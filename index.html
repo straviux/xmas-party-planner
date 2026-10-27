@@ -1560,13 +1560,13 @@ const app=createApp({
     goHome(){ this.$router.push({name:'home'}); },
     cancelSetup(){
       // Definitive cancel: do not rely only on the route watcher to hide
-      // setup — close every overlay, switch to home now, and replace the
-      // history entry so Back does not return to setup either.
+      // setup — close every overlay, switch to the host hub now, and
+      // replace the history entry so Back does not return to setup either.
       this.showWishModal=false; this.showQrModal=false; this.showClaimedModal=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
-      this.view='home';
-      this.$router.replace({name:'home'});
+      this.view='host';
+      this.$router.replace({name:'host'});
     },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
