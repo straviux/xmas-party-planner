@@ -809,7 +809,8 @@
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
-    <div v-if="guestMe && ['who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="flex items-center gap-2 text-sm mb-3"><p class="text-left flex-1 min-w-0">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0 ml-auto" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
+        <div v-if="view==='who'" class="flex justify-start mb-3"><button class="text-sm font-bold opacity-80" @click="goHome">← Back to home</button></div>
+<div v-if="guestMe && ['who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="flex items-center gap-2 text-sm mb-3"><p class="text-left flex-1 min-w-0">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0 ml-auto" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
         <p class="section-label">Your party</p>
@@ -847,7 +848,6 @@
 
 <section v-show="view==='who'" class="who-middle">
 <!-- Step 1: Who are you? (now its own page) -->
-      <div class="flex justify-start mb-3"><button class="text-sm font-bold opacity-80" @click="goHome">← Back to home</button></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
