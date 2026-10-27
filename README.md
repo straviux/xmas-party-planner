@@ -21,9 +21,17 @@ A general Christmas party app:
 
 ## Files in this folder
 
-- `index.html` — Secret Santa, Wishlist, Theme Poll, and Host tabs.
-  Vue 3 (CDN, no build), DaisyUI, Lucide, Material 3 Expressive
-  styling, layout optimized for mobile view.
+- `index.html` — Guided flow (not tabs): Home with Santa, then a
+  guest journey (Who → Reveal → Gifts → Vote → Done) and a separate
+  host flow (Setup → Dashboard → Poll setup). Vue 3 (CDN, no build),
+  DaisyUI, Lucide, Material 3 Expressive styling, layout optimized
+  for mobile view.
+- Santa mascot — Santa, your party guide, embedded directly in
+  `index.html` as a data URL (the GitHub snapshot push rejects
+  binary PNG files, so there is no separate `santa-mascot.png`
+  in the repo — the image still shows everywhere, with no extra
+  file to upload). He greets guests on Home, hints at each guest
+  step, and celebrates on the Done screen.
 - `api.php` — server side: draw, one-time claims, wishlists, poll,
   host dashboard. No database. Everything is stored in `data.php`
   (created on setup). That file starts with a PHP exit guard, so
@@ -32,6 +40,27 @@ A general Christmas party app:
 - `.htaccess` — Apache protection for `data.php` (ignored harmlessly
   on Nginx). `api.php` must still be reachable.
 - `.gitignore` — keeps `data.php` out of the repo; it contains the draw.
+
+## Guest flow (what guests actually do)
+
+1. **Home** — Santa greets them. Tap *I'm a guest*.
+2. **Who** — search once, tap your exact entry, confirm “Is this
+   you?”, PIN once if you have one. Name and PIN are remembered
+   for this session, so you don't pick your name again for
+   wishlists or the poll.
+3. **Reveal** — see your recipient once, note it down. A “Buying
+   for” card stays pinned while this page is open, so you don't
+   lose the name if you tap away. A fresh scan on another device
+   still only says “already revealed”.
+4. **Gifts** — your recipient's wishlist first (Reserve in one tap),
+   then your own wishlist (add text, link, or screenshot), with
+   everyone's wishlists available to browse if you want them.
+5. **Vote** — theme poll, then a Done screen with Santa and a
+   summary (buying for, reserved, your wishlist, your vote).
+
+If a name was already revealed on another device, the flow still
+lets that guest do wishlist and poll steps, and they can pick
+their recipient manually in the Gifts step to see that list.
 
 ## Deploy (Apache / PHP host)
 
