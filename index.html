@@ -129,7 +129,7 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:14px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; max-width:260px; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:14px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; max-width:260px; margin-top:8px; margin-left:40px; animation:float 5s ease-in-out infinite; }
   @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
   @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
@@ -815,7 +815,7 @@
       <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guest</h2></div>
 <!-- Step 1: Who are you? -->
       <div v-show="guestStep===1" class="card bg-base-100 m3-card p-4 sm:p-5">
-        <div class="flex gap-3 items-start">
+        <div class="flex gap-2 items-start">
           <scor-santa size="4"></scor-santa>
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
         </div>
@@ -876,7 +876,7 @@
       <div>
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
-          <div class="flex gap-3 items-start mt-2">
+          <div class="flex gap-2 items-start mt-2">
             <scor-santa size="4"></scor-santa>
             <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
           </div>
@@ -991,7 +991,7 @@
     <section v-show="view==='host'">
       <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host</h2></div>
       <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
-        <div class="flex gap-3 items-start">
+        <div class="flex gap-2 items-start">
           <scor-santa size="4"></scor-santa>
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
@@ -1042,7 +1042,7 @@
         <h3 class="text-xl font-black">Host setup</h3>
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostSetupModal">✕</button>
       </div>
-        <div class="flex gap-3 items-start">
+        <div class="flex gap-2 items-start">
           <scor-santa size="4"></scor-santa>
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
