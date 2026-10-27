@@ -32,6 +32,9 @@ A general Christmas party app:
   in the repo — the image still shows everywhere, with no extra
   file to upload). He greets guests on Home, hints at each guest
   step, and celebrates on the Done screen.
+- Look — dark navy grain texture as the page background (also
+  embedded in `index.html` as a data URL, same reason as the
+  mascot), with the header red set to `#F67280`.
 - `api.php` — server side: draw, one-time claims, wishlists, poll,
   host dashboard. No database. Everything is stored in `data.php`
   (created on setup). That file starts with a PHP exit guard, so
