@@ -1069,18 +1069,9 @@
         <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
         <label class="block mt-2">Gift budget (₱, optional) <input class="input input-bordered w-full" v-model="partyBudget" placeholder="e.g. ₱500"></label>
         <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
-        <h3 class="font-black mt-4">Guests ({{ guestRows.length }}) — add at least 2</h3>
-        <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
-        <div v-for="(r,i) in guestRows" :key="i" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
-          <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
-          <span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span>
-          <span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span>
-          <div class="flex gap-2 mt-2">
-            <button class="btn btn-sm" @click="openGuestModal(i)">Edit</button>
-            <button class="btn btn-sm btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
-          </div>
-        </div>
-        <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
+        <h3 class="font-black mt-4">Guests ({{ guestRows.length }})</h3>
+        <p class="text-sm opacity-70 mt-1">Add and edit guests on the Guests page.</p>
+        <button class="btn mt-3" @click="goTo('hostguests')">Manage guests</button>
         <button class="btn btn-success w-full mt-3" @click="doSetup">Save</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="goBack">Cancel</button>
@@ -1101,6 +1092,25 @@
         <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="goBack">Close</button>
+      </div>
+    </section>
+
+    <section v-show="view==='hostguests'">
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guests</h2></div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h3 class="font-black mt-4">Guests ({{ guestRows.length }}) — add at least 2</h3>
+        <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
+        <div v-for="(r,i) in guestRows" :key="i" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
+          <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
+          <span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span>
+          <span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-sm" @click="openGuestModal(i)">Edit</button>
+            <button class="btn btn-sm btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
+          </div>
+        </div>
+        <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
+        <button class="btn btn-ghost w-full mt-2" @click="goBack">Back</button>
       </div>
     </section>
 
@@ -1468,7 +1478,7 @@ createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(guests.length<2){ this.setupMsg='Add at least 2 guests.'; this.setupOk=false; return; }
+      if(guests.length<2){ this.setupMsg='Add at least 2 guests on the Guests page.'; this.setupOk=false; return; }
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
