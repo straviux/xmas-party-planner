@@ -215,7 +215,7 @@ if ($action === 'status') {
   $d = load_data();
   if (!$d) send(['exists' => false]);
   $claimed = 0; foreach ($d['guests'] as $g) if (!empty($g['claimed'])) $claimed++;
-  send(['exists' => true, 'party' => $d['party'], 'budget' => $d['budget'],
+  send(['exists' => true, 'party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '',
         'total' => count($d['guests']), 'claimed' => $claimed]);
 }
 
@@ -229,7 +229,7 @@ if ($action === 'list') {
   if (!$d) send(['error' => 'not_set_up'], 404);
   $out = [];
   foreach (sorted_guests($d) as $g) $out[] = public_guest($g);
-  send(['party' => $d['party'], 'budget' => $d['budget'], 'guests' => $out]);
+  send(['party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '', 'guests' => $out]);
 }
 
 if ($action === 'setup') {
@@ -239,6 +239,8 @@ if ($action === 'setup') {
   if (!$sess && strlen($pin_in) < 4) send(['error' => 'host_signin_required'], 400);
   $party = trim((string)($input['party'] ?? 'Christmas Party'));
   $budget = trim((string)($input['budget'] ?? ''));
+  $date = trim((string)($input['date'] ?? ''));
+  if ($date !== '' && !preg_match('#^\d{4}-\d{2}-\d{2}$#', $date)) send(['error' => 'Invalid party date'], 400);
   $guests_in = $input['guests'] ?? [];
   if (!is_array($guests_in)) $guests_in = [];
   $guests = []; $seen = [];
@@ -267,16 +269,40 @@ if ($action === 'setup') {
   if ($recipients === null) $recipients = array_fill(0, count($ids), null);
   foreach ($guests as $i => &$g) $g['recipient_id'] = $recipients[$i];
   unset($g);
-  $d = ['party' => $party, 'budget' => $budget,
+  $d = ['party' => $party, 'budget' => $budget, 'date' => $date,
         'invite_code' => invite_code_new(),
         'host_pin_hash' => ($pin_in !== '') ? password_hash($pin_in, PASSWORD_DEFAULT) : null,
         'host_google_sub' => $sess['google_sub'] ?? '', 'host_email' => $sess['email'] ?? '',
         'created_at' => date('c'), 'guests' => $guests,
-        'wishlists' => [], 'poll' => null];
+        'wishlists' => [], 'poll' => null, 'polls' => []];
   if (!save_data($d)) send(['error' => 'Could not save. Check folder write permissions.'], 500);
   send(['ok' => true, 'total' => count($guests)]);
 }
 
+if ($action === 'party_update') {
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  require_host($input, $d);
+  $date = trim((string)($input['date'] ?? ''));
+  if ($date !== '' && !preg_match('#^\d{4}-\d{2}-\d{2}$#', $date)) send(['error' => 'Invalid party date'], 400);
+  $party = trim((string)($input['party'] ?? ''));
+  if ($party !== '') $d['party'] = $party;
+  if (isset($input['budget'])) $d['budget'] = trim((string)$input['budget']);
+  $d['date'] = $date;
+  if (!save_data($d)) send(['error' => 'Could not save'], 500);
+  send(['ok' => true, 'party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date']]);
+}
+if ($action === 'host_pin_reset') {
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  if (!host_session_valid($input)) {
+    $cur = (string)($input['host_pin'] ?? '');
+    if ($cur === '' || empty($d['host_pin_hash']) || !password_verify($cur, $d['host_pin_hash'])) send(['error' => 'host_not_signed_in'], 403);
+  }
+  $new = trim((string)($input['new_pin'] ?? ''));
+  if (strlen($new) < 4) send(['error' => 'New PIN must be at least 4 characters'], 400);
+  $d['host_pin_hash'] = password_hash($new, PASSWORD_DEFAULT);
+  if (!save_data($d)) send(['error' => 'Could not save'], 500);
+  send(['ok' => true]);
+}
 if ($action === 'reveal') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
@@ -312,7 +338,7 @@ if ($action === 'host_status') {
               'aliases' => $g['aliases'], 'claimed' => !empty($g['claimed']),
               'claimed_at' => $g['claimed_at'] ?? null];
   }
-  send(['party' => $d['party'], 'budget' => $d['budget'], 'guests' => $out]);
+  send(['party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '', 'guests' => $out]);
 }
 
 if ($action === 'reset_one') {
@@ -442,26 +468,51 @@ if ($action === 'wishlist_reserve') {
   }
   send(['error' => 'Item not found'], 404);
 }
-// Theme poll: one vote per guest (changeable until the host closes it),
-// results are counts only — never who voted for what.
-function poll_public($d, $me) {
-  $p = $d['poll'] ?? null;
-  if (!$p) return null;
+// Theme polls: a party can have several polls (one vote per guest per poll,
+// changeable until the host closes that poll), results are counts only —
+// never who voted for what. Older parties stored a single poll in $d['poll'];
+// polls_list() migrates that into the $d['polls'] list on first poll action.
+function polls_list($d) {
+  if (!empty($d['polls']) && is_array($d['polls'])) return $d['polls'];
+  if (!empty($d['poll'])) { $p = $d['poll']; if (empty($p['id'])) $p['id'] = 'poll1'; return [$p]; }
+  return [];
+}
+function poll_index($polls, $id) {
+  foreach ($polls as $i => $p) if (($p['id'] ?? '') === $id) return $i;
+  return -1;
+}
+function poll_public_one($p, $me) {
   $counts = [];
   foreach ($p['options'] as $o) $counts[$o['id']] = 0;
   foreach (($p['votes'] ?? []) as $opt) if (isset($counts[$opt])) $counts[$opt]++;
   $opts = [];
   foreach ($p['options'] as $o) $opts[] = ['id' => $o['id'], 'text' => $o['text'], 'votes' => $counts[$o['id']]];
-  return ['question' => $p['question'], 'options' => $opts,
+  return ['id' => $p['id'] ?? '', 'question' => $p['question'], 'options' => $opts,
           'total' => array_sum($counts), 'open' => !empty($p['open']),
           'my_vote' => ($me !== '' ? ($p['votes'][$me] ?? null) : null)];
+}
+function polls_public($d, $me) {
+  $out = [];
+  foreach (polls_list($d) as $p) $out[] = poll_public_one($p, $me);
+  return $out;
+}
+function poll_resolve($d, $input) {
+  $polls = polls_list($d);
+  $id = (string)($input['poll_id'] ?? '');
+  if ($id === '') {
+    if (count($polls) === 1) return [0, $polls];
+    if (count($polls) === 0) send(['error' => 'No poll yet'], 404);
+    send(['error' => 'poll_id required'], 400);
+  }
+  $i = poll_index($polls, $id);
+  if ($i < 0) send(['error' => 'Poll not found'], 404);
+  return [$i, $polls];
 }
 if ($action === 'poll_get') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  $p = poll_public($d, (string)($_GET['me'] ?? ''));
-  if (!$p) send(['poll' => null]);
-  send(['poll' => $p]);
+  $list = polls_public($d, (string)($_GET['me'] ?? ''));
+  send(['polls' => $list, 'poll' => $list[0] ?? null]);
 }
 if ($action === 'poll_setup') {
   $d = load_data();
@@ -473,15 +524,18 @@ if ($action === 'poll_setup') {
   if ($q === '' || count($opts_in) < 2) send(['error' => 'Poll needs a question and at least 2 options'], 400);
   $opts = [];
   foreach ($opts_in as $o) $opts[] = ['id' => 'p' . bin2hex(random_bytes(5)), 'text' => $o];
-  $d['poll'] = ['question' => $q, 'options' => $opts, 'votes' => [], 'open' => true];
+  $polls = polls_list($d);
+  $new = ['id' => 'pl' . bin2hex(random_bytes(5)), 'question' => $q, 'options' => $opts, 'votes' => [], 'open' => true, 'created_at' => date('c')];
+  $polls[] = $new;
+  $d['polls'] = $polls; unset($d['poll']);
   save_data($d);
-  send(['ok' => true, 'poll' => poll_public($d, '')]);
+  send(['ok' => true, 'polls' => polls_public($d, ''), 'poll' => poll_public_one($new, '')]);
 }
 if ($action === 'poll_vote') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  $p = $d['poll'] ?? null;
-  if (!$p) send(['error' => 'No poll yet'], 404);
+  list($i, $polls) = poll_resolve($d, $input);
+  $p = $polls[$i];
   if (empty($p['open'])) send(['error' => 'poll_closed'], 409);
   $g = find_guest($d, (string)($input['guest_id'] ?? ''));
   if (!$g) send(['error' => 'Guest not found'], 404);
@@ -489,26 +543,41 @@ if ($action === 'poll_vote') {
   $opt = (string)($input['option_id'] ?? '');
   $ok = false; foreach ($p['options'] as $o) if ($o['id'] === $opt) $ok = true;
   if (!$ok) send(['error' => 'Option not found'], 404);
-  $d['poll']['votes'][$g['id']] = $opt;
+  $polls[$i]['votes'][$g['id']] = $opt;
+  $d['polls'] = $polls; unset($d['poll']);
   save_data($d);
-  send(['ok' => true, 'poll' => poll_public($d, $g['id'])]);
+  send(['ok' => true, 'polls' => polls_public($d, $g['id']), 'poll' => poll_public_one($polls[$i], $g['id'])]);
 }
 if ($action === 'poll_set_open') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
   if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
-  if (empty($d['poll'])) send(['error' => 'No poll yet'], 404);
-  $d['poll']['open'] = !empty($input['open']);
+  list($i, $polls) = poll_resolve($d, $input);
+  $polls[$i]['open'] = !empty($input['open']);
+  $d['polls'] = $polls; unset($d['poll']);
   save_data($d);
-  send(['ok' => true, 'poll' => poll_public($d, '')]);
+  send(['ok' => true, 'polls' => polls_public($d, ''), 'poll' => poll_public_one($polls[$i], '')]);
 }
 if ($action === 'poll_reset') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
   if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
-  $d['poll'] = null;
+  $polls = polls_list($d);
+  $id = (string)($input['poll_id'] ?? '');
+  if ($id !== '') {
+    $i = poll_index($polls, $id);
+    if ($i < 0) send(['error' => 'Poll not found'], 404);
+    array_splice($polls, $i, 1);
+  } elseif (count($polls) === 1) {
+    $polls = [];
+  } elseif (count($polls) === 0) {
+    send(['error' => 'No poll yet'], 404);
+  } else {
+    send(['error' => 'poll_id required'], 400);
+  }
+  $d['polls'] = $polls; unset($d['poll']);
   save_data($d);
-  send(['ok' => true]);
+  send(['ok' => true, 'polls' => polls_public($d, '')]);
 }
 
 send(['error' => 'Unknown action'], 400);

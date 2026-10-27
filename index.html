@@ -979,29 +979,30 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
           <scor-santa size="4"></scor-santa>
-          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Pick a theme! One vote each, and you can change it until the host closes the poll.</div>
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Vote on each poll! One vote each per poll, and you can change it until the host closes that poll.</div>
         </div>
-        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
-        <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
-        <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it.</div>
-        <div v-else class="mt-4">
-          <h3 class="text-xl font-black">{{ poll.question }}</h3>
-          <p class="text-sm opacity-70">{{ poll.open ? 'Voting open' : 'Poll closed' }} • {{ poll.total }} vote(s)</p>
-          <div class="divide-y divide-white/10 mt-2">
-            <div v-for="o in poll.options" :key="o.id" class="flex items-center gap-3 py-3">
-              <div class="flex-1 min-w-0">
-                <p><b>{{ o.text }}</b> <span v-if="poll.my_vote===o.id" class="text-sm"><i data-lucide="star" class="w-4 h-4 inline"></i> yours</span></p>
-                <p class="text-sm opacity-70 mt-1">{{ o.votes }} vote(s) • {{ poll.total ? Math.round(o.votes/poll.total*100) : 0 }}%</p>
-                <div class="m3-bar mt-1"><div :style="{width: (poll.total ? Math.round(o.votes/poll.total*100) : 0) + '%'}"></div></div>
+        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Polls</h2>
+        <p class="text-sm opacity-70 mt-1">One vote per guest per poll. You can change your vote until the host closes a poll. Results show counts only — never who voted for what.</p>
+        <div v-if="!polls.length" class="mt-4 opacity-70">No polls yet — the host creates them.</div>
+        <div v-else class="mt-4 space-y-4">
+          <div v-for="p in polls" :key="p.id" class="rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+            <h3 class="text-xl font-black">{{ p.question }}</h3>
+            <p class="text-sm opacity-70">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p>
+            <div class="divide-y divide-white/10 mt-2">
+              <div v-for="o in p.options" :key="o.id" class="flex items-center gap-3 py-3">
+                <div class="flex-1 min-w-0">
+                  <p><b>{{ o.text }}</b> <span v-if="p.my_vote===o.id" class="text-sm"><i data-lucide="star" class="w-4 h-4 inline"></i> yours</span></p>
+                  <p class="text-sm opacity-70 mt-1">{{ o.votes }} vote(s) • {{ p.total ? Math.round(o.votes/p.total*100) : 0 }}%</p>
+                  <div class="m3-bar mt-1"><div :style="{width: (p.total ? Math.round(o.votes/p.total*100) : 0) + '%'}"></div></div>
+                </div>
+                <button v-if="p.open" class="shrink-0" role="radio" :aria-checked="p.my_vote===o.id" :style="{width:'28px',height:'28px',borderRadius:'9999px',border:'2px solid ' + (p.my_vote===o.id ? '#34D399' : 'rgba(255,255,255,0.4)'),background:'transparent',display:'flex',alignItems:'center',justifyContent:'center',padding:'0',cursor:'pointer',flexShrink:'0'}" :aria-label="'Vote for ' + o.text" @click="votePoll(p.id, o.id)"><span v-if="p.my_vote===o.id" style="width:14px;height:14px;border-radius:9999px;background:#34D399;display:block"></span></button>
               </div>
-              <button v-if="poll.open" class="shrink-0" role="radio" :aria-checked="poll.my_vote===o.id" :style="{width:'28px',height:'28px',borderRadius:'9999px',border:'2px solid ' + (poll.my_vote===o.id ? '#34D399' : 'rgba(255,255,255,0.4)'),background:'transparent',display:'flex',alignItems:'center',justifyContent:'center',padding:'0',cursor:'pointer',flexShrink:'0'}" :aria-label="'Vote for ' + o.text" @click="votePoll(o.id)"><span v-if="poll.my_vote===o.id" style="width:14px;height:14px;border-radius:9999px;background:#34D399;display:block"></span></button>
             </div>
+            <div v-if="!p.open && p.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ p.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
           </div>
-          <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
-          <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
         </div>
+        <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
       </div>
-
     </section>
 
 
@@ -1146,9 +1147,11 @@
             <input class="input input-sm input-bordered w-full" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount">
           </div>
         </div>
+        <label class="block mt-2">Party date <input class="input input-bordered w-full" type="date" v-model="partyDate"></label>
         <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
         <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
+        <div v-if="setupDone" class="mt-2"><button class="btn btn-sm btn-compact btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
         <button class="btn btn-ghost" style="width:auto" @click="cancelSetup"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
@@ -1158,24 +1161,40 @@
     </section>
 
     <section v-show="view==='hostpoll'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Theme poll</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Polls</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
-
-        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll setup (host)</h2>
+        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Polls</h2>
+        <p class="text-sm opacity-70 mt-1">All polls, newest first. Guests can vote on open polls; closed polls show their final winner.</p>
+        <div v-if="!polls.length" class="mt-4 opacity-70">No polls yet — create your first one below.</div>
+        <div v-else class="mt-4 space-y-3">
+          <div v-for="p in polls.slice().reverse()" :key="p.id" class="rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+            <div class="flex items-start gap-3">
+              <div class="flex-1 min-w-0">
+                <b>{{ p.question }}</b>
+                <p class="text-sm opacity-70 mt-1">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p>
+                <p v-if="!p.open && p.options.length" class="text-sm mt-1">Winner: <b>{{ p.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></p>
+              </div>
+              <div class="flex gap-1 shrink-0">
+                <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="setPollOpen(p.id, !p.open)">{{ p.open ? 'Close' : 'Reopen' }}</button>
+                <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Delete poll" @click="resetPoll(p)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+      </div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black">Create a poll</h2>
         <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
         <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
         <div class="flex flex-wrap gap-2 mt-3">
-          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="setupPoll">Create / replace poll</button>
-          <button class="btn btn-compact shrink-0" style="width:auto" @click="setPollOpen(true)">Reopen poll</button>
-          <button class="btn btn-compact shrink-0" style="width:auto" @click="setPollOpen(false)">Close poll (show final winner)</button>
+          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="setupPoll">Create poll</button>
         </div>
-        <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-        <div class="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/10">
-          <button class="btn btn-error btn-compact shrink-0" style="width:auto" @click="resetPoll">Delete poll</button>
-          <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goBack">Close</button>
-        </div>
+      </div>
+      <div class="flex justify-end mt-4">
+        <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goBack">Close</button>
       </div>
     </section>
 
@@ -1303,6 +1322,22 @@
             <div v-if="wishFormMsg" class="alert mt-2 rounded-2xl" :class="wishFormMsgOk ? 'alert-success' : 'alert-error'">{{ wishFormMsg }}</div>
           </div>
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
+    </div>
+  </div>
+  <div v-if="showResetPinModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeResetPinModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Reset host PIN</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeResetPinModal">✕</button>
+      </div>
+      <div class="mt-3 space-y-2">
+        <input v-if="!hostSignedIn" class="input input-bordered w-full" type="password" v-model="resetPinCurrent" placeholder="Current host PIN">
+        <input class="input input-bordered w-full" type="password" v-model="resetPinNew" placeholder="New PIN (at least 4 characters)">
+        <input class="input input-bordered w-full" type="password" v-model="resetPinConfirm" placeholder="Confirm new PIN">
+        <button class="btn btn-success w-full" :disabled="resettingPin" @click="doResetPin">{{ resettingPin ? 'Resetting…' : 'Reset PIN' }}</button>
+        <div v-if="resetPinMsg" class="alert mt-2 rounded-2xl" :class="resetPinMsgOk ? 'alert-success' : 'alert-error'">{{ resetPinMsg }}</div>
+      </div>
+      <button class="btn btn-ghost w-full mt-2" @click="closeResetPinModal">Cancel</button>
     </div>
   </div>
   <!-- Host entry dialog: Google sign-in or new host -->
@@ -1523,10 +1558,10 @@ const app=createApp({
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
-    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
+    partyName:'Christmas Party', partyBudget:'', partyDate:'', hostPin:'', showResetPinModal:false, resetPinCurrent:'', resetPinNew:'', resetPinConfirm:'', resetPinMsg:'', resetPinMsgOk:false, resettingPin:false, guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishSearch:'', wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishImage:'', wishImageName:'',
-    poll:null, pollPin:'', pollMsg:'',
+    poll:null, polls:[], pollPin:'', pollMsg:'',
     pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollSetupMsg:'', pollSetupOk:false,
   }; },
   computed:{
@@ -1553,7 +1588,8 @@ const app=createApp({
       // keep rendering over the new page (e.g. home after a cancel).
       this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
-      this.showGuestModal=false; this.showWishOwnerModal=false; this.fabOpen=false;
+      this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.fabOpen=false;
+      if(to.name==='hostpoll') this.loadPoll();
       if(to.name==='wishlists' && this.pendingWishOwnerId){ const o=this.wishBoard.find(x=>x.id===this.pendingWishOwnerId); if(o){ this.wishModalOwner=o; this.showWishOwnerModal=true; } this.pendingWishOwnerId=null; }
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
     },
@@ -1563,7 +1599,7 @@ const app=createApp({
     if(window.lucide) lucide.createIcons();
     try{
       const s=await this.api('status');
-      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
+      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; this.partyName=s.party; this.partyBudget=s.budget; this.partyDate=s.date||''; await this.loadGuests(); }
       try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved) && saved.length) this.guestRows=saved; }catch(e){}
     }catch(e){ /* server not running yet — host setup will show */ try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved)) this.guestRows=saved; }catch(e2){} }
     // Start from the URL route (refresh / shared link keeps the page),
@@ -1573,6 +1609,7 @@ const app=createApp({
       if(['who','reveal','gifts','wishlists','vote','guesthome'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
       else this.view=start;
     }
+    if(this.view==='hostpoll') this.loadPoll();
     try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
     await this.initGoogle();
     await this.checkHostSession();
@@ -1797,10 +1834,29 @@ const app=createApp({
       if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Sign in with Google or choose a host PIN (at least 4 characters).'; this.setupOk=false; return; }
       this.savingSetup=true;
       try{
-        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, session:this.hostSession, host_pin:this.hostPin, guests});
+        if(this.setupDone){
+        await this.api('party_update',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPinCheck||this.hostPin});
+        this.setupMsg='Party details updated.'; this.setupOk=true; this.goTo('host');
+      } else {
+        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPin, guests});
         this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.goTo('host');
-      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message; this.setupOk=false; }
+      }
+      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message==='host_not_signed_in' ? 'Sign in with Google or enter your current host PIN.' : e.message; this.setupOk=false; }
       this.savingSetup=false;
+    },
+    openResetPinModal(){ this.resetPinCurrent=''; this.resetPinNew=''; this.resetPinConfirm=''; this.resetPinMsg=''; this.resetPinMsgOk=false; this.showResetPinModal=true; },
+    closeResetPinModal(){ this.showResetPinModal=false; this.resetPinMsg=''; },
+    async doResetPin(){
+      if(this.resetPinNew.length<4){ this.resetPinMsg='New PIN must be at least 4 characters.'; this.resetPinMsgOk=false; return; }
+      if(this.resetPinNew!==this.resetPinConfirm){ this.resetPinMsg='New PINs do not match.'; this.resetPinMsgOk=false; return; }
+      this.resettingPin=true;
+      try{
+        await this.api('host_pin_reset',{session:this.hostSession, host_pin:this.resetPinCurrent||this.hostPinCheck, new_pin:this.resetPinNew});
+        this.hostPinCheck=this.resetPinNew; this.hostPin=this.resetPinNew;
+        this.setupMsg='Host PIN reset.'; this.setupOk=true;
+        this.showResetPinModal=false;
+      }catch(e){ this.resetPinMsg=e.message==='host_not_signed_in'?'Current PIN is incorrect or you are not signed in.':e.message; this.resetPinMsgOk=false; }
+      this.resettingPin=false;
     },
     async loadHost(){
       if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Sign in with Google or enter the host PIN.'; this.hostOk=false; this.hostLoaded=false; return; }
@@ -1864,25 +1920,26 @@ const app=createApp({
     },
     // Poll (guestMe is the session identity)
     async loadPoll(){
-      try{ const d=await this.api('poll_get', null, 'me='+(this.guestMe?this.guestMe.id:'')); this.poll=d.poll; }catch(e){ this.poll=null; }
+      try{ const d=await this.api('poll_get', null, 'me='+(this.guestMe?this.guestMe.id:'')); this.polls=d.polls||(d.poll?[d.poll]:[]); this.poll=this.polls[0]||null; }catch(e){ this.poll=null; this.polls=[]; }
     },
-    async votePoll(optionId){
+    async votePoll(pollId, optionId){
       if(!this.guestMe) return;
-      try{ const d=await this.api('poll_vote',{guest_id:this.guestMe.id, pin:this.guestPin, option_id:optionId}); this.poll=d.poll; this.pollMsg=''; }
+      try{ const d=await this.api('poll_vote',{guest_id:this.guestMe.id, pin:this.guestPin, poll_id:pollId, option_id:optionId}); if(d.polls) this.polls=d.polls; if(d.poll) this.poll=d.poll; this.pollMsg=''; }
       catch(e){ this.pollMsg=e.message==='poll_closed'?'Poll is closed.':'Could not vote: '+e.message; }
     },
     async setupPoll(){
       try{
-        const d=await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
-        this.poll=d.poll; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
+        await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
       }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
-    async setPollOpen(open){
-      try{ const d=await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
+    async setPollOpen(pollId, open){
+      try{ await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:pollId, open}); await this.loadPoll(); this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
-    resetPoll(){
-      this.openConfirmDialog({title:'Delete poll?', message:'Delete the theme poll and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
+    resetPoll(poll){
+      const id=typeof poll==='string'?poll:poll.id; const q=typeof poll==='object'?poll.question:'this poll';
+      this.openConfirmDialog({title:'Delete poll?', message:'Delete "'+q+'" and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:id}); this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
     },
   }
 });
