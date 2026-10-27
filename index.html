@@ -1156,13 +1156,16 @@
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
         <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-        <label class="block mt-2">Host PIN (temporary, if not signed in with Google) <input class="input input-bordered w-full" v-model="pollHostPin" placeholder="Host PIN"></label>
-        <button class="btn btn-success w-full mt-3" @click="setupPoll">Create / replace poll</button>
-        <button class="btn w-full mt-2" @click="setPollOpen(true)">Reopen poll</button>
-        <button class="btn w-full mt-2" @click="setPollOpen(false)">Close poll (show final winner)</button>
-        <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="setupPoll">Create / replace poll</button>
+          <button class="btn btn-compact shrink-0" style="width:auto" @click="setPollOpen(true)">Reopen poll</button>
+          <button class="btn btn-compact shrink-0" style="width:auto" @click="setPollOpen(false)">Close poll (show final winner)</button>
+        </div>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-      <button class="btn btn-ghost w-full mt-2" @click="goBack">Close</button>
+        <div class="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/10">
+          <button class="btn btn-error btn-compact shrink-0" style="width:auto" @click="resetPoll">Delete poll</button>
+          <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goBack">Close</button>
+        </div>
       </div>
     </section>
 
@@ -1185,8 +1188,8 @@
           </div>
         </div>
         <div class="flex items-center justify-between gap-3 mt-4">
-          <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openGuestModal(-1)">+ Add guest</button>
           <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="goBack">Back</button>
+          <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openGuestModal(-1)">+ Add guest</button>
         </div>
       </div>
     </section>
@@ -1808,7 +1811,7 @@ const app=createApp({
     },
     async setupPoll(){
       try{
-        const d=await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        const d=await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
         this.poll=d.poll; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
       }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
