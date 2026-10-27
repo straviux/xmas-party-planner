@@ -92,56 +92,7 @@
       </div>
       <p v-if="!setupDone" class="text-sm opacity-80 text-center mt-2">No party set up yet — the host needs to set it up first.</p>
 
-      <!-- Get started: light 2-column cards, like Tutorials -->
-      <p class="section-label">Get started</p>
-      <div class="grid grid-cols-2 gap-3">
-        <div class="card bg-base-100 m3-card p-4 text-left cursor-pointer" @click="startGuest">
-          <p class="text-xs font-bold" style="color:#c62828">Guest</p>
-          <p class="font-black text-lg leading-tight mt-1">Find your name</p>
-          <p class="text-sm mt-1">Scan the QR, search your name, confirm it's you.</p>
-          <i data-lucide="search" class="w-6 h-6 mt-2"></i>
-        </div>
-        <div class="card bg-base-100 m3-card p-4 text-left cursor-pointer" @click="startGuest">
-          <p class="text-xs font-bold" style="color:#c62828">Secret Santa</p>
-          <p class="font-black text-lg leading-tight mt-1">Reveal once</p>
-          <p class="text-sm mt-1">Your recipient is shown once, then it's burned.</p>
-          <i data-lucide="gift" class="w-6 h-6 mt-2"></i>
-        </div>
-      </div>
-
-      <!-- Your party: dark 2-column cards, like My Last Work -->
-      <p class="section-label">Your party</p>
-      <div v-if="setupDone" class="grid grid-cols-2 gap-3">
-        <div class="dark-card p-4 text-left cursor-pointer" @click="startHost">
-          <p class="card-label">Party</p>
-          <p class="font-black text-lg leading-tight mt-1">{{ party }}</p>
-          <p class="text-sm opacity-80 mt-1">{{ guests.length }} guests</p>
-          <i data-lucide="users" class="w-6 h-6 mt-2"></i>
-        </div>
-        <div class="dark-card p-4 text-left cursor-pointer" @click="startHost">
-          <p class="card-label">Revealed</p>
-          <p class="font-black text-lg leading-tight mt-1">{{ guests.filter(g=>g.claimed).length }} / {{ guests.length }}</p>
-          <p class="text-sm opacity-80 mt-1">names claimed</p>
-          <i data-lucide="check" class="w-6 h-6 mt-2"></i>
-        </div>
-        <div class="dark-card p-4 text-left cursor-pointer" @click="startHost">
-          <p class="card-label">Budget</p>
-          <p class="font-black text-lg leading-tight mt-1">{{ budget || 'Not set' }}</p>
-          <p class="text-sm opacity-80 mt-1">per gift</p>
-          <i data-lucide="gift" class="w-6 h-6 mt-2"></i>
-        </div>
-        <div class="dark-card p-4 text-left cursor-pointer" @click="startGuest">
-          <p class="card-label">Gifts</p>
-          <p class="font-black text-lg leading-tight mt-1">Wishlists</p>
-          <p class="text-sm opacity-80 mt-1">One QR for everyone • Reveal once • Anonymous reserves</p>
-          <i data-lucide="shopping-bag" class="w-6 h-6 mt-2"></i>
-        </div>
-      </div>
-      <div v-else class="dark-card p-4 text-left">
-        <p class="card-label">Party</p>
-        <p class="font-black text-lg leading-tight mt-1">Not set up yet</p>
-        <p class="text-sm opacity-80 mt-1">The host needs to set it up first — tap "I'm the host" above.</p>
-      </div>
+      <p v-if="setupDone" class="text-sm opacity-80 text-center mt-2">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name. Host? Tap "I'm the host" to create your party.</p>
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
@@ -156,6 +107,37 @@
         </div>
         <p v-if="guestMe" class="text-center text-sm mt-3">Playing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span>
           <span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
+      </div>
+
+      <!-- Your party: only shown once the guest is in (past Who), never on home -->
+      <div v-if="guestMe && guestStep>1">
+        <p class="section-label">Your party</p>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="dark-card p-4 text-left">
+            <p class="card-label">Party</p>
+            <p class="font-black text-lg leading-tight mt-1">{{ party }}</p>
+            <p class="text-sm opacity-80 mt-1">{{ guests.length }} guests</p>
+            <i data-lucide="users" class="w-6 h-6 mt-2"></i>
+          </div>
+          <div class="dark-card p-4 text-left">
+            <p class="card-label">Revealed</p>
+            <p class="font-black text-lg leading-tight mt-1">{{ guests.filter(g=>g.claimed).length }} / {{ guests.length }}</p>
+            <p class="text-sm opacity-80 mt-1">names claimed</p>
+            <i data-lucide="check" class="w-6 h-6 mt-2"></i>
+          </div>
+          <div class="dark-card p-4 text-left">
+            <p class="card-label">Budget</p>
+            <p class="font-black text-lg leading-tight mt-1">{{ budget || 'Not set' }}</p>
+            <p class="text-sm opacity-80 mt-1">per gift</p>
+            <i data-lucide="gift" class="w-6 h-6 mt-2"></i>
+          </div>
+          <div class="dark-card p-4 text-left cursor-pointer" @click="goToGifts">
+            <p class="card-label">Gifts</p>
+            <p class="font-black text-lg leading-tight mt-1">Wishlists</p>
+            <p class="text-sm opacity-80 mt-1">Tap to open your Gifts step</p>
+            <i data-lucide="shopping-bag" class="w-6 h-6 mt-2"></i>
+          </div>
+        </div>
       </div>
 
       <!-- Step 1: Who are you? -->
