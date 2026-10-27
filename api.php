@@ -26,7 +26,7 @@ define('GUARD', "<?php http_response_code(403); exit; ?>\n");
 // Arc: replace this with the real client ID from Google Cloud, and add the
 // deployed site origin (e.g. https://your-site.com) to that client's
 // Authorized JavaScript origins, or Google sign-in will refuse to load.
-define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
+define('GOOGLE_CLIENT_ID', '829355882959-r5dail3ga00lrus5la857eeu5i8euvot.apps.googleusercontent.com');
 // Superadmin: a site-owner account that can reset and control the host's
 // config and data (party, invite code, host PIN, guests' claimed status,
 // polls, wishlists, full reset). It is NOT a host account and it NEVER
