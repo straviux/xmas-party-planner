@@ -1065,31 +1065,25 @@
           <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
           <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
         </div>
-        <div v-if="hostSignedIn || hostLoaded" class="grid grid-cols-3 gap-2 mt-4">
+        <div class="grid grid-cols-3 gap-2 mt-4">
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-            <div class="text-2xl font-black">{{ hostList.length }}</div>
+            <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.length : '—' }}</div>
             <div class="text-xs opacity-70">Guests</div>
           </div>
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-            <div class="text-2xl font-black">{{ hostList.filter(g=>g.claimed).length }}</div>
+            <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.filter(g=>g.claimed).length : '—' }}</div>
             <div class="text-xs opacity-70">Revealed</div>
           </div>
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-            <div class="text-2xl font-black">{{ hostList.filter(g=>!g.claimed).length }}</div>
+            <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.filter(g=>!g.claimed).length : '—' }}</div>
             <div class="text-xs opacity-70">Awaiting</div>
           </div>
         </div>
-
         <div v-if="!hostSignedIn && !hostLoaded" class="mt-4">
-          <p class="font-black">Host sign-in</p>
-          <p class="text-sm opacity-70 mt-1">Enter your host PIN to see claimed names, the invite code and the QR.</p>
-          <div class="flex gap-2 mt-3">
-            <input class="input input-bordered flex-1" style="height:36px;min-height:36px" v-model="hostPinCheck" type="password" placeholder="Host PIN" @keyup.enter="loadHost">
-            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="loadHost">Continue</button>
-          </div>
-          <p v-if="hostMsg && !hostOk" class="text-sm text-error mt-2">{{ hostMsg }}</p>
-          <p class="text-sm opacity-70 mt-2">Or go back to Host home to sign in with Google.</p>
+          <p class="text-sm opacity-70">Sign in with Google on Host home to load your party stats.</p>
+          <button class="btn btn-sm btn-compact mt-2" style="width:auto" @click="goTo('host')">Go to Host home</button>
         </div>
+
 
         <div v-if="hostSignedIn || hostLoaded" class="mt-4 flex items-center justify-between gap-3">
           <div>
