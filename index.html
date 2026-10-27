@@ -951,8 +951,12 @@
         </div>
         <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Everyone's wishlists</h2>
         <p class="text-sm opacity-70 mt-2">Tap a member's card to see what they want. Reserve it so nobody else buys the same thing.</p>
+        <div class="search-pill mt-3">
+          <i data-lucide="search" class="search-pill-icon"></i>
+          <input class="search-pill-input" v-model="wishSearch" placeholder="Search a member…">
+        </div>
         <div class="mt-4 space-y-3">
-          <button v-for="owner in wishBoard" :key="owner.id" class="m3-person w-full text-left p-4 bg-white" @click="openWishOwnerModal(owner)">
+          <button v-for="owner in filteredWishBoard" :key="owner.id" class="m3-person w-full text-left p-4 bg-white" @click="openWishOwnerModal(owner)">
             <div class="flex items-center gap-3">
               <div class="flex-1 min-w-0">
                 <b class="text-lg">{{ owner.display }}<span v-if="owner.nickname"> “{{ owner.nickname }}”</span></b><span v-if="guestMe && owner.id===guestMe.id" class="text-sm opacity-60"> — you</span>
@@ -961,7 +965,7 @@
               <i data-lucide="chevron-right" class="w-5 h-5 shrink-0"></i>
             </div>
           </button>
-          <p v-if="!wishBoard.length" class="text-sm opacity-60">No members yet.</p>
+          <p v-if="!filteredWishBoard.length" class="text-sm opacity-60">{{ wishBoard.length ? 'No member matches your search.' : 'No members yet.' }}</p>
         </div>
       </div>
     </section>
@@ -1502,12 +1506,13 @@ const app=createApp({
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
-    wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
+    wishMe:null, wishBoard:[], wishSearch:'', wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
     pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollSetupMsg:'', pollSetupOk:false,
   }; },
   computed:{
     filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
+    filteredWishBoard(){ return this.wishBoard.filter(o=>matches(o, norm(this.wishSearch))); },
     myBoardItems(){
       if(!this.guestMe) return [];
       const o=this.wishBoard.find(x=>x.id===this.guestMe.id);
