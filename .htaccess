@@ -6,4 +6,7 @@
 <Files "host_session.php">
   Require all denied
 </Files>
+<Files "superadmin.php">
+  Require all denied
+</Files>
 Options -Indexes

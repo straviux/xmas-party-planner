@@ -20,12 +20,21 @@ header('Cache-Control: no-store');
 
 define('DATA_FILE', __DIR__ . '/data.php');
 define('HOST_SESSION_FILE', __DIR__ . '/host_session.php');
+define('SUPERADMIN_FILE', __DIR__ . '/superadmin.php');
 define('GUARD', "<?php http_response_code(403); exit; ?>\n");
 // Google OAuth client ID (Web application, Google Identity Services).
 // Arc: replace this with the real client ID from Google Cloud, and add the
 // deployed site origin (e.g. https://your-site.com) to that client's
 // Authorized JavaScript origins, or Google sign-in will refuse to load.
 define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
+// Superadmin: a site-owner account that can reset and control the host's
+// config and data (party, invite code, host PIN, guests' claimed status,
+// polls, wishlists, full reset). It is NOT a host account and it NEVER
+// receives recipient mappings — the draw stays blind even to superadmin.
+// The account is never in the repo: username + password hash live only in
+// superadmin.php on the server (gitignored, .htaccess-denied, like
+// host_session.php). First visit to /superadmin sets the account; there
+// is no hardcoded username/password anywhere in the code.
 // TEMPORARY: host sign-in/PIN check disabled for poll management only
 // (poll_setup, poll_set_open, poll_reset). Set this to false to re-enable
 // it. Guest voting is unchanged — it never required host sign-in.
@@ -89,6 +98,41 @@ function save_host_session($s) {
   fclose($fp);
   @chmod(HOST_SESSION_FILE, 0600);
   return true;
+}
+function load_superadmin() {
+  if (!file_exists(SUPERADMIN_FILE)) return null;
+  $raw = file_get_contents(SUPERADMIN_FILE);
+  if ($raw === false) return null;
+  $pos = strpos($raw, "\n");
+  $json = ($pos === false) ? '' : substr($raw, $pos + 1);
+  $s = json_decode($json, true);
+  return is_array($s) ? $s : null;
+}
+function save_superadmin($s) {
+  if ($s === null) { @unlink(SUPERADMIN_FILE); return true; }
+  $fp = fopen(SUPERADMIN_FILE, 'c');
+  if (!$fp) return false;
+  if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
+  ftruncate($fp, 0);
+  fwrite($fp, GUARD . json_encode($s, JSON_UNESCAPED_UNICODE));
+  fflush($fp);
+  flock($fp, LOCK_UN);
+  fclose($fp);
+  @chmod(SUPERADMIN_FILE, 0600);
+  return true;
+}
+function superadmin_session_valid($input) {
+  $tok = (string)($input['superadmin_session'] ?? '');
+  if ($tok === '') return null;
+  $s = load_superadmin();
+  if (!$s) return null;
+  if (empty($s['token_hash']) || !hash_equals($s['token_hash'], hash('sha256', $tok))) return null;
+  if (empty($s['expires']) || $s['expires'] < time()) return null;
+  return $s;
+}
+function require_superadmin($input) {
+  if (superadmin_session_valid($input)) return;
+  send(['error' => 'superadmin_not_signed_in'], 403);
 }
 function host_session_valid($input) {
   $tok = (string)($input['session'] ?? '');
@@ -598,6 +642,149 @@ if ($action === 'poll_reset') {
   $d['polls'] = $polls; unset($d['poll']);
   save_data($d);
   send(['ok' => true, 'polls' => polls_public($d, '')]);
+}
+
+// ---------- Superadmin ----------
+if ($action === 'superadmin_status') {
+  $s = load_superadmin();
+  send(['set' => !empty($s['pass_hash']), 'signed_in' => superadmin_session_valid($input) !== null]);
+}
+if ($action === 'superadmin_setup') {
+  $s = load_superadmin();
+  if (!empty($s['pass_hash'])) send(['error' => 'Superadmin account already set — sign in to change it'], 409);
+  $user = trim((string)($input['username'] ?? ''));
+  $pass = (string)($input['password'] ?? '');
+  if ($user === '' || strlen($pass) < 4) send(['error' => 'Choose a username and a password of at least 4 characters'], 400);
+  $session = bin2hex(random_bytes(32));
+  save_superadmin(['user' => $user, 'pass_hash' => password_hash($pass, PASSWORD_DEFAULT),
+                   'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c')]);
+  send(['ok' => true, 'session' => $session, 'username' => $user]);
+}
+if ($action === 'superadmin_login') {
+  $s = load_superadmin();
+  if (empty($s['pass_hash'])) send(['error' => 'Superadmin account not set yet'], 404);
+  $user = trim((string)($input['username'] ?? ''));
+  $pass = (string)($input['password'] ?? '');
+  if ($user !== ($s['user'] ?? '') || !password_verify($pass, $s['pass_hash'])) send(['error' => 'Incorrect superadmin username or password'], 403);
+  $session = bin2hex(random_bytes(32));
+  $s['token_hash'] = hash('sha256', $session); $s['expires'] = time() + 30 * 24 * 3600;
+  save_superadmin($s);
+  send(['ok' => true, 'session' => $session, 'username' => $s['user']]);
+}
+if ($action === 'superadmin_logout') {
+  $s = load_superadmin();
+  if ($s) { $s['token_hash'] = null; $s['expires'] = 0; save_superadmin($s); }
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_change_password') {
+  require_superadmin($input);
+  $s = load_superadmin();
+  $pass = (string)($input['new_password'] ?? '');
+  if (strlen($pass) < 4) send(['error' => 'New password must be at least 4 characters'], 400);
+  $s['pass_hash'] = password_hash($pass, PASSWORD_DEFAULT);
+  save_superadmin($s);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_get') {
+  require_superadmin($input);
+  $d = load_data();
+  if (!$d) send(['exists' => false]);
+  $out = [];
+  foreach (sorted_guests($d) as $g) {
+    $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],
+              'aliases' => $g['aliases'], 'claimed' => !empty($g['claimed']),
+              'claimed_at' => $g['claimed_at'] ?? null, 'needs_pin' => !empty($g['pin_hash'])];
+  }
+  // Deliberately no recipient_id here: superadmin controls config/data,
+  // but the draw stays blind even to superadmin.
+  send(['exists' => true, 'party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '',
+        'invite_code' => $d['invite_code'] ?? '', 'host_email' => $d['host_email'] ?? '',
+        'host_pin_set' => !empty($d['host_pin_hash']), 'created_at' => $d['created_at'] ?? '',
+        'guests' => $out, 'polls' => polls_public($d, ''),
+        'wishlist_items' => array_sum(array_map('count', $d['wishlists'] ?? []))]);
+}
+if ($action === 'superadmin_party_update') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $date = trim((string)($input['date'] ?? ''));
+  if ($date !== '' && !preg_match('#^\d{4}-\d{2}-\d{2}$#', $date)) send(['error' => 'Invalid party date'], 400);
+  $party = trim((string)($input['party'] ?? ''));
+  if ($party !== '') $d['party'] = $party;
+  if (isset($input['budget'])) $d['budget'] = trim((string)$input['budget']);
+  $d['date'] = $date;
+  if (!save_data($d)) send(['error' => 'Could not save'], 500);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_invite_regen') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $d['invite_code'] = invite_code_new(); save_data($d);
+  send(['invite_code' => $d['invite_code']]);
+}
+if ($action === 'superadmin_host_pin_reset') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $new = trim((string)($input['new_pin'] ?? ''));
+  if (strlen($new) < 4) send(['error' => 'New host PIN must be at least 4 characters'], 400);
+  $d['host_pin_hash'] = password_hash($new, PASSWORD_DEFAULT);
+  if (!save_data($d)) send(['error' => 'Could not save'], 500);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_reset_one') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $id = (string)($input['id'] ?? '');
+  foreach ($d['guests'] as &$g) if ($g['id'] === $id) { $g['claimed'] = false; $g['claimed_at'] = null; }
+  unset($g); save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_reset_claims') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  foreach ($d['guests'] as &$g) { $g['claimed'] = false; $g['claimed_at'] = null; }
+  unset($g); save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_redraw') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  foreach ($d['guests'] as $g) if (!empty($g['claimed'])) send(['error' => 'Cannot redraw after names have been revealed — reset claims first'], 409);
+  $ids = array_column($d['guests'], 'id');
+  $recipients = derangement($ids);
+  if ($recipients === null) $recipients = array_fill(0, count($ids), null);
+  foreach ($d['guests'] as $i => &$g) $g['recipient_id'] = $recipients[$i];
+  unset($g); save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_clear_wishlists') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $d['wishlists'] = []; save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_poll_set_open') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  list($i, $polls) = poll_resolve($d, $input);
+  $polls[$i]['open'] = !empty($input['open']);
+  $d['polls'] = $polls; unset($d['poll']); save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_poll_delete') {
+  require_superadmin($input);
+  $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
+  $polls = polls_list($d);
+  $id = (string)($input['poll_id'] ?? '');
+  $i = poll_index($polls, $id);
+  if ($i < 0) send(['error' => 'Poll not found'], 404);
+  array_splice($polls, $i, 1);
+  $d['polls'] = $polls; unset($d['poll']); save_data($d);
+  send(['ok' => true]);
+}
+if ($action === 'superadmin_reset_all') {
+  require_superadmin($input);
+  @unlink(DATA_FILE);
+  send(['ok' => true]);
 }
 
 send(['error' => 'Unknown action'], 400);

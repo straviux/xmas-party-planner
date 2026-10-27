@@ -1007,6 +1007,88 @@
 
 
     <!-- ============ HOST HOME (hub) ============ -->
+    <section v-show="view==='superadmin'">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-2xl font-black">Superadmin</h2>
+          <button v-if="superadminSignedIn" class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="superadminLogout">Sign out</button>
+        </div>
+        <p class="text-sm opacity-70 mt-1">Reset and control the host's party config and data. The draw is never shown here — not even to superadmin.</p>
+        <div v-if="!superadminSet" class="mt-4">
+          <p class="text-sm opacity-70">No superadmin account yet. Set one now — it is stored hashed on the server only, never in the code.</p>
+          <label class="block mt-3">Username <input class="input input-bordered w-full" v-model="superadminFormUser" placeholder="Username"></label>
+          <label class="block mt-2">Password <input type="password" class="input input-bordered w-full" v-model="superadminFormPass" placeholder="Password (at least 4 characters)"></label>
+          <button class="btn btn-success w-full mt-3" @click="superadminSetup">Set superadmin account</button>
+        </div>
+        <div v-else-if="!superadminSignedIn" class="mt-4">
+          <label class="block mt-3">Username <input class="input input-bordered w-full" v-model="superadminFormUser" placeholder="Username"></label>
+          <label class="block mt-2">Password <input type="password" class="input input-bordered w-full" v-model="superadminFormPass" placeholder="Password" @keyup.enter="superadminLogin"></label>
+          <button class="btn btn-success w-full mt-3" @click="superadminLogin">Sign in</button>
+        </div>
+        <div v-else class="mt-4">
+          <div v-if="!superadminExists" class="opacity-70">No party set up yet. Nothing to control until a host sets one up.</div>
+          <div v-else>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Party config</h3>
+              <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="superadminParty"></label>
+              <label class="block mt-2">Gift budget <input class="input input-bordered w-full" v-model="superadminBudget" placeholder="e.g. 500"></label>
+              <label class="block mt-2">Party date <input type="date" class="input input-bordered w-full" v-model="superadminDate"></label>
+              <button class="btn btn-success w-full mt-3" @click="saveSuperadminParty">Save party details</button>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Invite code</h3>
+              <div class="flex items-center gap-2 mt-3">
+                <p class="text-lg font-black flex-1" style="letter-spacing:0.2em">{{ superadminInvite }}</p>
+                <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="regenSuperadminInvite">New code</button>
+              </div>
+              <p class="text-sm opacity-70 mt-2">Host: {{ superadminHostEmail || '—' }} • Host PIN set: {{ superadminHostPinSet ? 'Yes' : 'No' }}</p>
+              <label class="block mt-3">New host PIN <input class="input input-bordered w-full" v-model="superadminNewPin" placeholder="At least 4 characters"></label>
+              <button class="btn btn-sm btn-compact shrink-0 mt-2" style="width:auto" @click="setSuperadminHostPin">Set host PIN</button>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Guests ({{ superadminGuests.length }})</h3>
+              <div class="divide-y divide-white/10 mt-1">
+                <div v-for="g in superadminGuests" :key="g.id" class="flex items-center gap-2 py-2">
+                  <span class="flex-1"><b>{{ g.display }}</b> <span class="opacity-70 text-sm" v-if="g.nickname"> "{{ g.nickname }}"</span> <span class="opacity-70 text-sm">{{ g.claimed ? '• Revealed' : '• Not yet' }}</span></span>
+                  <button v-if="g.claimed" class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="superadminResetOne(g)">Reset claim</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Polls ({{ superadminPolls.length }})</h3>
+              <div class="divide-y divide-white/10 mt-1">
+                <div v-for="pl in superadminPolls" :key="pl.id" class="flex items-center gap-2 py-2">
+                  <span class="flex-1"><b>{{ pl.question }}</b> <span class="opacity-70 text-sm">{{ pl.open ? '• Open' : '• Closed' }} • {{ pl.total }} vote(s)</span></span>
+                  <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="superadminPollOpen(pl, !pl.open)">{{ pl.open ? 'Close' : 'Reopen' }}</button>
+                  <button class="btn btn-sm btn-compact btn-error shrink-0" style="width:auto" @click="superadminPollDelete(pl)">Delete</button>
+                </div>
+              </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Wishlists</h3>
+              <p class="text-sm opacity-70 mt-2">{{ superadminWishlistItems }} item(s) across all guests.</p>
+              <button class="btn btn-sm btn-compact btn-error shrink-0 mt-2" style="width:auto" @click="superadminClearWishlists">Clear all wishlists</button>
+            </div>
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <h3 class="font-black">Danger zone</h3>
+              <div class="flex flex-wrap gap-2 mt-3">
+                <button class="btn btn-sm btn-compact btn-error shrink-0" style="width:auto" @click="superadminUnclaimAll">Unclaim all names</button>
+                <button class="btn btn-sm btn-compact btn-error shrink-0" style="width:auto" @click="superadminRedraw">Redraw</button>
+                <button class="btn btn-sm btn-compact btn-error shrink-0" style="width:auto" @click="superadminResetAll">Reset everything</button>
+              </div>
+              <p class="text-sm opacity-70 mt-2">Redraw only works before anyone has revealed. Reset everything deletes the whole party — the superadmin account itself stays, so you can still sign in after.</p>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/10">
+            <h3 class="font-black">Change superadmin password</h3>
+            <label class="block mt-3">New password <input type="password" class="input input-bordered w-full" v-model="superadminNewPass" placeholder="At least 4 characters"></label>
+            <label class="block mt-2">Confirm new password <input type="password" class="input input-bordered w-full" v-model="superadminNewPassConfirm" placeholder="Repeat new password"></label>
+            <button class="btn btn-sm btn-compact shrink-0 mt-2" style="width:auto" @click="changeSuperadminPassword">Change password</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ============ HOST DASHBOARD ============ -->
     <section v-show="view==='hostdashboard'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
@@ -1396,7 +1478,7 @@
       <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
     </div>
   <div class="fab-wrap">
-    <button v-show="!['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
+    <button v-show="!['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome','superadmin'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <svg stroke="var(--button-color)" fill="none" class="hamburger" viewBox="-10 -10 120 120" width="36" height="36" aria-hidden="true">
         <path class="line" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="m 20 40 h 60 a 1 1 0 0 1 0 20 h -60 a 1 1 0 0 1 0 -40 h 30 v 70"></path>
       </svg>
@@ -1516,7 +1598,7 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'', superadminSet:false, superadminSignedIn:false, superadminSession:'', superadminUser:'', superadminFormUser:'', superadminFormPass:'', superadminExists:false, superadminParty:'', superadminBudget:'', superadminDate:'', superadminInvite:'', superadminHostEmail:'', superadminHostPinSet:false, superadminGuests:[], superadminPolls:[], superadminWishlistItems:0, superadminNewPin:'', superadminNewPass:'', superadminNewPassConfirm:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
@@ -1552,6 +1634,7 @@ const app=createApp({
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.showPollModal=false; this.pollMenuId=null; this.showEditPollModal=false; this.fabOpen=false;
       if(to.name==='hostpoll') this.loadPoll();
+      if(to.name==='superadmin') this.initSuperadmin();
       if(to.name==='wishlists' && this.pendingWishOwnerId){ const o=this.wishBoard.find(x=>x.id===this.pendingWishOwnerId); if(o){ this.wishModalOwner=o; this.showWishOwnerModal=true; } this.pendingWishOwnerId=null; }
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
     },
@@ -1572,6 +1655,7 @@ const app=createApp({
       else this.view=start;
     }
     if(this.view==='hostpoll') this.loadPoll();
+    if(this.view==='superadmin') this.initSuperadmin();
     try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
     await this.initGoogle();
     await this.checkHostSession();
@@ -1599,6 +1683,99 @@ const app=createApp({
       const j=await r.json().catch(()=>({error:'Server error'}));
       if(!r.ok) throw new Error(j.error||'Server error');
       return j;
+    },
+    async initSuperadmin(){
+      try{ this.superadminSession=localStorage.getItem('xmasSuperadminSession')||''; }catch(e){}
+      try{
+        const s=await this.api('superadmin_status',{superadmin_session:this.superadminSession});
+        this.superadminSet=s.set; this.superadminSignedIn=s.signed_in;
+        if(s.signed_in) await this.loadSuperadmin();
+      }catch(e){ this.superadminSet=false; this.superadminSignedIn=false; }
+    },
+    async loadSuperadmin(){
+      try{
+        const d=await this.api('superadmin_get',{superadmin_session:this.superadminSession});
+        this.superadminExists=d.exists;
+        if(d.exists){
+          this.superadminParty=d.party; this.superadminBudget=d.budget; this.superadminDate=d.date||'';
+          this.superadminInvite=d.invite_code; this.superadminHostEmail=d.host_email; this.superadminHostPinSet=d.host_pin_set;
+          this.superadminGuests=d.guests; this.superadminPolls=d.polls; this.superadminWishlistItems=d.wishlist_items;
+        } else { this.superadminGuests=[]; this.superadminPolls=[]; this.superadminWishlistItems=0; }
+      }catch(e){
+        if(e.message==='superadmin_not_signed_in') this.superadminSignedIn=false;
+        else this.showToast(e.message, false);
+      }
+    },
+    async superadminSetup(){
+      if(this.superadminFormPass.length<4){ this.showToast('Choose a username and a password of at least 4 characters.', false); return; }
+      try{
+        const d=await this.api('superadmin_setup',{username:this.superadminFormUser, password:this.superadminFormPass});
+        this.superadminSession=d.session; try{ localStorage.setItem('xmasSuperadminSession', d.session); }catch(e){}
+        this.superadminUser=d.username; this.superadminSet=true; this.superadminSignedIn=true; this.superadminFormPass='';
+        await this.loadSuperadmin(); this.showToast('Superadmin account set.');
+      }catch(e){ this.showToast(e.message, false); }
+    },
+    async superadminLogin(){
+      try{
+        const d=await this.api('superadmin_login',{username:this.superadminFormUser, password:this.superadminFormPass});
+        this.superadminSession=d.session; try{ localStorage.setItem('xmasSuperadminSession', d.session); }catch(e){}
+        this.superadminUser=d.username; this.superadminSignedIn=true; this.superadminFormPass='';
+        await this.loadSuperadmin(); this.showToast('Signed in as superadmin.');
+      }catch(e){ this.showToast(e.message, false); }
+    },
+    async superadminLogout(){
+      try{ await this.api('superadmin_logout',{superadmin_session:this.superadminSession}); }catch(e){}
+      this.superadminSession=''; this.superadminSignedIn=false;
+      try{ localStorage.removeItem('xmasSuperadminSession'); }catch(e){}
+      this.showToast('Signed out.');
+    },
+    async saveSuperadminParty(){
+      try{
+        await this.api('superadmin_party_update',{superadmin_session:this.superadminSession, party:this.superadminParty, budget:this.superadminBudget, date:this.superadminDate});
+        await this.loadSuperadmin(); this.showToast('Party details updated.');
+      }catch(e){ this.showToast(e.message, false); }
+    },
+    regenSuperadminInvite(){
+      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old QR stops working.', okText:'Generate', onOk: async ()=>{ const d=await this.api('superadmin_invite_regen',{superadmin_session:this.superadminSession}); this.superadminInvite=d.invite_code; this.showToast('New invite code generated.'); }});
+    },
+    async setSuperadminHostPin(){
+      if(this.superadminNewPin.length<4){ this.showToast('New host PIN must be at least 4 characters.', false); return; }
+      try{
+        await this.api('superadmin_host_pin_reset',{superadmin_session:this.superadminSession, new_pin:this.superadminNewPin});
+        this.superadminNewPin=''; await this.loadSuperadmin(); this.showToast('Host PIN updated.');
+      }catch(e){ this.showToast(e.message, false); }
+    },
+    superadminResetOne(g){
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset '+g.display+' so it can be revealed again?', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_one',{superadmin_session:this.superadminSession, id:g.id}); await this.loadSuperadmin(); this.showToast('Name reset — it can be revealed again.'); }});
+    },
+    superadminUnclaimAll(){
+      this.openConfirmDialog({title:'Unclaim all names?', message:'Reset every name so all of them can be revealed again.', okText:'Unclaim all', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_claims',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('All names reset.'); }});
+    },
+    superadminRedraw(){
+      this.openConfirmDialog({title:'Redraw the draw?', message:'Redraws who buys for whom and unclaims everyone. Only do this before anyone has revealed — the server blocks redraw while any name is claimed.', okText:'Redraw', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_redraw',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('Draw redrawn.'); }});
+    },
+    superadminClearWishlists(){
+      this.openConfirmDialog({title:'Clear all wishlists?', message:'Delete every wishlist item for every guest. This cannot be undone.', okText:'Clear all', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_clear_wishlists',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('All wishlists cleared.'); }});
+    },
+    async superadminPollOpen(pl, open){
+      try{
+        await this.api('superadmin_poll_set_open',{superadmin_session:this.superadminSession, poll_id:pl.id, open});
+        await this.loadSuperadmin(); this.showToast(open ? 'Poll reopened.' : 'Poll closed.');
+      }catch(e){ this.showToast(e.message, false); }
+    },
+    superadminPollDelete(pl){
+      this.openConfirmDialog({title:'Delete this poll?', message:'Delete "'+pl.question+'"? Votes are deleted with it.', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_poll_delete',{superadmin_session:this.superadminSession, poll_id:pl.id}); await this.loadSuperadmin(); this.showToast('Poll deleted.'); }});
+    },
+    superadminResetAll(){
+      this.openConfirmDialog({title:'Reset everything?', message:'Delete the entire party — guests, draw, wishlists and polls are all gone. The superadmin account itself stays, so you can still sign in after.', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_all',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('Party deleted.'); }});
+    },
+    async changeSuperadminPassword(){
+      if(this.superadminNewPass.length<4){ this.showToast('New password must be at least 4 characters.', false); return; }
+      if(this.superadminNewPass!==this.superadminNewPassConfirm){ this.showToast('New passwords do not match.', false); return; }
+      try{
+        await this.api('superadmin_change_password',{superadmin_session:this.superadminSession, new_password:this.superadminNewPass});
+        this.superadminNewPass=''; this.superadminNewPassConfirm=''; this.showToast('Superadmin password changed.');
+      }catch(e){ this.showToast(e.message, false); }
     },
     formatBudget(b){ if(!b) return 'Not set'; const s=String(b).trim(); if(/^[₱$£€]/.test(s)) return s; return '₱'+s; },
     async loadGuests(){ const d=await this.api('list'); this.guests=d.guests; this.party=d.party; this.budget=d.budget; },
@@ -1944,6 +2121,7 @@ const router=VueRouter.createRouter({
     { path:'/host/setup', name:'hostsetup', component:_dummy },
     { path:'/host/guests', name:'hostguests', component:_dummy },
     { path:'/host/poll', name:'hostpoll', component:_dummy },
+    { path:'/superadmin', name:'superadmin', component:_dummy },
   ],
 });
 app.use(router);
