@@ -386,12 +386,7 @@ if ($action === 'wishlist_add') {
     if (strlen($image) > 3000000)
       send(['error' => 'Screenshot is too large — keep it under about 2 MB'], 400);
   }
-  if ($kind === 'image' && $image === '') send(['error' => 'Add a screenshot image'], 400);
-  if ($kind === 'link' && $link === '') send(['error' => 'Add a link for a link item'], 400);
-  if ($kind !== 'image' && $text === '') send(['error' => 'Wishlist item is empty'], 400);
-  if ($kind === 'text') { $link = ''; $image = ''; }
-  if ($kind === 'link') $image = '';
-  if ($kind === 'image') $link = '';
+  if ($text === '' && $link === '' && $image === '') send(['error' => 'Wishlist item is empty'], 400);
   $item = ['id' => 'w' . bin2hex(random_bytes(6)), 'text' => $text, 'link' => $link,
            'notes' => trim((string)($input['notes'] ?? '')), 'kind' => $kind, 'image' => $image,
            'reserved_by' => null, 'created_at' => date('c')];
