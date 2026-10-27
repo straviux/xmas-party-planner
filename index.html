@@ -1171,7 +1171,7 @@
   <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
   <!-- Is this you? confirm modal (was inline at the bottom of the Who page) -->
   <div v-if="showConfirmModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeConfirmModal">
-    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full flex flex-col justify-center" style="max-width:520px;max-height:90vh;overflow:auto;min-height:60vh">
       <h2 class="text-2xl font-black">Is this you?</h2>
       <p class="text-3xl font-black mt-3">{{ selected ? selected.display : '' }}<span v-if="selected && selected.nickname"> “{{ selected.nickname }}”</span></p>
       <p v-if="selected && selected.aliases.length" class="text-sm opacity-60">Also: {{ selected.aliases.join(', ') }}</p>
