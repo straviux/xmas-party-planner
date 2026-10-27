@@ -767,7 +767,8 @@
         <button class="seg-btn seg-guest" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-6 h-6 inline"></i> I'm a guest</button>
         <button class="seg-btn seg-host" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
       </div>
-      <button class="btn btn-outline w-full mt-3" :disabled="!setupDone" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <!-- TEMPORARY: Scan button enabled without setup until the real scanner returns -->
+      <button class="btn btn-outline w-full mt-3" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
@@ -1155,6 +1156,8 @@
         <p class="text-sm opacity-70">Camera preview goes here</p>
       </div>
       <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
+      <button class="btn btn-success w-full mt-3" @click="openGuestTemp">Continue to guest page</button>
+      <p class="text-sm opacity-70 text-center mt-2">Temporary — opens the guest page without scanning, until the real scanner is added.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeQrModal">Cancel</button>
     </div>
   </div>
@@ -1359,6 +1362,7 @@ createApp({
     closeWishModal(){ this.showWishModal=false; },
     openQrModal(){ this.qrMsg=''; this.showQrModal=true; },
     closeQrModal(){ this.showQrModal=false; },
+    openGuestTemp(){ this.closeQrModal(); this.goTo('guest'); this.guestStep=1; this.guestSearched=false; },
     async goToGifts(){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
       await this.loadWishlists();
