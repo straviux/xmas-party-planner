@@ -1059,41 +1059,57 @@
 
     <!-- ============ HOST DASHBOARD ============ -->
     <section v-show="view==='hostdashboard'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host dashboard</h2></div>
-      <div class="card bg-base-100 m3-card p-4 sm:p-5">
-        <p class="text-sm opacity-70">Claimed status only — recipients are never shown here.</p>
-        <div v-if="hostSignedIn">
-          <p class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-          <button class="btn btn-ghost w-full mt-2" @click="googleSignOut">Sign out</button>
-        </div>
-        <button class="btn btn-primary w-full mt-2" @click="loadHost">Refresh dashboard</button>
-        <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
-        <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
-          {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
-          <button v-if="g.claimed" class="btn btn-sm btn-ghost ml-2" @click="resetOne(g.id)">Reset this name</button>
-        </div>
-        <div v-if="hostSignedIn || hostList.length" class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
-          <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
-          <p class="text-sm opacity-70 mt-1">Share this code with guests — they enter it to join, no login needed.</p>
-          <p class="text-2xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
-          <div class="flex gap-2 mt-2">
-            <button class="btn btn-sm" @click="copyInvite">Copy code</button>
-            <button class="btn btn-sm btn-ghost" @click="regenInvite">New code</button>
-          </div>
-          <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
-        </div>
-        <div v-if="qrUrl" class="text-center mt-4">
-          <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR — print this, everyone scans the same one</h3>
-          <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-2" style="max-width:280px;width:100%">
-          <p class="text-sm break-all opacity-70">{{ guestUrl }}</p>
-          <p class="text-sm">Scan the QR (it carries the invite code) or enter the invite code > find your name > reveal once > gifts > vote.</p>
-          <button class="btn mt-2" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print this QR sheet</button>
-        </div>
-        <div class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
-          <button class="btn btn-error w-full" @click="resetAll">Reset everything (starts over)</button>
-        </div>
-        <button class="btn btn-ghost w-full mt-2" @click="goTo('host')">Back to host home</button>
+      <div class="flex items-center gap-2 mb-1"><h2 class="text-xl font-black">Host dashboard</h2></div>
+      <p class="text-sm opacity-70">Who has revealed, and how guests join. Recipients are never shown here.</p>
+      <div v-if="hostSignedIn" class="flex items-center justify-between gap-3 mt-3">
+        <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
+        <button class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
       </div>
+
+      <div class="mt-6">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="font-black">Claimed status</h3>
+          <button class="btn btn-sm shrink-0" style="width:auto" @click="loadHost">Refresh</button>
+        </div>
+        <p v-if="hostMsg" class="text-sm mt-2" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
+        <p v-if="!hostList.length" class="text-sm opacity-70 mt-2">Tap Refresh to load the list.</p>
+        <div class="divide-y divide-white/10 mt-1">
+          <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
+            <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
+            <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
+            <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
+            <button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto;min-height:32px;height:32px" @click="resetOne(g.id)">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="hostSignedIn || hostList.length" class="mt-6">
+        <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
+        <p class="text-sm opacity-70 mt-1">Guests enter this code to join. No login needed.</p>
+        <p class="text-xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
+        <div class="flex gap-2 mt-2">
+          <button class="btn btn-sm" style="width:auto" @click="copyInvite">Copy code</button>
+          <button class="btn btn-sm btn-ghost" style="width:auto" @click="regenInvite">New code</button>
+        </div>
+        <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
+      </div>
+
+      <div v-if="qrUrl" class="mt-6">
+        <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR</h3>
+        <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
+        <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:200px;width:100%">
+        <div class="text-center">
+          <button class="btn btn-sm" style="width:auto" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print QR sheet</button>
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <h3 class="font-black text-error">Danger zone</h3>
+        <p class="text-sm opacity-70 mt-1">Deletes the whole draw and all claims. This cannot be undone.</p>
+        <button class="btn btn-sm btn-error mt-2" style="width:auto" @click="resetAll">Reset everything</button>
+      </div>
+
+      <button class="btn btn-sm btn-ghost mt-6" style="width:auto" @click="goTo('host')">Back to host home</button>
     </section>
 
     <section v-if="view==='hostsetup'">
