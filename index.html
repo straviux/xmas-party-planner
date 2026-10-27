@@ -801,9 +801,9 @@
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
+    <div v-if="guestMe && ['who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="flex items-center gap-2 text-sm mb-3"><p class="text-left flex-1 min-w-0">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0 ml-auto" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
-      <div v-if="guestMe" class="flex items-center gap-2 text-sm mt-1"><p class="text-left">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div class="dark-card p-4 text-left">
@@ -872,7 +872,7 @@
         </div>
         <div v-if="!guestRecipient">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Your Secret Santa reveal</h2>
-          <p class="mt-2">Wishing as <b>{{ guestMe ? guestMe.display : '' }}</b>. This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
+          <p class="mt-2">This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
           <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
           <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
           <div v-if="confirmMsg" class="alert alert-error mt-3 rounded-2xl">{{ confirmMsg }}</div>
