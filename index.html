@@ -1407,8 +1407,8 @@
         </div>
 
   <!-- FAB menu: replaces the bottom dock. Same 5 items, icons and destinations, in the same order. -->
-  <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
-    <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done'].includes(view)" class="fab-menu" id="fab-menu">
+  <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
+    <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab-menu" id="fab-menu">
       <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
       <button class="fab-item" :class="{'fab-item-active': ['who','reveal'].includes(view)}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-6 h-6"></i><span>Guest</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
@@ -1416,7 +1416,7 @@
       <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
     </div>
   <div class="fab-wrap">
-    <button v-show="!['hostsetup','who','reveal','gifts','wishlists','vote','done'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
+    <button v-show="!['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <svg stroke="var(--button-color)" fill="none" class="hamburger" viewBox="-10 -10 120 120" width="36" height="36" aria-hidden="true">
         <path class="line" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="m 20 40 h 60 a 1 1 0 0 1 0 20 h -60 a 1 1 0 0 1 0 -40 h 30 v 70"></path>
       </svg>
