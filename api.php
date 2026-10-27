@@ -558,6 +558,26 @@ if ($action === 'poll_set_open') {
   save_data($d);
   send(['ok' => true, 'polls' => polls_public($d, ''), 'poll' => poll_public_one($polls[$i], '')]);
 }
+if ($action === 'poll_edit') {
+  $d = load_data();
+  if (!$d) send(['error' => 'not_set_up'], 404);
+  if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
+  list($i, $polls) = poll_resolve($d, $input);
+  $q = trim((string)($input['question'] ?? ''));
+  $opts_in = [];
+  foreach ((array)($input['options'] ?? []) as $o) { $o = trim((string)$o); if ($o !== '') $opts_in[] = $o; }
+  if ($q === '' || count($opts_in) < 2) send(['error' => 'Poll needs a question and at least 2 options'], 400);
+  // Option ids are kept by position, so votes on kept options survive an
+  // edit; new options get new ids, dropped options' votes are ignored.
+  $old = $polls[$i]['options'];
+  $opts = [];
+  foreach ($opts_in as $j => $o) $opts[] = ['id' => $old[$j]['id'] ?? ('p' . bin2hex(random_bytes(5))), 'text' => $o];
+  $polls[$i]['question'] = $q;
+  $polls[$i]['options'] = $opts;
+  $d['polls'] = $polls; unset($d['poll']);
+  save_data($d);
+  send(['ok' => true, 'polls' => polls_public($d, ''), 'poll' => poll_public_one($polls[$i], '')]);
+}
 if ($action === 'poll_reset') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);

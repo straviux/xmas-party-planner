@@ -1007,55 +1007,6 @@
 
 
     <!-- ============ HOST HOME (hub) ============ -->
-    <section v-show="view==='host'">
-      <div class="card bg-base-100 m3-card p-4 sm:p-5">
-        <div class="flex gap-2 items-start">
-          <scor-santa size="6"></scor-santa>
-          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
-        </div>
-        <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
-      </div>
-
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <div class="divide-y divide-white/10">
-          <div class="flex items-center gap-3 py-3 first:pt-0">
-            <i data-lucide="layout-dashboard" class="w-6 h-6 shrink-0"></i>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-xl font-black">Dashboard</h2>
-              <p class="text-sm opacity-70">Claimed status, invite code and QR.</p>
-              <p v-if="!setupDone" class="text-sm opacity-70">Set up a party first.</p>
-            </div>
-            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open dashboard" :disabled="!setupDone" @click="openDashboard"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-          </div>
-          <div class="flex items-center gap-3 py-3">
-            <i data-lucide="users" class="w-6 h-6 shrink-0"></i>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-xl font-black">Guests</h2>
-              <p class="text-sm opacity-70">Add and edit the guest list.</p>
-            </div>
-            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open guests page" @click="goTo('hostguests')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-          </div>
-          <div class="flex items-center gap-3 py-3">
-            <i data-lucide="vote" class="w-6 h-6 shrink-0"></i>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-xl font-black">Theme poll</h2>
-              <p class="text-sm opacity-70">Create, reopen, close or delete the poll.</p>
-            </div>
-            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open poll page" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-          </div>
-          <div class="flex items-center gap-3 py-3 last:pb-0">
-            <i data-lucide="settings" class="w-6 h-6 shrink-0"></i>
-            <div class="flex-1 min-w-0">
-              <h2 class="text-xl font-black">Setup</h2>
-              <p class="text-sm opacity-70">Party name, gift budget and the draw.</p>
-            </div>
-            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" :aria-label="setupDone ? 'Open setup' : 'Create party'" @click="goTo('hostsetup')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-          </div>
-        </div>
-      </div>
-      <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-    </section>
-
     <!-- ============ HOST DASHBOARD ============ -->
     <section v-show="view==='hostdashboard'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
@@ -1080,8 +1031,8 @@
           </div>
         </div>
         <div v-if="!hostSignedIn && !hostLoaded" class="mt-4">
-          <p class="text-sm opacity-70">Sign in with Google on Host home to load your party stats.</p>
-          <button class="btn btn-sm btn-compact mt-2" style="width:auto" @click="goTo('host')">Go to Host home</button>
+          <p class="text-sm opacity-70">Sign in with Google to load your party stats.</p>
+          <button class="btn btn-sm btn-compact mt-2" style="width:auto" @click="startHost">Sign in</button>
         </div>
 
 
@@ -1162,16 +1113,18 @@
                 <p class="text-sm opacity-70 mt-1">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p>
                 <p v-if="!p.open && p.options.length" class="text-sm mt-1">Winner: <b>{{ p.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></p>
               </div>
-              <div class="flex gap-1 shrink-0">
-                <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="setPollOpen(p.id, !p.open)">{{ p.open ? 'Close' : 'Reopen' }}</button>
-                <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Delete poll" @click="resetPoll(p)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-              </div>
+              <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Poll settings" @click="togglePollMenu(p.id)"><i data-lucide="settings-2" class="w-5 h-5"></i></button>
+            </div>
+            <div v-if="pollMenuId===p.id" class="flex flex-wrap gap-2 mt-3">
+              <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openEditPollModal(p)"><i data-lucide="pencil" class="w-4 h-4 inline"></i> Edit</button>
+              <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="setPollOpen(p.id, !p.open)">{{ p.open ? 'Close' : 'Reopen' }}</button>
+              <button class="btn btn-sm btn-compact btn-error shrink-0" style="width:auto" @click="resetPoll(p)">Delete</button>
             </div>
           </div>
         </div>
         <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
         <div class="flex justify-end mt-4">
-          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="openPollModal">Create poll</button>
+          <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openPollModal"><i data-lucide="plus" class="w-4 h-4 inline"></i> Create poll</button>
         </div>
       </div>
     </section>
@@ -1200,6 +1153,7 @@
     </section>
 
   </main>
+  <div v-if="toastMsg" class="fixed left-1/2 px-4 py-3 rounded-2xl text-sm font-bold shadow-lg" style="top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);width:min(92vw,480px);text-align:center;z-index:60" :style="{background: toastOk ? '#34D399' : '#ff3954', color: toastOk ? '#18181b' : '#ffffff'}">{{ toastMsg }}</div>
 
   <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
   <!-- Is this you? confirm modal (was inline at the bottom of the Who page) -->
@@ -1329,6 +1283,20 @@
       <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       <button class="btn btn-success w-full mt-3" @click="setupPoll">Create poll</button>
       <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Cancel</button>
+    </div>
+  </div>
+  <div v-if="showEditPollModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeEditPollModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Edit poll</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeEditPollModal">✕</button>
+      </div>
+      <label class="block mt-3">Poll question <input class="input input-bordered w-full" v-model="editPollQuestion"></label>
+      <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="editPollOptionsText"></textarea></label>
+      <p class="text-sm opacity-70 mt-2">Votes on kept options are preserved; new options start at 0 votes.</p>
+      <div v-if="editPollMsg" class="alert mt-3 rounded-2xl" :class="editPollMsgOk ? 'alert-success' : 'alert-error'">{{ editPollMsg }}</div>
+      <button class="btn btn-success w-full mt-3" @click="doEditPoll">Save changes</button>
+      <button class="btn btn-ghost w-full mt-2" @click="closeEditPollModal">Cancel</button>
     </div>
   </div>
   <!-- Host entry dialog: Google sign-in or new host -->
@@ -1550,10 +1518,10 @@ const app=createApp({
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
     partyName:'Christmas Party', partyBudget:'', partyDate:'', hostPin:'', showResetPinModal:false, resetPinCurrent:'', resetPinNew:'', resetPinConfirm:'', resetPinMsg:'', resetPinMsgOk:false, resettingPin:false, guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
-    setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
+    setupMsg:'', setupOk:false, savingSetup:false, toastMsg:'', toastOk:true, toastTimer:null, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishSearch:'', wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishImage:'', wishImageName:'',
     poll:null, polls:[], pollPin:'', pollMsg:'',
-    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', showPollModal:false, pollSetupMsg:'', pollSetupOk:false,
+    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', showPollModal:false, pollMenuId:null, showEditPollModal:false, editPollId:'', editPollQuestion:'', editPollOptionsText:'', editPollMsg:'', editPollMsgOk:false, pollSetupMsg:'', pollSetupOk:false,
   }; },
   computed:{
     filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
@@ -1579,7 +1547,7 @@ const app=createApp({
       // keep rendering over the new page (e.g. home after a cancel).
       this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
-      this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.showPollModal=false; this.fabOpen=false;
+      this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.showPollModal=false; this.pollMenuId=null; this.showEditPollModal=false; this.fabOpen=false;
       if(to.name==='hostpoll') this.loadPoll();
       if(to.name==='wishlists' && this.pendingWishOwnerId){ const o=this.wishBoard.find(x=>x.id===this.pendingWishOwnerId); if(o){ this.wishModalOwner=o; this.showWishOwnerModal=true; } this.pendingWishOwnerId=null; }
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
@@ -1617,6 +1585,11 @@ const app=createApp({
     }
   },
   methods:{
+    showToast(msg, ok=true){
+      this.toastMsg=msg; this.toastOk=ok;
+      if(this.toastTimer) clearTimeout(this.toastTimer);
+      this.toastTimer=setTimeout(()=>{ this.toastMsg=''; }, 3000);
+    },
     async api(action, body, query){
       const url='api.php?action='+action+(query?'&'+query:'');
       const r=await fetch(url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
@@ -1634,13 +1607,14 @@ const app=createApp({
     guestLogout(){ this.guestMe=null; this.guestRecipient=null; this.guestAlreadyClaimed=false; this.guestPin=''; this.wishMe=null; this.wishPin=''; this.pollPin=''; this.search=''; this.guestSearched=false; this.selected=null; this.goHome(); },
     cancelSetup(){
       // Definitive cancel: do not rely only on the route watcher to hide
-      // setup — close every overlay, switch to the host hub now, and
+      // setup — close every overlay, switch to the dashboard now, and
       // replace the history entry so Back does not return to setup either.
       this.showWishModal=false; this.showQrModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.showWishOwnerModal=false; this.fabOpen=false;
-      this.view='host';
-      this.$router.replace({name:'host'});
+      this.view='hostdashboard';
+      this.$router.replace({name:'hostdashboard'});
+      this.loadHost();
     },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
@@ -1694,9 +1668,9 @@ const app=createApp({
         this.hostSession=d.session; try{ localStorage.setItem('xmasHostSession',d.session); }catch(e){}
         this.hostSignedIn=true; this.hostEmail=d.email||'';
         this.showHostEntryModal=false;
-        // Redirect automatically to the host page once logged in.
-        this.goTo('host');
-        if(this.setupDone){ await this.loadInvite(); await this.loadHost(); }
+        // Redirect automatically to the dashboard (the new host home) once logged in.
+        this.showToast('Signed in.'); this.openDashboard();
+        if(this.setupDone){ await this.loadInvite(); }
       }catch(e){
         this.googleMsg = e.message==='google_not_configured' ? 'Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.' : 'Google sign-in failed: '+e.message;
       }
@@ -1713,8 +1687,8 @@ const app=createApp({
       try{ if(this.hostSession) await this.api('google_logout',{session:this.hostSession}); }catch(e){}
       this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
       try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
-      this.hostMsg='Signed out.'; this.hostOk=true;
-      this.goTo('host');
+      this.hostMsg='Signed out.'; this.hostOk=true; this.showToast('Signed out.');
+      this.goTo('hostdashboard');
       this.$nextTick(()=>this.renderGoogleButtons());
     },
     async loadInvite(){
@@ -1722,11 +1696,11 @@ const app=createApp({
     },
     copyInvite(){
       if(!this.inviteCode) return;
-      if(navigator.clipboard) navigator.clipboard.writeText(this.inviteCode).then(()=>{ this.inviteMsg='Invite code copied — share it with your guests.'; }).catch(()=>{ this.inviteMsg='Copy this code: '+this.inviteCode; });
+      if(navigator.clipboard) navigator.clipboard.writeText(this.inviteCode).then(()=>{ this.inviteMsg='Invite code copied — share it with your guests.'; this.showToast('Invite code copied.'); }).catch(()=>{ this.inviteMsg='Copy this code: '+this.inviteCode; });
       else this.inviteMsg='Copy this code: '+this.inviteCode;
     },
     regenInvite(){
-      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old code and old QR will stop working.', okText:'Generate', okClass:'btn-error', onOk: async ()=>{ try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; }catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; } }});
+      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old code and old QR will stop working.', okText:'Generate', okClass:'btn-error', onOk: async ()=>{ try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; this.showToast('New invite code generated.'); }catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; this.showToast(this.inviteMsg, false); } }});
     },
     startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
@@ -1738,7 +1712,7 @@ const app=createApp({
         await this.api('host_status',{host_pin:this.hostPinEntry});
         this.hostPinCheck=this.hostPinEntry;
         this.showHostPinModal=false; this.hostPinEntry=''; this.hostPinEntryError=false;
-        this.goTo('host');
+        this.openDashboard();
       }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; }
     },
     openDashboard(){ this.goTo('hostdashboard'); this.loadHost(); },
@@ -1803,7 +1777,7 @@ const app=createApp({
     goToReveal(){ if(this.guestMe) this.goTo('reveal'); else this.goTo('who'); },
     removeGuestRow(i){
       const r=this.guestRows[i]; if(!r) return;
-      this.openConfirmDialog({title:'Remove guest?', message:`Remove ${r.display} from the guest list?`, okText:'Delete', okClass:'btn-error', onOk:()=>{ const idx=this.guestRows.indexOf(r); if(idx>=0) this.guestRows.splice(idx,1); }});
+      this.openConfirmDialog({title:'Remove guest?', message:`Remove ${r.display} from the guest list?`, okText:'Delete', okClass:'btn-error', onOk:()=>{ const idx=this.guestRows.indexOf(r); if(idx>=0) this.guestRows.splice(idx,1); this.showToast('Guest removed.'); }});
     },
     openGuestModal(i){
       this.guestEditIndex=i;
@@ -1818,7 +1792,7 @@ const app=createApp({
       if(this.guestEditIndex>=0) this.guestRows[this.guestEditIndex]=f;
       else this.guestRows.push(f);
       try{ localStorage.setItem('xmasGuestRows', JSON.stringify(this.guestRows)); }catch(e){}
-      this.showGuestModal=false;
+      this.showGuestModal=false; this.showToast(this.guestEditIndex>=0 ? 'Guest updated.' : 'Guest added.');
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
@@ -1827,12 +1801,12 @@ const app=createApp({
       try{
         if(this.setupDone){
         await this.api('party_update',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPinCheck||this.hostPin});
-        this.setupMsg='Party details updated.'; this.setupOk=true; this.goTo('host');
+        this.setupMsg='Party details updated.'; this.setupOk=true; this.hostPinCheck=this.hostPinCheck||this.hostPin; this.showToast('Party details updated.'); this.openDashboard();
       } else {
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPin, guests});
-        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.goTo('host');
+        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.showToast('Saved — draw locked!'); this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.hostPinCheck=this.hostPinCheck||this.hostPin; this.openDashboard();
       }
-      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message==='host_not_signed_in' ? 'Sign in with Google or enter your current host PIN.' : e.message; this.setupOk=false; }
+      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message==='host_not_signed_in' ? 'Sign in with Google or enter your current host PIN.' : e.message; this.setupOk=false; this.showToast(this.setupMsg, false); }
       this.savingSetup=false;
     },
     openResetPinModal(){ this.resetPinCurrent=''; this.resetPinNew=''; this.resetPinConfirm=''; this.resetPinMsg=''; this.resetPinMsgOk=false; this.showResetPinModal=true; },
@@ -1844,9 +1818,9 @@ const app=createApp({
       try{
         await this.api('host_pin_reset',{session:this.hostSession, host_pin:this.resetPinCurrent||this.hostPinCheck, new_pin:this.resetPinNew});
         this.hostPinCheck=this.resetPinNew; this.hostPin=this.resetPinNew;
-        this.setupMsg='Host PIN reset.'; this.setupOk=true;
+        this.setupMsg='Host PIN reset.'; this.setupOk=true; this.showToast('Host PIN reset.');
         this.showResetPinModal=false;
-      }catch(e){ this.resetPinMsg=e.message==='host_not_signed_in'?'Current PIN is incorrect or you are not signed in.':e.message; this.resetPinMsgOk=false; }
+      }catch(e){ this.resetPinMsg=e.message==='host_not_signed_in'?'Current PIN is incorrect or you are not signed in.':e.message; this.resetPinMsgOk=false; this.showToast(this.resetPinMsg, false); }
       this.resettingPin=false;
     },
     async loadHost(){
@@ -1859,7 +1833,7 @@ const app=createApp({
       }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     resetOne(id){
-      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); }});
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
     },
     resetAll(){
       if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
@@ -1896,18 +1870,18 @@ const app=createApp({
       try{
         const kind=this.wishImage?'image':(this.wishLink.trim()?'link':'text');
         await this.api('wishlist_add',{guest_id:this.wishMe.id, pin:this.wishPin, kind:kind, text:this.wishText, link:this.wishLink, image:this.wishImage, notes:this.wishNotes});
-        this.wishText=''; this.wishLink=''; this.wishNotes=''; this.clearWishImage(); this.wishFormMsg='Added to your wishlist.'; this.wishFormMsgOk=true; this.showWishModal=false; await this.loadWishlists();
-      }catch(e){ this.wishFormMsg=e.message==='pin_incorrect'?'PIN incorrect.':'Could not add: '+e.message; this.wishFormMsgOk=false; }
+        this.wishText=''; this.wishLink=''; this.wishNotes=''; this.clearWishImage(); this.wishFormMsg='Added to your wishlist.'; this.wishFormMsgOk=true; this.showToast('Added to your wishlist.'); this.showWishModal=false; await this.loadWishlists();
+      }catch(e){ this.wishFormMsg=e.message==='pin_incorrect'?'PIN incorrect.':'Could not add: '+e.message; this.wishFormMsgOk=false; this.showToast(this.wishFormMsg, false); }
     },
     async deleteWishItem(itemId){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
-      await this.api('wishlist_delete',{guest_id:this.wishMe.id, pin:this.wishPin, item_id:itemId}); await this.loadWishlists();
+      await this.api('wishlist_delete',{guest_id:this.wishMe.id, pin:this.wishPin, item_id:itemId}); await this.loadWishlists(); this.showToast('Wishlist item deleted.');
     },
     async reserveWishItem(ownerId, itemId){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
       if(!this.wishMe){ alert('Pick your name first, so the system knows who is reserving — it will not show your name to anyone.'); return; }
-      try{ await this.api('wishlist_reserve',{guest_id:this.wishMe.id, pin:this.wishPin, owner_id:ownerId, item_id:itemId}); await this.loadWishlists(); if(this.showWishOwnerModal && this.wishModalOwner){ const o=this.wishBoard.find(x=>x.id===this.wishModalOwner.id); if(o) this.wishModalOwner=o; } }
-      catch(e){ alert(e.message==='already_reserved'?'That item is already reserved by someone else.':'Could not reserve: '+e.message); }
+      try{ await this.api('wishlist_reserve',{guest_id:this.wishMe.id, pin:this.wishPin, owner_id:ownerId, item_id:itemId}); await this.loadWishlists(); this.showToast('Reservation updated.'); if(this.showWishOwnerModal && this.wishModalOwner){ const o=this.wishBoard.find(x=>x.id===this.wishModalOwner.id); if(o) this.wishModalOwner=o; } }
+      catch(e){ this.showToast(e.message==='already_reserved'?'That item is already reserved by someone else.':'Could not reserve: '+e.message, false); }
     },
     // Poll (guestMe is the session identity)
     async loadPoll(){
@@ -1915,24 +1889,37 @@ const app=createApp({
     },
     async votePoll(pollId, optionId){
       if(!this.guestMe) return;
-      try{ const d=await this.api('poll_vote',{guest_id:this.guestMe.id, pin:this.guestPin, poll_id:pollId, option_id:optionId}); if(d.polls) this.polls=d.polls; if(d.poll) this.poll=d.poll; this.pollMsg=''; }
-      catch(e){ this.pollMsg=e.message==='poll_closed'?'Poll is closed.':'Could not vote: '+e.message; }
+      try{ const d=await this.api('poll_vote',{guest_id:this.guestMe.id, pin:this.guestPin, poll_id:pollId, option_id:optionId}); if(d.polls) this.polls=d.polls; if(d.poll) this.poll=d.poll; this.pollMsg=''; this.showToast('Vote recorded.'); }
+      catch(e){ this.pollMsg=e.message==='poll_closed'?'Poll is closed.':'Could not vote: '+e.message; this.showToast(this.pollMsg, false); }
+    },
+    togglePollMenu(id){ this.pollMenuId=this.pollMenuId===id ? null : id; },
+    openEditPollModal(p){ this.editPollId=p.id; this.editPollQuestion=p.question; this.editPollOptionsText=p.options.map(o=>o.text).join('\n'); this.editPollMsg=''; this.editPollMsgOk=false; this.pollMenuId=null; this.showEditPollModal=true; },
+    closeEditPollModal(){ this.showEditPollModal=false; },
+    async doEditPoll(){
+      const opts=this.editPollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean);
+      if(!this.editPollQuestion.trim() || opts.length<2){ this.editPollMsg='Poll needs a question and at least 2 options.'; this.editPollMsgOk=false; return; }
+      try{
+        await this.api('poll_edit',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:this.editPollId, question:this.editPollQuestion, options:opts});
+        await this.loadPoll(); this.showEditPollModal=false; this.pollSetupMsg='Poll updated.'; this.pollSetupOk=true; this.showToast('Poll updated.');
+      }catch(e){ this.editPollMsg=e.message; this.editPollMsgOk=false; this.showToast(this.editPollMsg, false); }
     },
     openPollModal(){ this.showPollModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closePollModal(){ this.showPollModal=false; },
     async setupPoll(){
       try{
         await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
-        await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.showPollModal=false; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
-      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
+        await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.showPollModal=false; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true; this.showToast('Poll created and open for voting.');
+      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); }
     },
     async setPollOpen(pollId, open){
-      try{ await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:pollId, open}); await this.loadPoll(); this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
-      catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
+      this.pollMenuId=null;
+      try{ await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:pollId, open}); await this.loadPoll(); this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; this.showToast(this.pollSetupMsg); }
+      catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); }
     },
     resetPoll(poll){
+      this.pollMenuId=null;
       const id=typeof poll==='string'?poll:poll.id; const q=typeof poll==='object'?poll.question:'this poll';
-      this.openConfirmDialog({title:'Delete poll?', message:'Delete "'+q+'" and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:id}); this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
+      this.openConfirmDialog({title:'Delete poll?', message:'Delete "'+q+'" and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:id}); this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; this.showToast('Poll deleted.'); await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); } }});
     },
   }
 });
@@ -1948,7 +1935,7 @@ const router=VueRouter.createRouter({
     { path:'/wishlists', name:'wishlists', component:_dummy },
     { path:'/guest-home', name:'guesthome', component:_dummy },
     { path:'/vote', name:'vote', component:_dummy },
-    { path:'/host', name:'host', component:_dummy },
+    { path:'/host', redirect:{name:'hostdashboard'} },
     { path:'/host/dashboard', name:'hostdashboard', component:_dummy },
     { path:'/host/setup', name:'hostsetup', component:_dummy },
     { path:'/host/guests', name:'hostguests', component:_dummy },
