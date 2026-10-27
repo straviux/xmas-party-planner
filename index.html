@@ -1231,6 +1231,17 @@
       </div>
     </div>
   </div>
+  <!-- Generic confirm modal (replaces all native confirm() popups) -->
+  <div v-if="showConfirmDialog" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeConfirmDialog">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <h3 class="text-xl font-black">{{ confirmDialogTitle }}</h3>
+      <p class="text-sm opacity-70 mt-2">{{ confirmDialogMessage }}</p>
+      <div class="flex gap-2 mt-4">
+        <button class="btn btn-ghost flex-1" @click="closeConfirmDialog">Cancel</button>
+        <button class="btn flex-1" :class="confirmDialogOkClass" @click="confirmDialogOk">{{ confirmDialogOkText }}</button>
+      </div>
+    </div>
+  </div>
   <!-- Wishlist add modal -->
   <div v-if="showWishModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeWishModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
@@ -1468,7 +1479,7 @@ const app=createApp({
   data(){ return {
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
-    search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, guestPin:'', confirmMsg:'', recipient:null,
+    search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
@@ -1507,7 +1518,7 @@ const app=createApp({
       this.view=to.name || 'home'; window.scrollTo(0,0);
       // A modal is not a page, so it must never survive a page change and
       // keep rendering over the new page (e.g. home after a cancel).
-      this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false;
+      this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
@@ -1562,7 +1573,7 @@ const app=createApp({
       // Definitive cancel: do not rely only on the route watcher to hide
       // setup — close every overlay, switch to the host hub now, and
       // replace the history entry so Back does not return to setup either.
-      this.showWishModal=false; this.showQrModal=false; this.showClaimedModal=false;
+      this.showWishModal=false; this.showQrModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
       this.view='host';
@@ -1651,10 +1662,8 @@ const app=createApp({
       if(navigator.clipboard) navigator.clipboard.writeText(this.inviteCode).then(()=>{ this.inviteMsg='Invite code copied — share it with your guests.'; }).catch(()=>{ this.inviteMsg='Copy this code: '+this.inviteCode; });
       else this.inviteMsg='Copy this code: '+this.inviteCode;
     },
-    async regenInvite(){
-      if(!confirm('Generate a new invite code? The old code and old QR will stop working.')) return;
-      try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; }
-      catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; }
+    regenInvite(){
+      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old code and old QR will stop working.', okText:'Generate', okClass:'btn-error', onOk: async ()=>{ try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; }catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; } }});
     },
     startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
@@ -1671,6 +1680,16 @@ const app=createApp({
     },
     openDashboard(){ this.goTo('hostdashboard'); this.loadHost(); },
     openClaimedModal(){ this.showClaimedModal=true; this.loadHost(); },
+    openConfirmDialog(opts){
+      this.confirmDialogTitle=opts.title||'Are you sure?';
+      this.confirmDialogMessage=opts.message||'';
+      this.confirmDialogOkText=opts.okText||'OK';
+      this.confirmDialogOkClass=opts.okClass||'btn-error';
+      this.confirmDialogCallback=opts.onOk||null;
+      this.showConfirmDialog=true;
+    },
+    closeConfirmDialog(){ this.showConfirmDialog=false; this.confirmDialogCallback=null; },
+    confirmDialogOk(){ const cb=this.confirmDialogCallback; this.closeConfirmDialog(); if(cb) cb(); },
     closeClaimedModal(){ this.showClaimedModal=false; },
     // TEMPORARY: creating a new host does not require Google sign-in until
     // Google is configured after deployment — setup accepts a host PIN.
@@ -1705,8 +1724,7 @@ const app=createApp({
     pickManualRecipient(g){ this.manualRecipient=g; },
     removeGuestRow(i){
       const r=this.guestRows[i]; if(!r) return;
-      if(!confirm(`Remove ${r.display} from the guest list?`)) return;
-      this.guestRows.splice(i,1);
+      this.openConfirmDialog({title:'Remove guest?', message:`Remove ${r.display} from the guest list?`, okText:'Delete', okClass:'btn-error', onOk:()=>{ const idx=this.guestRows.indexOf(r); if(idx>=0) this.guestRows.splice(idx,1); }});
     },
     openGuestModal(i){
       this.guestEditIndex=i;
@@ -1742,14 +1760,12 @@ const app=createApp({
         await this.loadInvite();
       }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
-    async resetOne(id){
-      if(!confirm('Reset this name so it can be revealed again? Only do this in person with the real guest.')) return;
-      await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests();
+    resetOne(id){
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); }});
     },
-    async resetAll(){
+    resetAll(){
       if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
-      if(!confirm('This deletes the whole draw and all claims. Are you sure?')) return;
-      try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message); }
+      this.openConfirmDialog({title:'Reset everything?', message:'This deletes the whole draw and all claims. Are you sure?', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message); } }});
     },
     // Wishlist (guestMe is the session identity; wishMe/wishPin are synced in goToGifts)
     async loadWishlists(){
@@ -1800,10 +1816,8 @@ const app=createApp({
       try{ const d=await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
-    async resetPoll(){
-      if(!confirm('Delete the theme poll and all its votes?')) return;
-      try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
-      catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
+    resetPoll(){
+      this.openConfirmDialog({title:'Delete poll?', message:'Delete the theme poll and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
     },
   }
 });
