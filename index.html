@@ -1172,17 +1172,22 @@
         <h3 class="font-black mt-4">Guests ({{ guestRows.length }})</h3>
         <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
         <div v-for="(r,i) in guestRows" :key="i" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
-          <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
-          <span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span>
-          <span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span>
-          <div class="flex gap-2 mt-2">
-            <button class="btn btn-sm" @click="openGuestModal(i)">Edit</button>
-            <button class="btn btn-sm btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
+          <div class="flex items-start gap-2">
+            <div class="flex-1">
+              <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
+              <span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span>
+              <span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span>
+            </div>
+            <div class="flex gap-1 shrink-0">
+              <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" @click="guestRows.splice(i,1)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" @click="openGuestModal(i)"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+            </div>
           </div>
         </div>
-        <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
-        <button class="btn btn-success w-full mt-3" @click="goTo('hostsetup')">Continue to setup</button>
-        <button class="btn btn-ghost w-full mt-2" @click="goBack">Back</button>
+        <div class="flex items-center justify-between gap-3 mt-4">
+          <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openGuestModal(-1)">+ Add guest</button>
+          <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="goBack">Back</button>
+        </div>
       </div>
     </section>
 
