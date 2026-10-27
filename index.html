@@ -239,7 +239,7 @@
           </div>
 
 <section v-show="view==='guest'">
-      <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Guest</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guest</h2></div>
 <!-- Step 1: Who are you? -->
       <div v-show="guestStep===1" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
@@ -297,7 +297,7 @@
 
     <!-- ============ GIFTS PAGE ============ -->
     <section v-show="view==='gifts'">
-      <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Gifts</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Gifts</h2></div>
       <div>
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
@@ -361,7 +361,7 @@
           </div>
         </div>
         <div class="flex gap-2 mt-4">
-          <button class="btn btn-ghost flex-1" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button>
+          
           <button class="btn btn-primary flex-1" @click="goToVote">Next: Vote <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
       </div>
@@ -370,7 +370,7 @@
 
     <!-- ============ VOTE PAGE ============ -->
     <section v-show="view==='vote'">
-      <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Christmas theme poll</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Christmas theme poll</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
         <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
@@ -387,7 +387,7 @@
           <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
         </div>
         <div class="flex gap-2 mt-4">
-          <button class="btn btn-ghost flex-1" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button>
+          
           <button class="btn btn-success flex-1" @click="goToDone">Done</button>
         </div>
       </div>
@@ -396,7 +396,7 @@
 
     <!-- ============ DONE PAGE ============ -->
     <section v-show="view==='done'">
-      <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">All set</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">All set</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
         <img :src="santaSrc" alt="Santa" class="mx-auto rounded-2xl" style="max-width:240px;width:100%">
         <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
@@ -407,14 +407,14 @@
           <p><i data-lucide="vote" class="w-4 h-4 inline"></i> Theme vote: <b>{{ poll && poll.my_vote ? poll.options.find(o=>o.id===poll.my_vote).text : 'Not voted yet' }}</b></p>
         </div>
         <p class="text-sm opacity-70 mt-3">Your recipient card stays here while this page is open. A fresh scan will only say “already revealed”, so keep your note safe!</p>
-        <button class="btn btn-primary w-full mt-3" @click="goToGifts">Back to Gifts</button>
-        <button class="btn btn-ghost w-full mt-2" @click="goHome">Back to Home</button>
+        
+        
       </div>
     </section>
 
     <!-- ============ HOST ============ -->
     <section v-show="view==='host'">
-      <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Host</h2></div>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host</h2></div>
       <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
           <img :src="santaSrc" alt="" class="rounded-xl" style="width:120px;height:120px;object-fit:cover">
