@@ -1020,7 +1020,7 @@
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
-        <p class="text-sm opacity-70 mt-1">Set up the party in a modal, so you can open it, check the dashboard, and come back without losing your place.</p>
+        <p class="text-sm opacity-70 mt-1">Set up the party on its own page, so you can open it, check the dashboard, and come back without losing your place.</p>
         <button class="btn btn-success w-full mt-3" @click="goTo('hostsetup')">Create party</button>
         <button class="btn w-full mt-2" @click="goTo('hostguests')">Manage guests</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
@@ -1077,7 +1077,7 @@
         <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
-        <button class="btn btn-ghost" style="width:auto" @click="goBack"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
+        <button class="btn btn-ghost" style="width:auto" @click="goHome"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
         <button class="btn btn-success" style="width:auto" :disabled="savingSetup" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
       </div>
       </div>
