@@ -747,8 +747,8 @@
           <scor-santa size="6" @click="waveSanta"></scor-santa>
         </div>
         <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
-          <span v-if="!setupDone"> Ho ho ho! Host, set up the party first and I'll print your QR code for everyone.</span>
-          <span v-else> Ho ho ho! Scan the QR, find your name, and let's get gifting — I'll walk you through it, one step at a time.</span>
+          <span v-if="!setupDone"> Ho ho ho! Host, set up the party first and I'll print your QR code — scanning it opens the guest page straight away.</span>
+          <span v-else> Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting — I'll walk you through it, one step at a time.</span>
         </div>
       </div>
 
@@ -1014,7 +1014,7 @@
         <div v-if="qrUrl" class="text-center mt-4">
           <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR — print this, everyone scans the same one</h3>
           <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-2" style="max-width:280px;width:100%">
-          <p class="text-sm break-all opacity-70">{{ pageUrl }}</p>
+          <p class="text-sm break-all opacity-70">{{ guestUrl }}</p>
           <p class="text-sm">Scan > Home > I'm a guest > find your name > reveal once > gifts > vote.</p>
           <button class="btn mt-2" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print this QR sheet</button>
         </div>
@@ -1285,7 +1285,8 @@ createApp({
       let n=0; this.wishBoard.forEach(o=>o.items.forEach(it=>{ if(it.reserved_by_me) n++; })); return n;
     },
     currentStep(){ return {guest:this.guestStep, gifts:3, vote:4, done:5}[this.view] || 0; },
-    qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.pageUrl) : ''; },
+    guestUrl(){ return this.pageUrl + '?guest=1'; },
+    qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.guestUrl) : ''; },
   },
   updated(){ if(window.lucide) lucide.createIcons(); },
   async mounted(){
@@ -1295,6 +1296,8 @@ createApp({
       const s=await this.api('status');
       if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
     }catch(e){ /* server not running yet — host setup will show */ }
+    // QR scan only: ?guest=1 opens the guest page. Everyone else stays on home.
+    if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest();
   },
   methods:{
     async api(action, body, query){
