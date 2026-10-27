@@ -1033,16 +1033,14 @@
       <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black">Host dashboard</h2>
         <p class="text-sm opacity-70">Sign in with Google to see claimed status. Recipients are never shown here.</p>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-dashboard"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-2">{{ googleMsg }}</p>
-          <p class="text-sm opacity-70 text-center mt-3">or, temporarily, log in with a host PIN:</p>
-          <input class="input input-bordered w-full mt-2" v-model="hostPinCheck" placeholder="Host PIN">
+        <div v-if="!hostSignedIn" class="mt-2">
+          <input class="input input-bordered w-full" v-model="hostPinCheck" placeholder="Host PIN">
         </div>
         <div v-if="hostSignedIn">
           <p class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
           <button class="btn btn-ghost w-full mt-2" @click="googleSignOut">Sign out</button>
         </div>
         <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
-        <p class="text-sm opacity-70 mt-1">Temporary: PIN login stays until Google sign-in is configured after deployment, then it will be removed.</p>
         <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
         <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
           {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
@@ -1519,7 +1517,7 @@ const app=createApp({
     },
     renderGoogleButtons(){
       if(!this.googleReady) return;
-      ['google-btn-dashboard','google-btn-setup','google-btn-poll','google-btn-host-entry'].forEach(id=>{
+      ['google-btn-setup','google-btn-poll','google-btn-host-entry'].forEach(id=>{
         const el=document.getElementById(id);
         if(el && !el.dataset.rendered){ try{ window.google.accounts.id.renderButton(el,{theme:'filled_black',size:'large',width:320}); el.dataset.rendered='1'; }catch(e){} }
       });
