@@ -84,6 +84,14 @@
   @media (min-width: 641px){
     .landing{ min-height:calc(100dvh - 1rem - 96px); padding-left:0; padding-right:0; }
   }
+  /* Search page (Who): same vertical centering as the landing page — contents sit in the middle, not pinned to the top. */
+  .who-middle{ display:flex; flex-direction:column; justify-content:center; }
+  @media (max-width: 640px){
+    .who-middle{ min-height:calc(100dvh - 1rem - env(safe-area-inset-top) - 96px - env(safe-area-inset-bottom)); }
+  }
+  @media (min-width: 641px){
+    .who-middle{ min-height:calc(100dvh - 1rem - 96px); }
+  }
   .landing-santa-row{ padding:0; gap:8px; align-items:flex-start; margin-bottom:24px; flex-wrap:nowrap; }
   /* TEMPORARY for Santa Scor: Santa offsets were margin-top:-82px; margin-left:-60px; — restore those with Santa. */
   .landing .santa-bubble{ margin-top:8px; margin-left:40px; }
@@ -837,7 +845,7 @@
       </div>
     </section>
 
-<section v-show="view==='who'">
+<section v-show="view==='who'" class="who-middle">
 <!-- Step 1: Who are you? (now its own page) -->
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
