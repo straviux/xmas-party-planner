@@ -816,7 +816,7 @@
           </div>
           <div class="dark-card p-4 text-left">
             <p class="card-label">Budget</p>
-            <p class="font-black text-lg leading-tight mt-1">{{ budget || 'Not set' }}</p>
+            <p class="font-black text-lg leading-tight mt-1">{{ formatBudget(budget) }}</p>
             <p class="text-sm opacity-80 mt-1">per gift</p>
             <i data-lucide="gift" class="w-6 h-6 mt-2"></i>
           </div>
@@ -885,7 +885,7 @@
         <div v-else class="text-center">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> You are buying for:</h2>
           <div class="text-2xl sm:text-3xl font-black my-4 break-words">{{ guestRecipient.name }}<span v-if="guestRecipient.nickname"> “{{ guestRecipient.nickname }}”</span></div>
-          <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ guestRecipient.budget }}</p>
+          <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ formatBudget(guestRecipient.budget) }}</p>
           <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
           <button class="btn btn-primary w-full mt-3" @click="goToGifts">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
@@ -1021,7 +1021,7 @@
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
         <p class="text-sm opacity-70 mt-1">Set up the party in a modal, so you can open it, check the dashboard, and come back without losing your place.</p>
-        <button class="btn btn-success w-full mt-3" @click="openHostSetupModal">Create party</button>
+        <button class="btn btn-success w-full mt-3" @click="goTo('hostsetup')">Create party</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       </div>
 
@@ -1056,16 +1056,10 @@
       </div>
     </section>
 
-  </main>
+    <section v-show="view==='hostsetup'">
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host setup</h2></div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
 
-  <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
-  <!-- Host setup modal -->
-  <div v-if="showHostSetupModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostSetupModal">
-    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xl font-black">Host setup</h3>
-        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostSetupModal">✕</button>
-      </div>
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
@@ -1073,7 +1067,7 @@
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
         <p class="text-sm opacity-70 mt-1">Nickname shows next to the name. Aliases are extra searchable spellings, so guests can find themselves even if they use a different name.</p>
         <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
-        <label class="block mt-2">Gift budget (optional) <input class="input input-bordered w-full" v-model="partyBudget" placeholder="e.g. £20"></label>
+        <label class="block mt-2">Gift budget (₱, optional) <input class="input input-bordered w-full" v-model="partyBudget" placeholder="e.g. ₱500"></label>
         <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <h3 class="font-black mt-4">Guests ({{ guestRows.length }}) — add at least 2</h3>
         <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
@@ -1089,9 +1083,13 @@
         <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
         <button class="btn btn-success w-full mt-3" @click="doSetup">Draw names &amp; lock the draw</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
-      <button class="btn btn-ghost w-full mt-2" @click="closeHostSetupModal">Cancel</button>
-    </div>
-  </div>
+      <button class="btn btn-ghost w-full mt-2" @click="goBack">Cancel</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
   <!-- Poll setup modal -->
   <div v-if="showPollModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closePollModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
@@ -1336,7 +1334,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1389,6 +1387,7 @@ createApp({
       if(!r.ok) throw new Error(j.error||'Server error');
       return j;
     },
+    formatBudget(b){ if(!b) return 'Not set'; const s=String(b).trim(); if(/^[₱$£€]/.test(s)) return s; return '₱'+s; },
     async loadGuests(){ const d=await this.api('list'); this.guests=d.guests; this.party=d.party; this.budget=d.budget; },
     goTo(v){ if(v===this.view) return; this.viewStack.push(this.view); this.view=v; window.scrollTo(0,0); },
     fabGo(dest){ this.fabOpen=false; if(dest==='home') this.goHome(); else if(dest==='guest') this.startGuest(); else if(dest==='gifts') this.openGiftsPage(); else if(dest==='vote') this.openVotePage(); else if(dest==='host') this.startHost(); },
@@ -1397,8 +1396,6 @@ createApp({
     goHome(){ this.viewStack=[]; this.view='home'; window.scrollTo(0,0); },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
-    openHostSetupModal(){ this.showHostSetupModal=true; },
-    closeHostSetupModal(){ this.showHostSetupModal=false; },
     openPollModal(){ this.showPollModal=true; },
     closePollModal(){ this.showPollModal=false; },
     openWishModal(){ this.wishFormMsg=''; this.showWishModal=true; },
@@ -1431,7 +1428,7 @@ createApp({
     startHost(){ this.showHostEntryModal=true; },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
     enterHostWithPin(){ this.showHostEntryModal=false; this.goTo('host'); },
-    newHost(){ this.showHostEntryModal=false; this.goTo('host'); this.openHostSetupModal(); },
+    newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
     confirmClaimedGuest(){ this.guestStep=2; },
     async doReveal(){
@@ -1479,7 +1476,7 @@ createApp({
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
-        this.setupMsg='Draw locked!'; this.setupOk=true; this.setupDone=true; this.showHostSetupModal=false; await this.loadGuests();
+        this.setupMsg='Draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests(); this.goTo('host');
       }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
     },
     async loadHost(){
