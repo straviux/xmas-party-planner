@@ -40,10 +40,16 @@
   .santa-shadow{ width:120px; height:18px; margin:2px auto 0; background:rgba(0,0,0,.35); border-radius:50%; filter:blur(6px); animation:santa-shadow 2.4s ease-in-out infinite; }
   @keyframes santa-wave{ 0%,100%{ transform:perspective(800px) translateY(-6px) rotate(0deg) scale(1.05); } 20%{ transform:perspective(800px) translateY(-6px) rotate(-12deg) scale(1.05); } 40%{ transform:perspective(800px) translateY(-6px) rotate(12deg) scale(1.05); } 60%{ transform:perspective(800px) translateY(-6px) rotate(-8deg) scale(1.05); } 80%{ transform:perspective(800px) translateY(-6px) rotate(8deg) scale(1.05); } }
   .santa-wave{ animation:santa-wave 1.2s ease-in-out !important; }
-  @media (prefers-reduced-motion: reduce){ .santa-anim{ animation:none; } .snow{ display:none; } body{ animation:none; } .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot{ animation:none; } .button-three .hamburger, .button-three .line{ transition:none; } .card, .dark-card, .segmented{ animation:none; } }
+  @media (prefers-reduced-motion: reduce){ .santa-anim{ animation:none; } .snow, .scor-snow{ display:none; } body{ animation:none; } .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot{ animation:none; } .button-three .hamburger, .button-three .line{ transition:none; } .card, .dark-card, .segmented{ animation:none; } }
 
   @keyframes snow-fall{ from{ transform:translateY(-20px); } to{ transform:translateY(105vh); } }
   .snow{ position:fixed; inset:0; pointer-events:none; z-index:30; overflow:hidden; }
+  /* Kept snow effect: Scor's drifting dot snowfall, as its own layer (z-29, just
+     under the app's falling flakes) so it adds to, never replaces, the app snow. */
+  .scor-snow{ position:fixed; inset:0; pointer-events:none; z-index:29;
+    background-image: radial-gradient(circle, #fff 1.5px, transparent 2.5px), radial-gradient(circle, #fff 1px, transparent 2px);
+    background-size:180px 180px, 260px 260px; animation:scor-snowfall 18s linear infinite; opacity:0.9; }
+  @keyframes scor-snowfall{ from{ background-position:0 0, 0 0; } to{ background-position:60px 600px, -40px 600px; } }
   .snow i{ position:absolute; top:-20px; display:block; background:#fff; border-radius:50%; opacity:.7; animation:snow-fall linear infinite; }
   .snow i:nth-child(1){ left:4%; width:6px; height:6px; animation-duration:13s; animation-delay:0s; }
   .snow i:nth-child(2){ left:12%; width:4px; height:4px; animation-duration:10s; animation-delay:2s; }
@@ -749,6 +755,7 @@
 <body>
 <div id="app">
   <div class="grain" aria-hidden="true"></div>
+  <div class="scor-snow" aria-hidden="true"></div>
   <div class="snow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   
 
