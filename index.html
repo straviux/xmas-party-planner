@@ -1426,7 +1426,7 @@
   <nav v-if="guestMe && ['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="dock" aria-label="Guest navigation">
     <button class="dock-item" :class="{'dock-item-active': view==='guesthome'}" @click="goToGuestHome"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='gifts'}" @click="goToGifts"><i data-lucide="gift" class="w-6 h-6"></i><span>Gifts</span></button>
-    <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="plus" class="w-7 h-7"></i></span><span>Add wish</span></button>
+    <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="shopping-cart-plus" class="w-7 h-7"></i></span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='wishlists'}" @click="goToWishlists"><i data-lucide="users" class="w-6 h-6"></i><span>Wishlists</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='vote'}" @click="goToVote"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
   </nav>
