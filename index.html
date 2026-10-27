@@ -894,7 +894,7 @@
           <div class="text-2xl sm:text-3xl font-black my-4 break-words">{{ guestRecipient.name }}<span v-if="guestRecipient.nickname"> “{{ guestRecipient.nickname }}”</span></div>
           <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ formatBudget(guestRecipient.budget) }}</p>
           <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
-          <button class="btn btn-primary w-full mt-3" @click="goToGifts">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
+          <button class="btn btn-primary w-full mt-3" @click="showAllWishlists=true; goToGifts()">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
         <button class="btn btn-ghost w-full mt-3" @click="guestStep=1; guestSearched=false; goTo('who')"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Who are you?</button>
       </div>
@@ -910,31 +910,6 @@
           <div class="flex gap-2 items-start mt-2">
             <scor-santa size="6"></scor-santa>
             <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
-          </div>
-
-          <h3 class="text-xl font-black mt-4">Buying for</h3>
-          <div v-if="recipientGuest">
-            <p class="mt-1"><b>{{ recipientGuest.display }}</b><span v-if="recipientGuest.nickname"> “{{ recipientGuest.nickname }}”</span>'s wishlist:</p>
-            <p v-if="!recipientBoardItems.length" class="text-sm opacity-60 mt-1">— no wishlist yet. Check back later, or nudge them to add something!</p>
-            <div class="divide-y divide-white/10 mt-1">
-              <div v-for="it in recipientBoardItems" :key="it.id" class="flex items-start gap-2 py-2">
-                <div class="flex-1 min-w-0">
-                  <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
-                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
-                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
-                  <span v-if="it.notes" class="text-sm opacity-60"> ({{ it.notes }})</span>
-                  <span v-if="it.reserved" class="text-error font-bold"> {{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
-                </div>
-                <button class="btn shrink-0" :class="it.reserved_by_me ? 'btn-success' : ''" style="width:36px;height:36px;min-height:36px;padding:0" :disabled="it.reserved && !it.reserved_by_me" :aria-label="it.reserved_by_me ? 'Unreserve this item' : 'Reserve this item'" @click="reserveWishItem(recipientGuest.id, it.id)"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
-              </div>
-            </div>
-          </div>
-          <div v-else>
-            <p class="text-sm opacity-70 mt-1">You revealed on another device, so I can't show your recipient here. Pick them below to see their wishlist:</p>
-            <input class="input input-bordered w-full mt-2" v-model="recipientSearch" placeholder="Search your recipient's name…">
-            <div class="mt-2 space-y-2">
-              <button v-for="g in filteredRecipientGuests" :key="g.id" class="m3-person w-full text-left p-3 bg-white" @click="pickManualRecipient(g)"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></button>
-            </div>
           </div>
 
           <div class="flex items-center justify-between gap-3 mt-5">
@@ -1508,7 +1483,7 @@ const app=createApp({
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
-    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
+    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
@@ -1517,16 +1492,6 @@ const app=createApp({
   }; },
   computed:{
     filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
-    filteredRecipientGuests(){ return this.guests.filter(g=>g.id!==(this.guestMe?this.guestMe.id:'') && matches(g, norm(this.recipientSearch))); },
-    recipientGuest(){
-      if(this.guestRecipient) return this.guests.find(g=>g.display===this.guestRecipient.name && g.nickname===this.guestRecipient.nickname) || null;
-      return this.manualRecipient;
-    },
-    recipientBoardItems(){
-      if(!this.recipientGuest) return [];
-      const o=this.wishBoard.find(x=>x.id===this.recipientGuest.id);
-      return o ? o.items : [];
-    },
     myBoardItems(){
       if(!this.guestMe) return [];
       const o=this.wishBoard.find(x=>x.id===this.guestMe.id);
@@ -1752,7 +1717,6 @@ const app=createApp({
       this.goTo('vote');
     },
     goToReveal(){ if(this.guestMe) this.goTo('reveal'); else this.goTo('who'); },
-    pickManualRecipient(g){ this.manualRecipient=g; },
     removeGuestRow(i){
       const r=this.guestRows[i]; if(!r) return;
       this.openConfirmDialog({title:'Remove guest?', message:`Remove ${r.display} from the guest list?`, okText:'Delete', okClass:'btn-error', onOk:()=>{ const idx=this.guestRows.indexOf(r); if(idx>=0) this.guestRows.splice(idx,1); }});
