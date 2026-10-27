@@ -738,6 +738,7 @@
   95%, 97% { transform: scaleY(0.08); }
 }
 .scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(28px); }
+  .guesthome-scor{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom)); z-index:39; width:min(92vw,480px); }
   .santa-bubble-sm{ padding:10px !important; font-size:10px !important; max-width:170px !important; margin-bottom:50px !important; }
   .santa-bubble-sm::before{ bottom:-25px; }
   .santa-bubble-sm::after{ bottom:-15px; }
@@ -829,7 +830,7 @@
             <i data-lucide="shopping-bag" class="w-6 h-6 mt-2"></i>
           </div>
         </div>
-      <div class="flex gap-2 items-start">
+      <div class="flex gap-2 items-end guesthome-scor">
         <scor-santa size="4"></scor-santa>
         <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Welcome in! Use the dock to peek at wishlists and cast your vote.</div>
       </div>
