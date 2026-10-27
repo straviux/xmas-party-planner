@@ -1103,7 +1103,7 @@
     <section v-show="view==='hostguests'">
       <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guests</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
-        <h3 class="font-black mt-4">Guests ({{ guestRows.length }}) — add at least 2</h3>
+        <h3 class="font-black mt-4">Guests ({{ guestRows.length }})</h3>
         <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
         <div v-for="(r,i) in guestRows" :key="i" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
           <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
@@ -1489,7 +1489,6 @@ createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(guests.length<2){ this.setupMsg=`Add at least 2 guests on the Guests page (you have ${guests.length}).`; this.setupOk=false; return; }
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
       this.savingSetup=true;
       try{

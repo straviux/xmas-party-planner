@@ -109,7 +109,7 @@ if ($action === 'setup') {
   $host_pin = (string)($input['host_pin'] ?? '');
   $guests_in = $input['guests'] ?? [];
   if (strlen($host_pin) < 4) send(['error' => 'Host PIN must be at least 4 characters'], 400);
-  if (!is_array($guests_in) || count($guests_in) < 2) send(['error' => 'Add at least 2 guests'], 400);
+  if (!is_array($guests_in)) $guests_in = [];
   $guests = []; $seen = [];
   foreach ($guests_in as $gi) {
     $display = trim((string)($gi['display'] ?? ''));
@@ -131,9 +131,9 @@ if ($action === 'setup') {
       'recipient_id' => null, 'claimed' => false, 'claimed_at' => null,
     ];
   }
-  if (count($guests) < 2) send(['error' => 'Add at least 2 guests with names'], 400);
   $ids = array_column($guests, 'id');
   $recipients = derangement($ids);
+  if ($recipients === null) $recipients = array_fill(0, count($ids), null);
   foreach ($guests as $i => &$g) $g['recipient_id'] = $recipients[$i];
   unset($g);
   $d = ['party' => $party, 'budget' => $budget,
