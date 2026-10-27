@@ -910,16 +910,18 @@
           <div v-if="recipientGuest">
             <p class="mt-1"><b>{{ recipientGuest.display }}</b><span v-if="recipientGuest.nickname"> “{{ recipientGuest.nickname }}”</span>'s wishlist:</p>
             <p v-if="!recipientBoardItems.length" class="text-sm opacity-60 mt-1">— no wishlist yet. Check back later, or nudge them to add something!</p>
-            <ul class="list-disc ml-5 mt-1 space-y-1">
-              <li v-for="it in recipientBoardItems" :key="it.id">
-                <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
-                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
-                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
-                <span v-if="it.notes" class="text-sm opacity-60">({{ it.notes }})</span>
-                <span v-if="it.reserved" class="text-error font-bold">{{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
-                <button class="btn btn-sm" @click="reserveWishItem(recipientGuest.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
-              </li>
-            </ul>
+            <div class="divide-y divide-white/10 mt-1">
+              <div v-for="it in recipientBoardItems" :key="it.id" class="flex items-start gap-2 py-2">
+                <div class="flex-1 min-w-0">
+                  <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
+                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
+                  <span v-if="it.notes" class="text-sm opacity-60"> ({{ it.notes }})</span>
+                  <span v-if="it.reserved" class="text-error font-bold"> {{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
+                </div>
+                <button class="btn shrink-0" :class="it.reserved_by_me ? 'btn-success' : ''" style="width:36px;height:36px;min-height:36px;padding:0" :disabled="it.reserved && !it.reserved_by_me" :aria-label="it.reserved_by_me ? 'Unreserve this item' : 'Reserve this item'" @click="reserveWishItem(recipientGuest.id, it.id)"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
+              </div>
+            </div>
           </div>
           <div v-else>
             <p class="text-sm opacity-70 mt-1">You revealed on another device, so I can't show your recipient here. Pick them below to see their wishlist:</p>
@@ -929,40 +931,48 @@
             </div>
           </div>
 
-          <h3 class="text-xl font-black mt-5">My wishlist</h3>
-          <p class="text-sm opacity-70">Only you can add or delete your own items.</p>
-          <button class="btn btn-success w-full mt-3" @click="openWishModal">+ Add item to my wishlist</button>
+          <div class="flex items-center justify-between gap-3 mt-5">
+            <h3 class="text-xl font-black">My wishlist</h3>
+            <button class="btn btn-success shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Add item to my wishlist" @click="openWishModal"><i data-lucide="plus" class="w-5 h-5"></i></button>
+          </div>
+          <p class="text-sm opacity-70 mt-1">Only you can add or delete your own items.</p>
           <div v-if="wishFormMsg" class="alert mt-2 rounded-2xl" :class="wishFormMsgOk ? 'alert-success' : 'alert-error'">{{ wishFormMsg }}</div>
             <p v-if="!myBoardItems.length" class="text-sm opacity-60">— you haven't added anything yet.</p>
-            <ul class="list-disc ml-5 mt-1 space-y-1">
-              <li v-for="it in myBoardItems" :key="it.id">
-                <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
-                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
-                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
-                <span v-if="it.notes" class="text-sm opacity-60">({{ it.notes }})</span>
-                <button class="btn btn-sm btn-ghost" @click="deleteWishItem(it.id)">Delete</button>
-              </li>
-            </ul>
+            <div class="divide-y divide-white/10 mt-1">
+              <div v-for="it in myBoardItems" :key="it.id" class="flex items-start gap-2 py-2">
+                <div class="flex-1 min-w-0">
+                  <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
+                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
+                  <span v-if="it.notes" class="text-sm opacity-60"> ({{ it.notes }})</span>
+                </div>
+                <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Delete this item" @click="deleteWishItem(it.id)"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
+            </div>
 
-          <button class="btn btn-ghost w-full mt-4" @click="showAllWishlists=!showAllWishlists">{{ showAllWishlists ? 'Hide' : 'Browse' }} everyone's wishlists</button>
+          <div class="flex items-center justify-between gap-3 mt-5">
+            <h3 class="text-xl font-black">Everyone's wishlists</h3>
+            <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" :aria-label="showAllWishlists ? 'Hide all wishlists' : 'Browse all wishlists'" @click="showAllWishlists=!showAllWishlists"><i v-if="showAllWishlists" data-lucide="eye-off" class="w-5 h-5"></i><i v-else data-lucide="eye" class="w-5 h-5"></i></button>
+          </div>
           <div v-if="showAllWishlists">
             <div v-for="owner in wishBoard" :key="owner.id" class="mt-4">
               <b>{{ owner.display }}</b><span v-if="owner.nickname"> “{{ owner.nickname }}”</span>
               <p v-if="!owner.items.length" class="text-sm opacity-60">— no wishlist yet</p>
-              <ul class="list-disc ml-5 mt-1 space-y-1">
-                <li v-for="it in owner.items" :key="it.id">
-                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
-                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
-                  <span v-if="it.reserved" class="text-error font-bold">{{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
-                  <button v-if="guestMe && guestMe.id!==owner.id" class="btn btn-sm" @click="reserveWishItem(owner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
-                </li>
-              </ul>
+              <div class="divide-y divide-white/10 mt-1">
+                <div v-for="it in owner.items" :key="it.id" class="flex items-start gap-2 py-2">
+                  <div class="flex-1 min-w-0">
+                    <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                    <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
+                    <span v-if="it.reserved" class="text-error font-bold"> {{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
+                  </div>
+                  <button v-if="guestMe && guestMe.id!==owner.id" class="btn shrink-0" :class="it.reserved_by_me ? 'btn-success' : ''" style="width:36px;height:36px;min-height:36px;padding:0" :disabled="it.reserved && !it.reserved_by_me" :aria-label="it.reserved_by_me ? 'Unreserve this item' : 'Reserve this item'" @click="reserveWishItem(owner.id, it.id)"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <div class="flex gap-2 mt-4">
-          
-          <button class="btn btn-primary flex-1" @click="goToVote">Next: Vote <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
+        <div class="flex justify-end mt-4">
+          <button class="btn btn-primary btn-compact shrink-0" style="width:auto" @click="goToVote">Next: Vote <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
       </div>
 
