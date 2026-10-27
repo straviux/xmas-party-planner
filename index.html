@@ -747,6 +747,7 @@
   .pin-pill-sep{ width:1px; height:24px; background:rgba(255,255,255,0.2); flex-shrink:0; }
   .pin-pill-action{ display:flex; align-items:center; gap:4px; background:none; border:none; color:#34d399; font-weight:600; white-space:nowrap; cursor:pointer; flex-shrink:0; }
   .pin-pill-action:disabled{ opacity:0.4; cursor:not-allowed; }
+  .scan-qr-glow{ text-shadow:0 0 10px rgba(52,211,153,0.9), 0 0 20px rgba(52,211,153,0.45); }
 </style>
 </head>
 <body>
@@ -776,7 +777,7 @@
         <button class="seg-btn seg-host" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
       </div>
       <!-- TEMPORARY: Scan button enabled without setup until the real scanner returns -->
-      <button class="btn btn-outline w-full mt-3" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <button class="btn btn-outline w-full mt-3 scan-qr-glow" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
@@ -1192,7 +1193,7 @@
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeGuestEntryModal">✕</button>
       </div>
       <p class="text-sm opacity-70 mt-1">Scan the host's QR code, or enter the host PIN.</p>
-      <button class="btn btn-primary w-full mt-4" @click="showGuestEntryModal=false; openQrModal()"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <button class="btn btn-primary w-full mt-4 scan-qr-glow" @click="showGuestEntryModal=false; openQrModal()"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <p class="text-sm opacity-70 text-center mt-4">or</p>
       <div class="pin-pill mt-2">
         <i data-lucide="key-round" class="pin-pill-icon"></i>
@@ -1208,7 +1209,7 @@
   <div v-if="showQrModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeQrModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
       <div class="flex items-center justify-between">
-        <h3 class="text-xl font-black">Scan QR code</h3>
+        <h3 class="text-xl font-black scan-qr-glow">Scan QR code</h3>
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeQrModal">✕</button>
       </div>
       <p class="text-sm opacity-70 mt-1">Point your camera at the host's QR code.</p>
