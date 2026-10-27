@@ -1015,32 +1015,54 @@
       </div>
     </section>
 
-    <!-- ============ HOST ============ -->
+    <!-- ============ HOST HOME (hub) ============ -->
     <section v-show="view==='host'">
       <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host</h2></div>
-      <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
-        <h2 class="text-2xl font-black mt-3">Host setup</h2>
-        <p class="text-sm opacity-70 mt-1">Set up the party on its own page, so you can open it, check the dashboard, and come back without losing your place.</p>
-        <button class="btn btn-success w-full mt-3" @click="goTo('hostsetup')">Create party</button>
-        <button class="btn w-full mt-2" @click="goTo('hostguests')">Manage guests</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       </div>
 
-      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
-        <h2 class="text-2xl font-black">Host dashboard</h2>
-        <p class="text-sm opacity-70">Sign in with Google to see claimed status. Recipients are never shown here.</p>
-        <div v-if="!hostSignedIn" class="mt-2">
-          <input class="input input-bordered w-full" v-model="hostPinCheck" placeholder="Host PIN">
-        </div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black"><i data-lucide="layout-dashboard" class="w-6 h-6 inline"></i> Dashboard</h2>
+        <p class="text-sm opacity-70 mt-1">Claimed status, invite code and the single QR. Recipients are never shown here.</p>
+        <button class="btn btn-success w-full mt-3" :disabled="!setupDone" @click="openDashboard">Open dashboard</button>
+        <p v-if="!setupDone" class="text-sm opacity-70 mt-1">Set up a party first.</p>
+      </div>
+
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Guests</h2>
+        <p class="text-sm opacity-70 mt-1">Add and edit the guest list on the Guests page.</p>
+        <button class="btn btn-success w-full mt-3" @click="goTo('hostguests')">Open guests page</button>
+      </div>
+
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll</h2>
+        <p class="text-sm opacity-70 mt-1">Create, reopen, close or delete the poll on its own page. Results stay counts only — never who voted for what.</p>
+        <button class="btn btn-success w-full mt-3" :disabled="!setupDone" @click="goTo('hostpoll')">Open poll page</button>
+        <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+      </div>
+
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black"><i data-lucide="settings" class="w-6 h-6 inline"></i> Setup</h2>
+        <p class="text-sm opacity-70 mt-1">Party name, gift budget and the draw.</p>
+        <button class="btn btn-success w-full mt-3" @click="goTo('hostsetup')">{{ setupDone ? 'Open setup' : 'Create party' }}</button>
+      </div>
+    </section>
+
+    <!-- ============ HOST DASHBOARD ============ -->
+    <section v-show="view==='hostdashboard'">
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host dashboard</h2></div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <p class="text-sm opacity-70">Claimed status only — recipients are never shown here.</p>
         <div v-if="hostSignedIn">
           <p class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
           <button class="btn btn-ghost w-full mt-2" @click="googleSignOut">Sign out</button>
         </div>
-        <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
+        <button class="btn btn-primary w-full mt-2" @click="loadHost">Refresh dashboard</button>
         <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
         <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
           {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
@@ -1063,23 +1085,10 @@
           <p class="text-sm">Scan the QR (it carries the invite code) or enter the invite code > find your name > reveal once > gifts > vote.</p>
           <button class="btn mt-2" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print this QR sheet</button>
         </div>
-      </div>
-
-      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Guests</h2>
-        <p class="text-sm opacity-70 mt-1">Add and edit the guest list on the Guests page.</p>
-        <button class="btn btn-success w-full mt-3" @click="goTo('hostguests')">Open guests page</button>
-      </div>
-
-      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll</h2>
-        <p class="text-sm opacity-70 mt-1">Create, reopen, close or delete the poll on its own page. Results stay counts only — never who voted for what.</p>
-        <button class="btn btn-success w-full mt-3" @click="goTo('hostpoll')">Open poll page</button>
-        <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-      </div>
-
-      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <button class="btn btn-error w-full" @click="resetAll">Reset everything (starts over)</button>
+        <div class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
+          <button class="btn btn-error w-full" @click="resetAll">Reset everything (starts over)</button>
+        </div>
+        <button class="btn btn-ghost w-full mt-2" @click="goTo('host')">Back to host home</button>
       </div>
     </section>
 
@@ -1208,6 +1217,13 @@
       <button class="btn btn-success w-full mt-3" @click="newHost"><i data-lucide="plus" class="w-5 h-5 inline"></i> I'm a new host</button>
       <p v-if="setupDone" class="text-sm opacity-70 text-center mt-2">Starting as a new host replaces the current party.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
+    </div>
+  </div>
+  <!-- Host PIN popup: PIN input + submit only, nothing else -->
+  <div v-if="showHostPinModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostPinModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px">
+      <input class="input input-bordered w-full" :class="{'input-error': hostPinEntryError}" v-model="hostPinEntry" :placeholder="hostPinEntryError ? 'Incorrect PIN — try again' : 'Host PIN'" @keyup.enter="submitHostPin">
+      <button class="btn btn-primary w-full mt-3" @click="submitHostPin">Continue</button>
     </div>
   </div>
   <!-- Guest entry dialog: Scan QR or enter invite code -->
@@ -1384,7 +1400,7 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1426,7 +1442,7 @@ const app=createApp({
       // A modal is not a page, so it must never survive a page change and
       // keep rendering over the new page (e.g. home after a cancel).
       this.showWishModal=false; this.showQrModal=false;
-      this.showGuestEntryModal=false; this.showHostEntryModal=false;
+      this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
     },
@@ -1548,6 +1564,7 @@ const app=createApp({
       this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode='';
       try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
       this.hostMsg='Signed out.'; this.hostOk=true;
+      this.goTo('host');
       this.$nextTick(()=>this.renderGoogleButtons());
     },
     async loadInvite(){
@@ -1565,7 +1582,18 @@ const app=createApp({
     },
     startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
-    enterHostWithPin(){ this.showHostEntryModal=false; this.goTo('host'); },
+    enterHostWithPin(){ this.showHostEntryModal=false; this.hostPinEntry=''; this.hostPinEntryError=false; this.showHostPinModal=true; },
+    closeHostPinModal(){ this.showHostPinModal=false; },
+    async submitHostPin(){
+      if(!this.hostPinEntry.trim()){ this.hostPinEntryError=true; return; }
+      try{
+        await this.api('host_status',{host_pin:this.hostPinEntry});
+        this.hostPinCheck=this.hostPinEntry;
+        this.showHostPinModal=false; this.hostPinEntry=''; this.hostPinEntryError=false;
+        this.goTo('host');
+      }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; }
+    },
+    openDashboard(){ this.goTo('hostdashboard'); this.loadHost(); },
     // TEMPORARY: creating a new host does not require Google sign-in until
     // Google is configured after deployment — setup accepts a host PIN.
     newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
@@ -1705,6 +1733,7 @@ const router=VueRouter.createRouter({
     { path:'/vote', name:'vote', component:_dummy },
     { path:'/done', name:'done', component:_dummy },
     { path:'/host', name:'host', component:_dummy },
+    { path:'/host/dashboard', name:'hostdashboard', component:_dummy },
     { path:'/host/setup', name:'hostsetup', component:_dummy },
     { path:'/host/guests', name:'hostguests', component:_dummy },
     { path:'/host/poll', name:'hostpoll', component:_dummy },
