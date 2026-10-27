@@ -1,0 +1,1 @@
+{"description":"Christmas Party app: Secret Santa (single QR, one-time reveal), wishlist posting, and Christmas theme voting poll. JavaScript only, SQLite, no dependencies.","engines":{"node":">=22"},"name":"xmas-party-planner","scripts":{"start":"node server.js"},"type":"module","version":"1.0.0"}
