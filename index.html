@@ -797,7 +797,7 @@
     <!-- ============ GUEST FLOW ============ -->
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
-      <p v-if="guestMe" class="text-sm mt-1">Playing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
+      <div v-if="guestMe" class="flex items-center justify-end gap-2 text-sm mt-1"><p class="text-right">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div class="dark-card p-4 text-left">
@@ -858,7 +858,7 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div v-if="!guestRecipient">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Your Secret Santa reveal</h2>
-          <p class="mt-2">Playing as <b>{{ guestMe ? guestMe.display : '' }}</b>. This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
+          <p class="mt-2">Wishing as <b>{{ guestMe ? guestMe.display : '' }}</b>. This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
           <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
           <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
           <div v-if="confirmMsg" class="alert alert-error mt-3 rounded-2xl">{{ confirmMsg }}</div>
@@ -1572,6 +1572,7 @@ const app=createApp({
     handleFabEscape(e){ if(e.key==='Escape') this.fabOpen=false; },
     goBack(){ const st=this.$router.options.history.state; if(st && st.back) this.$router.back(); else this.goHome(); },
     goHome(){ this.$router.push({name:'home'}); },
+    guestLogout(){ this.guestMe=null; this.guestRecipient=null; this.guestAlreadyClaimed=false; this.guestPin=''; this.wishMe=null; this.wishPin=''; this.pollPin=''; this.search=''; this.guestSearched=false; this.selected=null; this.goHome(); },
     cancelSetup(){
       // Definitive cancel: do not rely only on the route watcher to hide
       // setup — close every overlay, switch to the host hub now, and
