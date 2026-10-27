@@ -1035,27 +1035,27 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
         <h2 class="text-2xl font-black"><i data-lucide="layout-dashboard" class="w-6 h-6 inline"></i> Dashboard</h2>
         <p class="text-sm opacity-70 mt-1">Claimed status, invite code and the single QR. Recipients are never shown here.</p>
-        <button class="btn btn-sm mt-3" style="width:auto" :disabled="!setupDone" @click="openDashboard">Open dashboard</button>
+        <button class="btn btn-circle mt-3" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open dashboard" :disabled="!setupDone" @click="openDashboard"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
         <p v-if="!setupDone" class="text-sm opacity-70 mt-1">Set up a party first.</p>
       </div>
 
       <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
         <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Guests</h2>
         <p class="text-sm opacity-70 mt-1">Add and edit the guest list on the Guests page.</p>
-        <button class="btn btn-sm mt-3" style="width:auto" @click="goTo('hostguests')">Open guests page</button>
+        <button class="btn btn-circle mt-3" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open guests page" @click="goTo('hostguests')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
       </div>
 
       <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll</h2>
         <p class="text-sm opacity-70 mt-1">Create, reopen, close or delete the poll on its own page. Results stay counts only — never who voted for what.</p>
-        <button class="btn btn-sm mt-3" style="width:auto" :disabled="!setupDone" @click="goTo('hostpoll')">Open poll page</button>
+        <button class="btn btn-circle mt-3" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open poll page" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       </div>
 
       <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
         <h2 class="text-2xl font-black"><i data-lucide="settings" class="w-6 h-6 inline"></i> Setup</h2>
         <p class="text-sm opacity-70 mt-1">Party name, gift budget and the draw.</p>
-        <button class="btn btn-sm mt-3" style="width:auto" @click="goTo('hostsetup')">{{ setupDone ? 'Open setup' : 'Create party' }}</button>
+        <button class="btn btn-circle mt-3" style="width:44px;height:44px;min-height:44px;padding:0" :aria-label="setupDone ? 'Open setup' : 'Create party'" @click="goTo('hostsetup')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
       </div>
     </section>
 
