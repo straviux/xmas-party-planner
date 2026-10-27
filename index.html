@@ -126,7 +126,7 @@
 .dock{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(12px + env(safe-area-inset-bottom)); z-index:40; width:min(92vw,480px); display:flex; align-items:flex-end; justify-content:space-between; gap:4px; padding:8px 10px; background:rgba(24,24,27,0.92); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.12); border-radius:9999px; box-shadow:0 12px 30px rgba(0,0,0,.45); }
 .dock-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; justify-content:center; background:none; border:none; color:#fafafa; font-size:11px; font-weight:700; cursor:pointer; }
 .dock-item-active{ color:#34D399; }
-.dock-plus{ width:52px; height:52px; border-radius:9999px; background:#34D399; color:#000; display:flex; align-items:center; justify-content:center; transform:translateY(-14px); box-shadow:0 8px 20px rgba(52,211,153,.45); }
+.dock-plus{ width:52px; height:52px; border-radius:9999px; background:#34D399; color:#000; display:flex; align-items:center; justify-content:center;  box-shadow:0 8px 20px rgba(52,211,153,.45); }
   .m3-card{ border-radius:2.5rem !important; box-shadow:0 10px 30px rgba(0,0,0,.4) !important; border:1px solid rgba(255,255,255,0.1) !important; }
   .card{ background:rgba(255,255,255,0.05) !important; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1) !important; color:#fafafa; animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform 300ms cubic-bezier(0.16,1,0.3,1), background-color 300ms, box-shadow 300ms; }
@@ -1383,7 +1383,7 @@
   <nav v-if="guestMe && ['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="dock" aria-label="Guest navigation">
     <button class="dock-item" :class="{'dock-item-active': view==='guesthome'}" @click="goToGuestHome"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='gifts'}" @click="goToGifts"><i data-lucide="gift" class="w-6 h-6"></i><span>Gifts</span></button>
-    <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="shopping-cart-plus" class="w-7 h-7"></i></span></button>
+    <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="star-plus" class="w-7 h-7"></i></span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='wishlists'}" @click="goToWishlists"><i data-lucide="users" class="w-6 h-6"></i><span>Wishlists</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='vote'}" @click="goToVote"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
   </nav>
