@@ -92,6 +92,13 @@
   @media (min-width: 641px){
     .who-middle{ min-height:calc(100dvh - 1rem - 96px); }
   }
+  /* When results are listed, the Scor card moves to the top (no more centering) and both cards animate in. */
+  .who-middle.who-results{ justify-content:flex-start; }
+  .who-card{ transition: transform .35s ease; }
+  .who-results .who-card{ animation: who-card-up .35s ease; }
+  @keyframes who-card-up{ from{ transform: translateY(16px); } to{ transform: translateY(0); } }
+  .results-card{ animation: results-in .35s ease; }
+  @keyframes results-in{ from{ opacity:0; transform: translateY(12px); } to{ opacity:1; transform: translateY(0); } }
   .landing-santa-row{ padding:0; gap:8px; align-items:flex-start; margin-bottom:24px; flex-wrap:nowrap; }
   /* TEMPORARY for Santa Scor: Santa offsets were margin-top:-82px; margin-left:-60px; — restore those with Santa. */
   .landing .santa-bubble{ margin-top:8px; margin-left:40px; }
@@ -846,9 +853,9 @@
       </div>
     </section>
 
-<section v-show="view==='who'" class="who-middle">
+<section v-show="view==='who'" class="who-middle" :class="{'who-results': guestSearched && filteredGuests.length}">
 <!-- Step 1: Who are you? (now its own page) -->
-      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 who-card">
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
           <div class="santa-bubble santa-bubble-sm santa-bubble-wide flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
@@ -859,7 +866,9 @@
           <span class="search-pill-sep" aria-hidden="true"></span>
           <button class="search-pill-action" :disabled="!search.trim()" @click="guestSearched=true">Search <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
         </div>
-        <div class="mt-3 space-y-2">
+      </div>
+      <div v-if="!guests.length || guestSearched" class="card bg-base-100 m3-card p-4 sm:p-5 mt-3 results-card">
+        <div class="space-y-2">
           <p v-if="!guests.length" class="opacity-70">No draw yet — the host needs to set it up first.</p>
           <p v-else-if="guestSearched && !filteredGuests.length" class="opacity-70">No match — that name isn't on the list. Try a first name, nickname, or part of a name.</p>
           <template v-if="guestSearched"><button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" @click="selectGuest(g)">
