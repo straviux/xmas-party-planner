@@ -1124,7 +1124,8 @@
     <section v-if="view==='hostsetup'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
 
-        <div class="flex justify-end">
+        <div class="flex items-center justify-between gap-3">
+          <h2 class="text-2xl font-black">Setup</h2>
           <button class="btn btn-success btn-sm btn-compact" style="width:auto" :disabled="savingSetup || (!hostSignedIn && hostPin.length<4)" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
         </div>
         <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
