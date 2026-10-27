@@ -1106,7 +1106,7 @@
       </div>
     </section>
 
-    <section v-show="view==='hostsetup'">
+    <section v-if="view==='hostsetup'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
 
         <div class="flex gap-2 items-start">
@@ -1131,7 +1131,7 @@
         <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
-        <button class="btn btn-ghost" style="width:auto" @click="goHome"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
+        <button class="btn btn-ghost" style="width:auto" @click="cancelSetup"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
         <button class="btn btn-success" style="width:auto" :disabled="savingSetup || (!hostSignedIn && hostPin.length<4)" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
       </div>
       </div>
@@ -1506,6 +1506,16 @@ const app=createApp({
     handleFabEscape(e){ if(e.key==='Escape') this.fabOpen=false; },
     goBack(){ const st=this.$router.options.history.state; if(st && st.back) this.$router.back(); else this.goHome(); },
     goHome(){ this.$router.push({name:'home'}); },
+    cancelSetup(){
+      // Definitive cancel: do not rely only on the route watcher to hide
+      // setup — close every overlay, switch to home now, and replace the
+      // history entry so Back does not return to setup either.
+      this.showWishModal=false; this.showQrModal=false;
+      this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
+      this.showGuestModal=false; this.fabOpen=false;
+      this.view='home';
+      this.$router.replace({name:'home'});
+    },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
     openWishModal(){ this.wishFormMsg=''; this.showWishModal=true; },
