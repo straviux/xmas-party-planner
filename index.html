@@ -1170,9 +1170,9 @@
           </div>
         </div>
         <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-      </div>
-      <div class="flex mt-4">
-        <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="openPollModal">Create poll</button>
+        <div class="flex justify-end mt-4">
+          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="openPollModal">Create poll</button>
+        </div>
       </div>
     </section>
 
