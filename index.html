@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F67280">
-<title>🎄 Christmas Party — Secret Santa, Wishlists & Theme Poll</title>
+<title>Christmas Party — Secret Santa, Wishlists & Theme Poll</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css">
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
@@ -49,7 +49,7 @@
   <header class="m3-header p-4 sm:p-6 text-center">
     <h1 class="text-2xl sm:text-3xl font-black">{{ party || 'Christmas Party' }}</h1>
     <p class="opacity-90 mt-1">Secret Santa • Wishlists • Christmas theme poll</p>
-    <button v-if="view!=='home'" class="btn btn-sm btn-ghost mt-2" @click="goHome">🏠 Home</button>
+    <button v-if="view!=='home'" class="btn btn-sm btn-ghost mt-2" @click="goHome"><i data-lucide="home" class="w-4 h-4 inline"></i> Home</button>
   </header>
 
   <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4">
@@ -59,14 +59,14 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
         <img :src="santaSrc" alt="Santa, your party guide" class="mx-auto rounded-2xl" style="max-width:220px;width:100%">
         <div class="santa-bubble mt-3 text-left">
-          <b>🎅 Santa says:</b>
+          <b>Santa says:</b>
           <span v-if="!setupDone"> Ho ho ho! Host, set up the party first and I'll print your QR code for everyone.</span>
           <span v-else> Ho ho ho! Scan the QR, find your name, and let's get gifting — I'll walk you through it, one step at a time.</span>
         </div>
         <div class="mt-4 space-y-2">
-          <button class="btn btn-success w-full text-lg" :disabled="!setupDone" @click="startGuest">🎁 I'm a guest — start my journey</button>
+          <button class="btn btn-success w-full text-lg" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-5 h-5 inline"></i> I'm a guest — start my journey</button>
           <p v-if="!setupDone" class="text-sm opacity-70">No party set up yet — the host needs to set it up first.</p>
-          <button class="btn btn-primary w-full text-lg" @click="startHost">🔑 I'm the host</button>
+          <button class="btn btn-primary w-full text-lg" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
         </div>
         <p class="text-sm opacity-60 mt-3">One QR for everyone • Reveal once • Anonymous wishlist reserves • PHP + Apache, no Node needed</p>
       </div>
@@ -78,7 +78,7 @@
       <div class="card bg-base-100 m3-card p-4 mb-4">
         <div class="flex items-center justify-between">
           <div v-for="(label,i) in guestSteps" :key="label" class="flex-1 text-center">
-            <div class="step-dot mx-auto" :class="{active: guestStep===i+1, done: guestStep>i+1}">{{ guestStep>i+1 ? '✓' : i+1 }}</div>
+            <div class="step-dot mx-auto" :class="{active: guestStep===i+1, done: guestStep>i+1}"><span v-if="guestStep>i+1"><i data-lucide="check" class="w-4 h-4"></i></span><span v-else>{{ i+1 }}</span></div>
             <div class="text-xs font-bold mt-1">{{ label }}</div>
           </div>
         </div>
@@ -120,29 +120,29 @@
           <h2 class="text-2xl font-black">Already revealed</h2>
           <p class="mt-2">This name has already been revealed — no recipient is shown again. Ask the host if you lost it.</p>
           <p class="text-sm opacity-70 mt-2">You can still continue: add to your own wishlist, reserve gifts, and vote in the poll.</p>
-          <button class="btn btn-success w-full mt-3" @click="goToGifts">Continue to Gifts →</button>
+          <button class="btn btn-success w-full mt-3" @click="goToGifts">Continue to Gifts <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
         <div v-else-if="!guestRecipient">
-          <h2 class="text-2xl font-black">🎁 Your Secret Santa reveal</h2>
+          <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Your Secret Santa reveal</h2>
           <p class="mt-2">Playing as <b>{{ guestMe ? guestMe.display : '' }}</b>. This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
-          <div class="alert alert-warning mt-3 rounded-2xl">⚠️ Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
+          <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
           <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
           <div v-if="confirmMsg" class="alert alert-error mt-3 rounded-2xl">{{ confirmMsg }}</div>
         </div>
         <div v-else class="text-center">
-          <h2 class="text-2xl font-black">🎁 You are buying for:</h2>
+          <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> You are buying for:</h2>
           <div class="text-2xl sm:text-3xl font-black my-4 break-words">{{ guestRecipient.name }}<span v-if="guestRecipient.nickname"> “{{ guestRecipient.nickname }}”</span></div>
           <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ guestRecipient.budget }}</p>
           <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
-          <button class="btn btn-primary w-full mt-3" @click="goToGifts">I've noted it down — show their wishlist →</button>
+          <button class="btn btn-primary w-full mt-3" @click="goToGifts">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
-        <button class="btn btn-ghost w-full mt-3" @click="guestStep=1">← Back to Who are you?</button>
+        <button class="btn btn-ghost w-full mt-3" @click="guestStep=1"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Who are you?</button>
       </div>
 
       <!-- Step 3: Gifts -->
       <div v-show="guestStep===3">
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
-          <h2 class="text-2xl font-black">🎁 Gifts</h2>
+          <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
           <div class="flex gap-3 items-start mt-2">
             <img :src="santaSrc" alt="" class="rounded-xl" style="width:64px;height:64px;object-fit:cover">
             <div class="santa-bubble flex-1">Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
@@ -155,8 +155,8 @@
             <ul class="list-disc ml-5 mt-1 space-y-1">
               <li v-for="it in recipientBoardItems" :key="it.id">
                 <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
-                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'">📸 Screenshot</span>
-                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link ↗</a>
+                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
                 <span v-if="it.notes" class="text-sm opacity-60">({{ it.notes }})</span>
                 <span v-if="it.reserved" class="text-error font-bold">{{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
                 <button class="btn btn-sm" @click="reserveWishItem(recipientGuest.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
@@ -175,9 +175,9 @@
           <p class="text-sm opacity-70">Only you can add or delete your own items.</p>
           <div class="mt-3 space-y-2">
             <div class="flex flex-wrap gap-2">
-              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='text'}" @click="wishKind='text'">📝 Plain text</button>
-              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='link'}" @click="wishKind='link'">🔗 Link</button>
-              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='image'}" @click="wishKind='image'">📸 Screenshot</button>
+              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='text'}" @click="wishKind='text'"><i data-lucide="file-text" class="w-4 h-4 inline"></i> Plain text</button>
+              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='link'}" @click="wishKind='link'"><i data-lucide="link" class="w-4 h-4 inline"></i> Link</button>
+              <button class="btn btn-sm" :class="{'btn-primary': wishKind==='image'}" @click="wishKind='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</button>
             </div>
             <input v-if="wishKind==='text'" class="input input-bordered w-full" v-model="wishText" placeholder="I wish for… e.g. cosy socks, a book, board game">
             <div v-if="wishKind==='link'" class="space-y-2">
@@ -201,8 +201,8 @@
             <ul class="list-disc ml-5 mt-1 space-y-1">
               <li v-for="it in myBoardItems" :key="it.id">
                 <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
-                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'">📸 Screenshot</span>
-                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link ↗</a>
+                <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
                 <span v-if="it.notes" class="text-sm opacity-60">({{ it.notes }})</span>
                 <button class="btn btn-sm btn-ghost" @click="deleteWishItem(it.id)">Delete</button>
               </li>
@@ -216,8 +216,8 @@
               <p v-if="!owner.items.length" class="text-sm opacity-60">— no wishlist yet</p>
               <ul class="list-disc ml-5 mt-1 space-y-1">
                 <li v-for="it in owner.items" :key="it.id">
-                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'">📸 Screenshot</span>
-                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link ↗</a>
+                  <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                  <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
                   <span v-if="it.reserved" class="text-error font-bold">{{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
                   <button v-if="guestMe && guestMe.id!==owner.id" class="btn btn-sm" @click="reserveWishItem(owner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
                 </li>
@@ -226,42 +226,42 @@
           </div>
         </div>
         <div class="flex gap-2 mt-4">
-          <button class="btn btn-ghost flex-1" @click="guestStep=2">← Back</button>
-          <button class="btn btn-primary flex-1" @click="goToVote">Next: Vote →</button>
+          <button class="btn btn-ghost flex-1" @click="guestStep=2"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button>
+          <button class="btn btn-primary flex-1" @click="goToVote">Next: Vote <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
       </div>
 
       <!-- Step 4: Vote -->
       <div v-show="guestStep===4" class="card bg-base-100 m3-card p-4 sm:p-5">
-        <h2 class="text-2xl font-black">🗳️ Christmas theme poll</h2>
+        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
         <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
         <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it. You can skip straight to Done.</div>
         <div v-else class="mt-4">
           <h3 class="text-xl font-black">{{ poll.question }}</h3>
           <p class="text-sm opacity-70">{{ poll.open ? 'Voting open' : 'Poll closed' }} • {{ poll.total }} vote(s)</p>
           <div v-for="o in poll.options" :key="o.id" class="mt-3">
-            <b>{{ o.text }}</b> <span v-if="poll.my_vote===o.id">⭐ yours</span> — {{ o.votes }} vote(s) ({{ poll.total ? Math.round(o.votes/poll.total*100) : 0 }}%)
+            <b>{{ o.text }}</b> <span v-if="poll.my_vote===o.id"><i data-lucide="star" class="w-4 h-4 inline"></i> yours</span> — {{ o.votes }} vote(s) ({{ poll.total ? Math.round(o.votes/poll.total*100) : 0 }}%)
             <div class="m3-bar mt-1"><div :style="{width: (poll.total ? Math.round(o.votes/poll.total*100) : 0) + '%'}"></div></div>
             <button v-if="poll.open" class="btn btn-sm w-full sm:w-auto mt-2" @click="votePoll(o.id)">Vote for this</button>
           </div>
-          <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl">🏆 Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
+          <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
           <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
         </div>
         <div class="flex gap-2 mt-4">
-          <button class="btn btn-ghost flex-1" @click="guestStep=3">← Back to Gifts</button>
-          <button class="btn btn-success flex-1" @click="guestStep=5">Done ✓</button>
+          <button class="btn btn-ghost flex-1" @click="guestStep=3"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Gifts</button>
+          <button class="btn btn-success flex-1" @click="guestStep=5">Done</button>
         </div>
       </div>
 
       <!-- Step 5: Done -->
       <div v-show="guestStep===5" class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
         <img :src="santaSrc" alt="Santa" class="mx-auto rounded-2xl" style="max-width:180px;width:100%">
-        <h2 class="text-2xl font-black mt-3">🎄 You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
+        <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
         <div class="text-left mt-3 space-y-1">
-          <p>🎁 Buying for: <b>{{ guestRecipient ? guestRecipient.name : (manualRecipient ? manualRecipient.display : 'revealed earlier — check your notes') }}</b></p>
-          <p>🛍️ Items you reserved: <b>{{ reservedByMeCount }}</b></p>
-          <p>📝 Your wishlist items: <b>{{ myBoardItems.length }}</b></p>
-          <p>🗳️ Theme vote: <b>{{ poll && poll.my_vote ? poll.options.find(o=>o.id===poll.my_vote).text : 'Not voted yet' }}</b></p>
+          <p><i data-lucide="gift" class="w-4 h-4 inline"></i> Buying for: <b>{{ guestRecipient ? guestRecipient.name : (manualRecipient ? manualRecipient.display : 'revealed earlier — check your notes') }}</b></p>
+          <p><i data-lucide="shopping-bag" class="w-4 h-4 inline"></i> Items you reserved: <b>{{ reservedByMeCount }}</b></p>
+          <p><i data-lucide="file-text" class="w-4 h-4 inline"></i> Your wishlist items: <b>{{ myBoardItems.length }}</b></p>
+          <p><i data-lucide="vote" class="w-4 h-4 inline"></i> Theme vote: <b>{{ poll && poll.my_vote ? poll.options.find(o=>o.id===poll.my_vote).text : 'Not voted yet' }}</b></p>
         </div>
         <p class="text-sm opacity-70 mt-3">Your recipient card stays here while this page is open. A fresh scan will only say “already revealed”, so keep your note safe!</p>
         <button class="btn btn-primary w-full mt-3" @click="guestStep=3">Back to Gifts</button>
@@ -323,16 +323,16 @@
           <button v-if="g.claimed" class="btn btn-sm btn-ghost ml-2" @click="resetOne(g.id)">Reset this name</button>
         </div>
         <div v-if="qrUrl" class="text-center mt-4">
-          <h3 class="font-black">📱 Single QR — print this, everyone scans the same one</h3>
+          <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR — print this, everyone scans the same one</h3>
           <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-2" style="max-width:280px;width:100%">
           <p class="text-sm break-all opacity-70">{{ pageUrl }}</p>
-          <p class="text-sm">Scan → Home → I'm a guest → find your name → reveal once → gifts → vote.</p>
-          <button class="btn mt-2" onclick="window.print()">🖨️ Print this QR sheet</button>
+          <p class="text-sm">Scan > Home > I'm a guest > find your name > reveal once > gifts > vote.</p>
+          <button class="btn mt-2" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print this QR sheet</button>
         </div>
       </div>
 
       <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black">🗳️ Theme poll setup (host)</h2>
+        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll setup (host)</h2>
         <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
         <label class="block mt-2">Host PIN <input class="input input-bordered w-full" v-model="pollHostPin" placeholder="Host PIN"></label>
