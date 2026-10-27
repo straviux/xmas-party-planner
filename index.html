@@ -1355,8 +1355,8 @@
             <label class="block mt-2">Guest PIN (optional) <input class="input input-bordered w-full" v-model="guestForm.pin" placeholder="Guest PIN"></label>
             <div v-if="guestFormMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestFormMsg }}</div>
             <div class="flex gap-2 mt-4">
-              <button class="btn btn-success flex-1" @click="saveGuestModal">Save</button>
               <button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button>
+              <button class="btn btn-success flex-1" @click="saveGuestModal">Save</button>
             </div>
           </div>
         </div>
