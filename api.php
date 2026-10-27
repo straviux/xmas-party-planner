@@ -5,6 +5,12 @@
 // Stores the draw in data.php in the same folder. That file starts with a
 // PHP exit guard, so requesting it directly in a browser returns nothing,
 // and .htaccess denies it as a second layer.
+// Host access is Google login, not a PIN: the host signs in with Google
+// (Google Identity Services), api.php verifies the ID token and issues a
+// 30-day session token stored in host_session.php. Guests never log in:
+// they enter the host's invite code (stored with the party, shown on the
+// dashboard, carried in the QR link) to reach the guest flow. Per-guest
+// PINs (optional, set by the host) still protect individual reveals.
 // The host dashboard never receives recipient mappings — only claimed status.
 // A guest reveal returns ONE recipient, and only if that name is unclaimed.
 // Wishlist items have a kind: text, link, or image (screenshot, stored as
@@ -13,7 +19,13 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 define('DATA_FILE', __DIR__ . '/data.php');
+define('HOST_SESSION_FILE', __DIR__ . '/host_session.php');
 define('GUARD', "<?php http_response_code(403); exit; ?>\n");
+// Google OAuth client ID (Web application, Google Identity Services).
+// Arc: replace this with the real client ID from Google Cloud, and add the
+// deployed site origin (e.g. https://your-site.com) to that client's
+// Authorized JavaScript origins, or Google sign-in will refuse to load.
+define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
 
 function send($data, $code = 200) {
   http_response_code($code);
@@ -52,6 +64,68 @@ function save_data($d) {
   @chmod(DATA_FILE, 0600);
   return true;
 }
+function load_host_session() {
+  if (!file_exists(HOST_SESSION_FILE)) return null;
+  $raw = file_get_contents(HOST_SESSION_FILE);
+  if ($raw === false) return null;
+  $pos = strpos($raw, "\n");
+  $json = ($pos === false) ? '' : substr($raw, $pos + 1);
+  $s = json_decode($json, true);
+  return is_array($s) ? $s : null;
+}
+function save_host_session($s) {
+  if ($s === null) { @unlink(HOST_SESSION_FILE); return true; }
+  $fp = fopen(HOST_SESSION_FILE, 'c');
+  if (!$fp) return false;
+  if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
+  ftruncate($fp, 0);
+  fwrite($fp, GUARD . json_encode($s, JSON_UNESCAPED_UNICODE));
+  fflush($fp);
+  flock($fp, LOCK_UN);
+  fclose($fp);
+  @chmod(HOST_SESSION_FILE, 0600);
+  return true;
+}
+function host_session_valid($input) {
+  $tok = (string)($input['session'] ?? '');
+  if ($tok === '') return null;
+  $s = load_host_session();
+  if (!$s) return null;
+  if (empty($s['token_hash']) || !hash_equals($s['token_hash'], hash('sha256', $tok))) return null;
+  if (empty($s['expires']) || $s['expires'] < time()) return null;
+  return $s;
+}
+function require_host($input) {
+  if (!host_session_valid($input)) send(['error' => 'host_not_signed_in'], 403);
+}
+function invite_code_new() {
+  $chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  $c = '';
+  for ($i = 0; $i < 6; $i++) $c .= $chars[random_int(0, strlen($chars) - 1)];
+  return $c;
+}
+function verify_google_token($id_token) {
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' || GOOGLE_CLIENT_ID === '' || $id_token === '') return null;
+  $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($id_token);
+  $body = false;
+  if (function_exists('curl_init')) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+    $body = curl_exec($ch); curl_close($ch);
+  } else {
+    $ctx = stream_context_create(['http' => ['timeout' => 8]]);
+    $body = @file_get_contents($url, false, $ctx);
+  }
+  if ($body === false) return null;
+  $j = json_decode($body, true);
+  if (!is_array($j)) return null;
+  if (($j['aud'] ?? '') !== GOOGLE_CLIENT_ID) return null;
+  if (!in_array($j['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) return null;
+  if (empty($j['exp']) || $j['exp'] < time()) return null;
+  if (empty($j['sub'])) return null;
+  return $j;
+}
 function public_guest($g) {
   return [
     'id' => $g['id'],
@@ -81,6 +155,49 @@ $action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true);
 if (!is_array($input)) $input = $_POST;
 
+if ($action === 'config') {
+  send(['google_client_id' => GOOGLE_CLIENT_ID]);
+}
+if ($action === 'google_login') {
+  $tok = verify_google_token((string)($input['id_token'] ?? ''));
+  if (!$tok) send(['error' => (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' ? 'google_not_configured' : 'google_token_invalid')], 403);
+  $session = bin2hex(random_bytes(32));
+  $s = ['google_sub' => $tok['sub'], 'email' => $tok['email'] ?? '', 'name' => $tok['name'] ?? '',
+        'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c')];
+  save_host_session($s);
+  send(['ok' => true, 'session' => $session, 'email' => $s['email'], 'name' => $s['name']]);
+}
+if ($action === 'google_session') {
+  $s = host_session_valid($input);
+  if (!$s) send(['signed_in' => false]);
+  send(['signed_in' => true, 'email' => $s['email'] ?? '', 'name' => $s['name'] ?? '']);
+}
+if ($action === 'google_logout') {
+  if (host_session_valid($input)) save_host_session(null);
+  send(['ok' => true]);
+}
+if ($action === 'invite_check') {
+  $d = load_data();
+  if (!$d) send(['error' => 'not_set_up'], 404);
+  $code = strtoupper(trim((string)($input['code'] ?? '')));
+  if ($code === '' || $code !== strtoupper((string)($d['invite_code'] ?? ''))) send(['error' => 'invite_incorrect'], 403);
+  send(['ok' => true]);
+}
+if ($action === 'invite_get') {
+  $d = load_data();
+  if (!$d) send(['error' => 'not_set_up'], 404);
+  require_host($input);
+  if (empty($d['invite_code'])) { $d['invite_code'] = invite_code_new(); save_data($d); }
+  send(['invite_code' => $d['invite_code']]);
+}
+if ($action === 'invite_regen') {
+  $d = load_data();
+  if (!$d) send(['error' => 'not_set_up'], 404);
+  require_host($input);
+  $d['invite_code'] = invite_code_new(); save_data($d);
+  send(['invite_code' => $d['invite_code']]);
+}
+
 if ($action === 'status') {
   $d = load_data();
   if (!$d) send(['exists' => false]);
@@ -104,11 +221,11 @@ if ($action === 'list') {
 
 if ($action === 'setup') {
   if (load_data()) send(['error' => 'already_set_up'], 409);
+  require_host($input);
+  $sess = host_session_valid($input);
   $party = trim((string)($input['party'] ?? 'Christmas Party'));
   $budget = trim((string)($input['budget'] ?? ''));
-  $host_pin = (string)($input['host_pin'] ?? '');
   $guests_in = $input['guests'] ?? [];
-  if (strlen($host_pin) < 4) send(['error' => 'Host PIN must be at least 4 characters'], 400);
   if (!is_array($guests_in)) $guests_in = [];
   $guests = []; $seen = [];
   foreach ($guests_in as $gi) {
@@ -137,7 +254,8 @@ if ($action === 'setup') {
   foreach ($guests as $i => &$g) $g['recipient_id'] = $recipients[$i];
   unset($g);
   $d = ['party' => $party, 'budget' => $budget,
-        'host_pin_hash' => password_hash($host_pin, PASSWORD_DEFAULT),
+        'invite_code' => invite_code_new(),
+        'host_google_sub' => $sess['google_sub'] ?? '', 'host_email' => $sess['email'] ?? '',
         'created_at' => date('c'), 'guests' => $guests,
         'wishlists' => [], 'poll' => null];
   if (!save_data($d)) send(['error' => 'Could not save. Check folder write permissions.'], 500);
@@ -169,17 +287,10 @@ if ($action === 'reveal') {
   send(['error' => 'Guest not found'], 404);
 }
 
-function require_host($d, $input) {
-  $pin = (string)($input['host_pin'] ?? '');
-  if (empty($d['host_pin_hash']) || !password_verify($pin, $d['host_pin_hash'])) {
-    send(['error' => 'host_pin_incorrect'], 403);
-  }
-}
-
 if ($action === 'host_status') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   $out = [];
   foreach (sorted_guests($d) as $g) {
     $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],
@@ -192,7 +303,7 @@ if ($action === 'host_status') {
 if ($action === 'reset_one') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   $id = (string)($input['id'] ?? '');
   foreach ($d['guests'] as &$g) if ($g['id'] === $id) { $g['claimed'] = false; $g['claimed_at'] = null; }
   unset($g);
@@ -203,7 +314,7 @@ if ($action === 'reset_one') {
 if ($action === 'reset_all') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   @unlink(DATA_FILE);
   send(['ok' => true]);
 }
@@ -332,7 +443,7 @@ if ($action === 'poll_get') {
 if ($action === 'poll_setup') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   $q = trim((string)($input['question'] ?? 'What should our Christmas theme be?'));
   $opts_in = [];
   foreach ((array)($input['options'] ?? []) as $o) { $o = trim((string)$o); if ($o !== '') $opts_in[] = $o; }
@@ -362,7 +473,7 @@ if ($action === 'poll_vote') {
 if ($action === 'poll_set_open') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   if (empty($d['poll'])) send(['error' => 'No poll yet'], 404);
   $d['poll']['open'] = !empty($input['open']);
   save_data($d);
@@ -371,7 +482,7 @@ if ($action === 'poll_set_open') {
 if ($action === 'poll_reset') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($d, $input);
+  require_host($input);
   $d['poll'] = null;
   save_data($d);
   send(['ok' => true]);

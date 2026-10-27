@@ -3,4 +3,7 @@
 <Files "data.php">
   Require all denied
 </Files>
+<Files "host_session.php">
+  Require all denied
+</Files>
 Options -Indexes

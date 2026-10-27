@@ -12,6 +12,7 @@
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/vue-router@4.2.5/dist/vue-router.global.prod.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --rounded-box: 2.5rem; --rounded-btn: 9999px; --rounded-badge: 9999px; --rounded-input: 1rem;
@@ -1031,19 +1032,33 @@
 
       <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black">Host dashboard</h2>
-        <p class="text-sm opacity-70">Enter your host PIN to see claimed status. Recipients are never shown here.</p>
-        <input class="input input-bordered w-full mt-2" v-model="hostPinCheck" placeholder="Host PIN">
-        <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
+        <p class="text-sm opacity-70">Sign in with Google to see claimed status. Recipients are never shown here.</p>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-dashboard"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-2">{{ googleMsg }}</p></div>
+        <div v-if="hostSignedIn">
+          <p class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+          <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
+          <button class="btn btn-ghost w-full mt-2" @click="googleSignOut">Sign out</button>
+        </div>
         <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
         <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
           {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
           <button v-if="g.claimed" class="btn btn-sm btn-ghost ml-2" @click="resetOne(g.id)">Reset this name</button>
         </div>
+        <div v-if="hostSignedIn" class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
+          <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
+          <p class="text-sm opacity-70 mt-1">Share this code with guests — they enter it to join, no login needed.</p>
+          <p class="text-2xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-sm" @click="copyInvite">Copy code</button>
+            <button class="btn btn-sm btn-ghost" @click="regenInvite">New code</button>
+          </div>
+          <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
+        </div>
         <div v-if="qrUrl" class="text-center mt-4">
           <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR — print this, everyone scans the same one</h3>
           <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-2" style="max-width:280px;width:100%">
           <p class="text-sm break-all opacity-70">{{ guestUrl }}</p>
-          <p class="text-sm">Scan > Home > I'm a guest > find your name > reveal once > gifts > vote.</p>
+          <p class="text-sm">Scan the QR (it carries the invite code) or enter the invite code > find your name > reveal once > gifts > vote.</p>
           <button class="btn mt-2" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print this QR sheet</button>
         </div>
       </div>
@@ -1086,11 +1101,12 @@
             <input class="input input-sm input-bordered w-full" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount">
           </div>
         </div>
-        <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p class="text-sm opacity-70 mt-1">Sign in with Google first — setup needs a signed-in host.</p><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
+        <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
         <button class="btn btn-ghost" style="width:auto" @click="goHome"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
-        <button class="btn btn-success" style="width:auto" :disabled="savingSetup" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
+        <button class="btn btn-success" style="width:auto" :disabled="savingSetup || !hostSignedIn" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
       </div>
       </div>
     </section>
@@ -1102,11 +1118,12 @@
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll setup (host)</h2>
         <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
-        <label class="block mt-2">Host PIN <input class="input input-bordered w-full" v-model="pollHostPin" placeholder="Host PIN"></label>
-        <button class="btn btn-success w-full mt-3" @click="setupPoll">Create / replace poll</button>
-        <button class="btn w-full mt-2" @click="setPollOpen(true)">Reopen poll</button>
-        <button class="btn w-full mt-2" @click="setPollOpen(false)">Close poll (show final winner)</button>
-        <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p class="text-sm opacity-70 mt-1">Sign in with Google to manage the poll.</p><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
+        <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+        <button class="btn btn-success w-full mt-3" :disabled="!hostSignedIn" @click="setupPoll">Create / replace poll</button>
+        <button class="btn w-full mt-2" :disabled="!hostSignedIn" @click="setPollOpen(true)">Reopen poll</button>
+        <button class="btn w-full mt-2" :disabled="!hostSignedIn" @click="setPollOpen(false)">Close poll (show final winner)</button>
+        <button class="btn btn-error w-full mt-2" :disabled="!hostSignedIn" @click="resetPoll">Delete poll</button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="goBack">Close</button>
       </div>
@@ -1170,7 +1187,7 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
     </div>
   </div>
-  <!-- Host entry dialog: Enter PIN or new host -->
+  <!-- Host entry dialog: Google sign-in or new host -->
   <div v-if="showHostEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostEntryModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
       <div class="flex items-center justify-between">
@@ -1178,29 +1195,30 @@
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostEntryModal">✕</button>
       </div>
       <p class="text-sm opacity-70 mt-1">Are you returning to a party, or setting up a new one?</p>
-      <button class="btn btn-primary w-full mt-4" :disabled="!setupDone" @click="enterHostWithPin"><i data-lucide="key-round" class="w-5 h-5 inline"></i> Enter PIN</button>
-      <p v-if="!setupDone" class="text-sm opacity-70 text-center mt-2">No party set up yet — start as a new host.</p>
+      <div id="google-btn-host-entry" class="mt-4"></div>
+      <p v-if="googleMsg" class="text-sm opacity-70 text-center mt-2">{{ googleMsg }}</p>
+      <p v-if="!setupDone" class="text-sm opacity-70 text-center mt-2">No party set up yet — sign in, then start as a new host.</p>
       <p class="text-sm opacity-70 text-center mt-4">or</p>
       <button class="btn btn-success w-full mt-3" @click="newHost"><i data-lucide="plus" class="w-5 h-5 inline"></i> I'm a new host</button>
       <p v-if="setupDone" class="text-sm opacity-70 text-center mt-2">Starting as a new host replaces the current party.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
     </div>
   </div>
-  <!-- Guest entry dialog: Scan QR or enter host PIN -->
+  <!-- Guest entry dialog: Scan QR or enter invite code -->
   <div v-if="showGuestEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeGuestEntryModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
       <div class="flex items-center justify-between">
         <h3 class="text-xl font-black">Join as a guest</h3>
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeGuestEntryModal">✕</button>
       </div>
-      <p class="text-sm opacity-70 mt-1">Scan the host's QR code, or enter the host PIN.</p>
+      <p class="text-sm opacity-70 mt-1">Scan the host's QR code, or enter the invite code from the host.</p>
       <button class="btn btn-primary w-full mt-4 scan-qr-glow" @click="showGuestEntryModal=false; openQrModal()"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <p class="text-sm opacity-70 text-center mt-4">or</p>
       <div class="pin-pill mt-2">
-        <i data-lucide="key-round" class="pin-pill-icon"></i>
-        <input class="pin-pill-input" v-model="guestEntryPin" placeholder="Host PIN" @keyup.enter="enterGuestWithPin">
+        <i data-lucide="ticket" class="pin-pill-icon"></i>
+        <input class="pin-pill-input" v-model="guestEntryCode" placeholder="Invite code" @keyup.enter="enterGuestWithCode">
         <span class="pin-pill-sep" aria-hidden="true"></span>
-        <button class="pin-pill-action" :disabled="!guestEntryPin.trim()" @click="enterGuestWithPin">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+        <button class="pin-pill-action" :disabled="!guestEntryCode.trim()" @click="enterGuestWithCode">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
       </div>
       <div v-if="guestEntryMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestEntryMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="closeGuestEntryModal">Cancel</button>
@@ -1360,15 +1378,15 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
-    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
-    setupMsg:'', setupOk:false, savingSetup:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
+    partyName:'Christmas Party', partyBudget:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
+    setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
-    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollHostPin:'', pollSetupMsg:'', pollSetupOk:false,
+    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollSetupMsg:'', pollSetupOk:false,
   }; },
   computed:{
     filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
@@ -1391,7 +1409,7 @@ const app=createApp({
       let n=0; this.wishBoard.forEach(o=>o.items.forEach(it=>{ if(it.reserved_by_me) n++; })); return n;
     },
     currentStep(){ return {guest:this.guestStep, gifts:3, vote:4, done:5}[this.view] || 0; },
-    guestUrl(){ return this.pageUrl + '?guest=1'; },
+    guestUrl(){ return this.pageUrl + (this.inviteCode ? '?guest=1&code='+encodeURIComponent(this.inviteCode) : '?guest=1'); },
     qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.guestUrl) : ''; },
   },
   updated(){ if(window.lucide) lucide.createIcons(); },
@@ -1404,6 +1422,7 @@ const app=createApp({
       this.showWishModal=false; this.showQrModal=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false;
       this.showGuestModal=false; this.fabOpen=false;
+      this.$nextTick(()=>{ this.renderGoogleButtons(); });
     },
   },
   async mounted(){
@@ -1421,8 +1440,20 @@ const app=createApp({
       if(['guest','gifts','vote','done'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
       else this.view=start;
     }
-    // QR scan only: ?guest=1 opens the guest page. Everyone else stays on home.
-    if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest(true);
+    try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
+    await this.initGoogle();
+    await this.checkHostSession();
+    // QR scan: ?guest=1&code=CODE opens the guest page directly (the QR
+    // carries the invite code). A plain ?guest=1 without a valid code
+    // shows the guest entry dialog, so guests enter the invite code.
+    {
+      const qs=new URLSearchParams(location.search);
+      if(qs.get('guest')==='1'){
+        const code=qs.get('code');
+        if(code){ try{ await this.api('invite_check',{code}); this.startGuest(true); }catch(e){ this.startGuest(); } }
+        else this.startGuest();
+      }
+    }
   },
   methods:{
     async api(action, body, query){
@@ -1450,28 +1481,88 @@ const app=createApp({
     startGuest(bypassDialog=false){
       if(!this.setupDone) return;
       if(this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)){ this.goToGifts(); return; }
-      if(!bypassDialog){ this.guestEntryPin=''; this.guestEntryMsg=''; this.showGuestEntryModal=true; return; }
+      if(!bypassDialog){ this.guestEntryCode=''; this.guestEntryMsg=''; this.showGuestEntryModal=true; return; }
       this.goTo('guest');
       this.guestStep = this.guestMe ? 2 : 1;
       this.guestSearched=false;
     },
     closeGuestEntryModal(){ this.showGuestEntryModal=false; },
-    async enterGuestWithPin(){
-      if(!this.guestEntryPin.trim()){ this.guestEntryMsg='Enter the host PIN.'; return; }
+    async enterGuestWithCode(){
+      if(!this.guestEntryCode.trim()){ this.guestEntryMsg='Enter the invite code from the host.'; return; }
       try{
-        // Same host PIN check the host dashboard uses; the returned list is
-        // discarded — a correct PIN only opens the guest page, nothing else.
-        await this.api('host_status',{host_pin:this.guestEntryPin});
+        // Invite code only opens the guest page — it never returns the
+        // guest list or any draw information.
+        await this.api('invite_check',{code:this.guestEntryCode});
         this.showGuestEntryModal=false; this.guestEntryMsg='';
         this.goTo('guest'); this.guestStep = this.guestMe ? 2 : 1; this.guestSearched=false;
       }catch(e){
-        this.guestEntryMsg = e.message==='host_pin_incorrect' ? 'That host PIN is incorrect. Ask the host for the right one.' : 'Could not check that PIN: '+e.message;
+        this.guestEntryMsg = e.message==='invite_incorrect' ? 'That invite code is incorrect. Ask the host for the right one.' : 'Could not check that code: '+e.message;
       }
     },
-    startHost(){ this.showHostEntryModal=true; },
+    // ---- Host Google login (replaces the host PIN everywhere) ----
+    async initGoogle(){
+      try{ const c=await this.api('config'); this.googleClientId=c.google_client_id||''; }catch(e){ this.googleClientId=''; }
+      if(!this.googleClientId || this.googleClientId==='YOUR_GOOGLE_CLIENT_ID'){ this.googleMsg='Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.'; return; }
+      for(let i=0;i<20;i++){ if(window.google && window.google.accounts && window.google.accounts.id) break; await new Promise(r=>setTimeout(r,250)); }
+      if(!(window.google && window.google.accounts && window.google.accounts.id)){ this.googleMsg='Could not load Google sign-in. Check your connection and try again.'; return; }
+      window.google.accounts.id.initialize({client_id:this.googleClientId, callback:(resp)=>this.handleGoogleCredential(resp)});
+      this.googleReady=true; this.googleMsg='';
+      this.$nextTick(()=>this.renderGoogleButtons());
+    },
+    renderGoogleButtons(){
+      if(!this.googleReady) return;
+      ['google-btn-dashboard','google-btn-setup','google-btn-poll','google-btn-host-entry'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(el && !el.dataset.rendered){ try{ window.google.accounts.id.renderButton(el,{theme:'filled_black',size:'large',width:320}); el.dataset.rendered='1'; }catch(e){} }
+      });
+    },
+    async handleGoogleCredential(resp){
+      try{
+        const d=await this.api('google_login',{id_token:resp.credential});
+        this.hostSession=d.session; try{ localStorage.setItem('xmasHostSession',d.session); }catch(e){}
+        this.hostSignedIn=true; this.hostEmail=d.email||'';
+        this.showHostEntryModal=false;
+        // Redirect automatically to the host page once logged in.
+        this.goTo('host');
+        if(this.setupDone){ await this.loadInvite(); await this.loadHost(); }
+      }catch(e){
+        this.googleMsg = e.message==='google_not_configured' ? 'Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.' : 'Google sign-in failed: '+e.message;
+      }
+    },
+    async checkHostSession(){
+      if(!this.hostSession) return;
+      try{
+        const d=await this.api('google_session',{session:this.hostSession});
+        if(d.signed_in){ this.hostSignedIn=true; this.hostEmail=d.email||''; if(this.setupDone) await this.loadInvite(); }
+        else{ this.hostSignedIn=false; this.hostSession=''; try{ localStorage.removeItem('xmasHostSession'); }catch(e){} }
+      }catch(e){ this.hostSignedIn=false; }
+    },
+    async googleSignOut(){
+      try{ if(this.hostSession) await this.api('google_logout',{session:this.hostSession}); }catch(e){}
+      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode='';
+      try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
+      this.hostMsg='Signed out.'; this.hostOk=true;
+      this.$nextTick(()=>this.renderGoogleButtons());
+    },
+    async loadInvite(){
+      try{ const d=await this.api('invite_get',{session:this.hostSession}); this.inviteCode=d.invite_code; }catch(e){ this.inviteCode=''; }
+    },
+    copyInvite(){
+      if(!this.inviteCode) return;
+      if(navigator.clipboard) navigator.clipboard.writeText(this.inviteCode).then(()=>{ this.inviteMsg='Invite code copied — share it with your guests.'; }).catch(()=>{ this.inviteMsg='Copy this code: '+this.inviteCode; });
+      else this.inviteMsg='Copy this code: '+this.inviteCode;
+    },
+    async regenInvite(){
+      if(!confirm('Generate a new invite code? The old code and old QR will stop working.')) return;
+      try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; }
+      catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; }
+    },
+    startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
-    enterHostWithPin(){ this.showHostEntryModal=false; this.goTo('host'); },
-    newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
+    newHost(){
+      if(this.hostSignedIn){ this.showHostEntryModal=false; this.goTo('hostsetup'); }
+      else{ this.googleMsg='Sign in with Google first — then you can set up a new party.'; this.$nextTick(()=>this.renderGoogleButtons()); }
+    },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
     confirmClaimedGuest(){ this.guestStep=2; },
     async doReveal(){
@@ -1516,29 +1607,29 @@ const app=createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
+      if(!this.hostSignedIn || !this.hostSession){ this.setupMsg='Sign in with Google first.'; this.setupOk=false; return; }
       this.savingSetup=true;
       try{
-        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
-        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); this.goTo('host');
+        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, session:this.hostSession, guests});
+        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.goTo('host');
       }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message; this.setupOk=false; }
       this.savingSetup=false;
     },
     async loadHost(){
+      if(!this.hostSignedIn || !this.hostSession){ this.hostMsg='Sign in with Google to see the dashboard.'; this.hostOk=false; return; }
       try{
-        const d=await this.api('host_status',{host_pin:this.hostPinCheck});
+        const d=await this.api('host_status',{session:this.hostSession});
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
         this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true;
-      }catch(e){ this.hostMsg=e.message==='host_pin_incorrect'?'Host PIN incorrect.':e.message; this.hostOk=false; }
+      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; this.hostOk=false; if(e.message==='host_not_signed_in') this.hostSignedIn=false; }
     },
     async resetOne(id){
       if(!confirm('Reset this name so it can be revealed again? Only do this in person with the real guest.')) return;
-      await this.api('reset_one',{host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests();
+      await this.api('reset_one',{session:this.hostSession, id}); await this.loadHost(); await this.loadGuests();
     },
     async resetAll(){
-      const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return;
       if(!confirm('This deletes the whole draw and all claims. Are you sure?')) return;
-      try{ await this.api('reset_all',{host_pin:pin}); location.reload(); }catch(e){ alert(e.message); }
+      try{ await this.api('reset_all',{session:this.hostSession}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google first.':e.message); }
     },
     // Wishlist (guestMe is the session identity; wishMe/wishPin are synced in goToGifts)
     async loadWishlists(){
@@ -1581,17 +1672,17 @@ const app=createApp({
     },
     async setupPoll(){
       try{
-        const d=await this.api('poll_setup',{host_pin:this.pollHostPin, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        const d=await this.api('poll_setup',{session:this.hostSession, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
         this.poll=d.poll; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
-      }catch(e){ this.pollSetupMsg=e.message==='host_pin_incorrect'?'Host PIN incorrect.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
+      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
     async setPollOpen(open){
-      try{ const d=await this.api('poll_set_open',{host_pin:this.pollHostPin, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
+      try{ const d=await this.api('poll_set_open',{session:this.hostSession, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
     async resetPoll(){
       if(!confirm('Delete the theme poll and all its votes?')) return;
-      try{ await this.api('poll_reset',{host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
+      try{ await this.api('poll_reset',{session:this.hostSession}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
   }
