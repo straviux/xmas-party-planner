@@ -1179,8 +1179,8 @@
       <input v-if="selected && selected.needs_pin" class="input input-bordered w-full mt-3" v-model="guestPin" inputmode="numeric" placeholder="Your private PIN, if you have one">
       <div class="flex gap-2 mt-3">
         <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
-        <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="showConfirmModal=false; guestStep=2">Yes, that's me — continue to reveal</button>
-        <button v-if="selected && selected.claimed" class="btn btn-success flex-1" @click="confirmClaimedGuest">Yes, that's me — continue</button>
+        <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="showConfirmModal=false; guestStep=2">Yes, that's me</button>
+        <button v-if="selected && selected.claimed" class="btn btn-success flex-1" @click="confirmClaimedGuest">Yes, that's me</button>
       </div>
     </div>
   </div>
