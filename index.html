@@ -8,6 +8,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css?family=Baloo+2:400,800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <style>
@@ -128,9 +129,10 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#F4F4F5; color:#27272A; border:1px solid rgba(0,0,0,0.08); border-radius:1.5rem; padding:.75rem 1rem; position:relative; min-width:0; overflow-wrap:break-word; }
-  .santa-bubble::before{ content:''; position:absolute; left:-13px; top:50%; transform:translateY(-50%); border:10px solid transparent; border-right-color:#e4e4e7; }
-  .santa-bubble::after{ content:''; position:absolute; left:-9px; top:50%; transform:translateY(-50%); border:8px solid transparent; border-right-color:#F4F4F5; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:11px; padding:.75rem 1rem; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:1px; box-shadow:8px 8px #83af9b; animation:float 5s ease-in-out infinite; }
+  @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
+  .santa-bubble::before{ content:''; position:absolute; left:-13px; top:50%; transform:translateY(-50%); border:10px solid transparent; border-right-color:#83af9b; }
+  .santa-bubble::after{ content:''; position:absolute; left:-9px; top:50%; transform:translateY(-50%); border:8px solid transparent; border-right-color:#ece5ce; }
   .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
   .step-dot.active{ background:var(--m3-secondary); color:#000; }
   .step-dot.done{ background:var(--m3-secondary); color:#000; }
