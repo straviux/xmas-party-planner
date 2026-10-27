@@ -1078,7 +1078,10 @@
           <button class="btn btn-sm" style="width:auto" :class="{'btn-primary': partyBudget==='250'}" @click="partyBudget='250'">₱250</button>
           <button class="btn btn-sm" style="width:auto" :class="{'btn-primary': partyBudget==='500'}" @click="partyBudget='500'">₱500</button>
           <button class="btn btn-sm" style="width:auto" :class="{'btn-primary': partyBudget==='1000'}" @click="partyBudget='1000'">₱1000</button>
-          <input class="input input-sm input-bordered flex-1" style="min-width:120px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount">
+          <div class="relative flex-1" style="min-width:120px">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-70 pointer-events-none">₱</span>
+            <input class="input input-sm input-bordered w-full" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount">
+          </div>
         </div>
         <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
