@@ -92,8 +92,8 @@
   @media (min-width: 641px){
     .landing{ min-height:calc(100dvh - 1rem - 96px); padding-left:0; padding-right:0; }
   }
-  .landing-santa-row{ padding:0; gap:12px; align-items:flex-start; margin-bottom:24px; flex-wrap:nowrap; }
-  .landing .santa-bubble{ margin-top:14px; }
+  .landing-santa-row{ padding:0; gap:8px; align-items:flex-start; margin-bottom:24px; flex-wrap:nowrap; }
+  .landing .santa-bubble{ margin-top:-18px; }
   @media (max-width:640px){
     .santa-bubble{ padding:14px; letter-spacing:1px; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; }
     .santa-bubble::after{ bottom:-18px; width:34px; height:8px; }
@@ -167,7 +167,7 @@
     <!-- ============ HOME ============ -->
     <section v-show="view==='home'" class="landing">
       <!-- Mascot hero: Santa next to his chat bubble, like a chat avatar + message -->
-      <div class="flex items-start gap-3 landing-santa-row">
+      <div class="flex items-start gap-2 landing-santa-row">
         <div class="shrink-0 text-center">
           <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:180px;max-width:180px;height:auto;cursor:pointer" @click="waveSanta">
           <div class="santa-shadow" aria-hidden="true"></div>
