@@ -93,8 +93,12 @@
     .landing{ min-height:calc(100dvh - 1rem - 96px); padding-left:0; padding-right:0; }
   }
   .landing-santa-row{ padding:0; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:nowrap; }
+  @media (max-width:640px){
+    .santa-bubble{ padding:24px; letter-spacing:1px; box-shadow:12px 12px #83af9b; margin-right:12px; margin-bottom:70px; }
+    .santa-bubble::after{ bottom:-22px; width:44px; height:10px; box-shadow:16px 16px #83af9b; }
+    .santa-bubble::before{ bottom:-62px; left:18px; width:10px; height:10px; }
+  }
   .landing .santa-shadow{ width:72px; }
-  .landing .santa-bubble{ padding:16px; }
   /* Buttons sit directly on the background: the pill wrapper stays in the
      DOM (so nothing functional changes) but is transparent, borderless
      and padding-free, so the nested inset look is gone. */
@@ -131,10 +135,10 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:11px; padding:.75rem 1rem; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:1px; box-shadow:8px 8px #83af9b; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:20px; padding:50px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:3px; text-align:center; box-shadow:20px 20px #83af9b; margin-right:20px; margin-bottom:90px; animation:float 5s ease-in-out infinite; }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
-  .santa-bubble::before{ content:''; position:absolute; left:-13px; top:50%; transform:translateY(-50%); border:10px solid transparent; border-right-color:#83af9b; }
-  .santa-bubble::after{ content:''; position:absolute; left:-9px; top:50%; transform:translateY(-50%); border:8px solid transparent; border-right-color:#ece5ce; }
+  .santa-bubble::before{ content:''; position:absolute; left:24px; bottom:-82px; width:12px; height:12px; border-radius:50%; background:#83af9b; }
+  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-30px; width:55px; height:11px; border-radius:11px; background:#ece5ce; box-shadow:22px 22px #83af9b; }
   .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
   .step-dot.active{ background:var(--m3-secondary); color:#000; }
   .step-dot.done{ background:var(--m3-secondary); color:#000; }
@@ -556,8 +560,8 @@
       <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='vote'}" :disabled="!setupDone" @click="fabGo('vote')"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
-  <div class="fab-wrap">
     </div>
+  <div class="fab-wrap">
     <button class="fab" @click="fabOpen=!fabOpen" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <i v-if="!fabOpen" data-lucide="menu" class="w-6 h-6"></i>
       <i v-else data-lucide="x" class="w-6 h-6"></i>
