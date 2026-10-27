@@ -58,6 +58,11 @@
     .mascot-player{ right:8px; bottom:calc(88px + env(safe-area-inset-bottom)); }
     .mascot-player video{ width:140px; }
   }
+  /* Static background snowflakes: fixed layer behind all content (main is
+     z-index 1, FAB/modals are z-40/50), pointer-events none, no motion. */
+  .snow-bg{ position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  .snow-bg span{ position:absolute; color:#cfeaff; line-height:1; }
+  #app main{ position:relative; z-index:1; }
   .grain{ position:fixed; inset:0; pointer-events:none; z-index:30; opacity:0.15; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
   .segmented{ background:rgba(255,255,255,0.05); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:9999px; padding:4px; display:flex; gap:4px; animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .seg-btn{ flex:1; border-radius:9999px; padding:.9rem .5rem; font-weight:800; font-size:1rem; display:flex; align-items:center; justify-content:center; gap:.5rem; min-height:56px; border:none; cursor:pointer; }
@@ -755,6 +760,7 @@
 <body>
 <div id="app">
   <div class="grain" aria-hidden="true"></div>
+  <div class="snow-bg" aria-hidden="true"><span style="left:4%;top:6%;font-size:14px;opacity:0.3">❄</span><span style="left:12%;top:22%;font-size:18px;opacity:0.4">❄</span><span style="left:20%;top:10%;font-size:11px;opacity:0.2">❄</span><span style="left:28%;top:30%;font-size:20px;opacity:0.35">❄</span><span style="left:36%;top:14%;font-size:13px;opacity:0.45">❄</span><span style="left:44%;top:8%;font-size:22px;opacity:0.25">❄</span><span style="left:52%;top:20%;font-size:15px;opacity:0.4">❄</span><span style="left:60%;top:12%;font-size:11px;opacity:0.2">❄</span><span style="left:68%;top:26%;font-size:19px;opacity:0.35">❄</span><span style="left:76%;top:10%;font-size:14px;opacity:0.5">❄</span><span style="left:84%;top:22%;font-size:12px;opacity:0.3">❄</span><span style="left:92%;top:14%;font-size:18px;opacity:0.4">❄</span><span style="left:8%;top:48%;font-size:20px;opacity:0.35">❄</span><span style="left:18%;top:62%;font-size:12px;opacity:0.25">❄</span><span style="left:26%;top:78%;font-size:16px;opacity:0.4">❄</span><span style="left:34%;top:52%;font-size:11px;opacity:0.2">❄</span><span style="left:42%;top:88%;font-size:21px;opacity:0.3">❄</span><span style="left:50%;top:64%;font-size:13px;opacity:0.45">❄</span><span style="left:58%;top:80%;font-size:17px;opacity:0.25">❄</span><span style="left:66%;top:56%;font-size:12px;opacity:0.4">❄</span><span style="left:74%;top:90%;font-size:20px;opacity:0.3">❄</span><span style="left:82%;top:68%;font-size:14px;opacity:0.2">❄</span><span style="left:90%;top:82%;font-size:18px;opacity:0.45">❄</span><span style="left:14%;top:92%;font-size:15px;opacity:0.3">❄</span><span style="left:30%;top:95%;font-size:12px;opacity:0.2">❄</span><span style="left:70%;top:95%;font-size:13px;opacity:0.35">❄</span><span style="left:88%;top:48%;font-size:22px;opacity:0.25">❄</span><span style="left:96%;top:70%;font-size:11px;opacity:0.4">❄</span></div>
   
 
   <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4" :class="{'landing-main': view==='home'}">
