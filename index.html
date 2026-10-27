@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css?family=Baloo+2:400,800&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/dist/html5-qrcode.min.js"></script>
 <style>
   :root{
     --rounded-box: 2.5rem; --rounded-btn: 9999px; --rounded-badge: 9999px; --rounded-input: 1rem;
@@ -757,6 +758,8 @@
         <button class="seg-btn seg-guest" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-6 h-6 inline"></i> I'm a guest</button>
         <button class="seg-btn seg-host" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
       </div>
+      <button class="btn btn-outline w-full mt-3" :disabled="!setupDone" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
       <p v-if="setupDone" class="text-sm opacity-80 text-center">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name. Host? Tap "I'm the host" to create your party.</p>
@@ -1122,6 +1125,19 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
     </div>
   </div>
+  <!-- Scan QR modal -->
+  <div v-if="showQrModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeQrModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Scan QR code</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeQrModal">✕</button>
+      </div>
+      <p class="text-sm opacity-70 mt-1">Point your camera at the host's QR code.</p>
+      <div id="qr-reader" class="mt-3"></div>
+      <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
+      <button class="btn btn-ghost w-full mt-2" @click="closeQrModal">Cancel</button>
+    </div>
+  </div>
         <!-- Add / Edit guest modal -->
         <div v-if="showGuestModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeGuestModal">
           <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:480px;max-height:90vh;overflow:auto">
@@ -1254,7 +1270,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false,
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1321,6 +1337,28 @@ createApp({
     closePollModal(){ this.showPollModal=false; },
     openWishModal(){ this.wishFormMsg=''; this.showWishModal=true; },
     closeWishModal(){ this.showWishModal=false; },
+    async openQrModal(){
+      this.qrMsg=''; this.showQrModal=true;
+      await this.$nextTick();
+      if(!window.Html5Qrcode){ this.qrMsg='QR scanner could not load — check your connection and try again, or scan with your phone camera app instead.'; return; }
+      try{
+        this._qrScanner=new Html5Qrcode('qr-reader');
+        await this._qrScanner.start({facingMode:'environment'}, {fps:10, qrbox:{width:250, height:250}},
+          (text)=>this.onQrScanned(text), ()=>{});
+      }catch(e){ this.qrMsg='Camera could not start — open this page over HTTPS and allow camera access, or scan with your phone camera app instead.'; }
+    },
+    async closeQrModal(){
+      this.showQrModal=false;
+      if(this._qrScanner){ try{ await this._qrScanner.stop(); }catch(e){} try{ this._qrScanner.clear(); }catch(e){} this._qrScanner=null; }
+    },
+    async onQrScanned(text){
+      await this.closeQrModal();
+      let scanned=null; try{ scanned=new URL(text.trim()); }catch(e){}
+      const base=new URL(this.pageUrl);
+      const isPartyQr=scanned && scanned.origin===base.origin && scanned.pathname===base.pathname;
+      if(isPartyQr){ this.startGuest(); }
+      else{ this.qrMsg='That QR code is not for this party. Scan the QR code from your host.'; }
+    },
     async goToDone(){ if(this.guestMe){ await this.loadWishlists(); await this.loadPoll(); } this.goTo('done'); },
     waveSanta(){ this.santaWaving=true; setTimeout(()=>{ this.santaWaving=false; }, 1200); },
     startGuest(){
