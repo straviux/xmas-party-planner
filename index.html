@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b91c1c">
+<title>🎄 Christmas Party — Secret Santa, Wishlists & Theme Poll</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css">
+<script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+  /* Material Design 3 Expressive, adapted to Christmas, on top of DaisyUI.
+     Expressive = big rounded shapes, bold colour, large type, springy press. */
+  :root{
+    --rounded-box: 1.75rem; --rounded-btn: 9999px; --rounded-badge: 9999px; --rounded-input: 1rem;
+    --m3-primary:#c62828; --m3-secondary:#2e7d32; --m3-tertiary:#f9a825; --m3-surface:#fff8f0;
+  }
+  body{ background:var(--m3-surface); font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+  /* Mobile-first: 16px inputs stop iOS zooming on focus, 48px+ tap targets,
+     safe-area padding for notched phones, no horizontal overflow. */
+  input, textarea, select{ font-size:16px !important; }
+  .btn{ min-height:48px; }
+  main{ padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  @media (max-width: 640px){
+    main{ padding-left:.75rem; padding-right:.75rem; }
+    .card{ padding:1rem !important; }
+    h1{ font-size:1.5rem !important; } h2{ font-size:1.35rem !important; }
+    .m3-tab{ padding:.6rem .85rem; font-size:.9rem; }
+    .m3-person{ padding:.9rem !important; }
+    .btn{ width:100%; }
+    .btn-xs, .btn-sm{ min-height:44px; font-size:.95rem; }
+    img{ max-width:100%; height:auto; }
+  }
+  .m3-header{ background:linear-gradient(135deg,#b91c1c,#dc2626 55%,#2e7d32); color:#fff; border-radius:0 0 2rem 2rem; }
+  .m3-card{ border-radius:1.75rem !important; box-shadow:0 10px 30px rgba(0,0,0,.08) !important; border:1px solid #f3e8d8 !important; }
+  .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s; }
+  .btn:hover{ transform:scale(1.02); } .btn:active{ transform:scale(.97); }
+  .btn-primary{ background:var(--m3-primary) !important; border-color:var(--m3-primary) !important; color:#fff !important; }
+  .btn-success, .btn-secondary{ background:var(--m3-secondary) !important; border-color:var(--m3-secondary) !important; color:#fff !important; }
+  .input, .textarea{ border-radius:1rem !important; }
+  .m3-tab{ border-radius:9999px; padding:.65rem 1rem; font-weight:700; white-space:nowrap; flex-shrink:0; }
+  .m3-tab.active{ background:var(--m3-secondary); color:#fff; box-shadow:0 6px 18px rgba(46,125,50,.35); }
+  .m3-person{ border-radius:1.25rem; border:2px solid #f3e8d8; transition:transform .15s cubic-bezier(.34,1.56,.64,1); }
+  .m3-person:hover{ transform:translateY(-2px) scale(1.01); border-color:var(--m3-secondary); }
+  .m3-bar{ height:16px; border-radius:9999px; background:#f3e8d8; overflow:hidden; }
+  .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
+  h1{ letter-spacing:-.02em; } h2{ letter-spacing:-.01em; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="m3-header p-4 sm:p-6 text-center">
+    <h1 class="text-2xl sm:text-3xl font-black flex items-center justify-center gap-2"><i data-lucide="tree-pine" class="w-7 h-7 sm:w-8 sm:h-8"></i> {{ party || 'Christmas Party' }}</h1>
+    <p class="opacity-90 mt-1">Secret Santa (one QR, reveal once) • Wishlists • Christmas theme poll</p>
+    <p class="text-sm opacity-80 mt-1">JavaScript + Vue 3 + DaisyUI + Lucide • SQLite on the server • No PHP</p>
+  </header>
+
+  <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4">
+    <!-- Tabs: DaisyUI buttons, M3 expressive pill style. On mobile this scrolls horizontally instead of wrapping into a cramped stack. -->
+    <div class="flex flex-nowrap gap-2 my-4 overflow-x-auto pb-1" style="scrollbar-width:none">
+      <button class="m3-tab" :class="{active: tab==='santa'}" @click="switchTab('santa')"><i data-lucide="gift" class="w-4 h-4 inline"></i> Secret Santa</button>
+      <button class="m3-tab" :class="{active: tab==='wish'}" @click="switchTab('wish')"><i data-lucide="list-heart" class="w-4 h-4 inline"></i> Wishlist</button>
+      <button class="m3-tab" :class="{active: tab==='poll'}" @click="switchTab('poll')"><i data-lucide="vote" class="w-4 h-4 inline"></i> Theme Poll</button>
+      <button class="m3-tab" :class="{active: tab==='host'}" @click="switchTab('host')"><i data-lucide="key-round" class="w-4 h-4 inline"></i> Host</button>
+    </div>
+
+    <!-- SECRET SANTA -->
+    <section v-show="tab==='santa'">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h2 class="text-2xl font-black flex gap-2 items-center"><i data-lucide="search"></i> Find your name</h2>
+        <p class="text-sm opacity-70 mt-1">Type any part of your name or nickname. Tap your exact entry — you never type a name to reveal, so spelling can't mismatch.</p>
+        <input class="input input-bordered w-full mt-3" v-model="search" placeholder="Search your name or nickname…">
+        <div class="mt-3 space-y-2">
+          <button v-if="!guests.length" class="btn btn-ghost w-full">No draw yet — the host needs to set it up first.</button>
+          <button v-else-if="!filteredGuests.length" class="btn btn-ghost w-full">No match. Try a first name, nickname, or part of a name.</button>
+          <button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" :disabled="g.claimed" @click="selectGuest(g)">
+            <b class="text-lg">{{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span></b>
+            <span v-if="g.claimed" class="text-error font-bold"> — Already revealed</span>
+            <div v-if="g.aliases.length" class="text-sm opacity-60">Also: {{ g.aliases.join(', ') }}</div>
+          </button>
+        </div>
+      </div>
+
+      <div v-if="selected" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black">Is this you?</h2>
+        <p class="text-xl mt-2"><b>{{ selected.display }}</b><span v-if="selected.nickname"> “{{ selected.nickname }}”</span></p>
+        <p v-if="selected.aliases.length" class="text-sm opacity-60">Also: {{ selected.aliases.join(', ') }}</p>
+        <input v-if="selected.needs_pin" class="input input-bordered w-full mt-3" v-model="guestPin" inputmode="numeric" placeholder="Your private PIN, if you have one">
+        <div class="alert alert-warning mt-3 rounded-2xl">⚠️ This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you. Note it down first.</div>
+        <button class="btn btn-success w-full mt-3" @click="doReveal">Yes, that's me — show my recipient</button>
+        <button class="btn btn-ghost w-full mt-2" @click="selected=null">No, go back</button>
+        <div v-if="confirmMsg" class="alert alert-error mt-3 rounded-2xl">{{ confirmMsg }}</div>
+      </div>
+
+      <div v-if="recipient" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4 text-center">
+        <h2 class="text-2xl font-black">🎁 You are buying for:</h2>
+        <div class="text-2xl sm:text-3xl font-black my-4 break-words">{{ recipient.name }}<span v-if="recipient.nickname"> “{{ recipient.nickname }}”</span></div>
+        <p v-if="recipient.budget" class="opacity-70">Gift budget: {{ recipient.budget }}</p>
+        <div class="alert alert-warning mt-3 rounded-2xl">Write it down now. This screen won't show it again, and rescanning the QR with your name will only say “already revealed”.</div>
+        <button class="btn btn-primary w-full mt-3" @click="recipient=null; selected=null; search=''">I've noted it down</button>
+      </div>
+    </section>
+
+    <!-- WISHLIST -->
+    <section v-show="tab==='wish'">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h2 class="text-2xl font-black flex gap-2 items-center"><i data-lucide="list-heart"></i> Wishlists</h2>
+        <p class="text-sm opacity-70 mt-1">Post what you'd like, so your Secret Santa giver can check your list after they reveal you. Only you can add or delete your own items.</p>
+        <p class="font-bold mt-4">Step 1 — who are you?</p>
+        <input class="input input-bordered w-full mt-2" v-model="wishSearch" placeholder="Search your name or nickname…">
+        <div class="mt-2 space-y-2">
+          <button v-for="g in filteredWishGuests" :key="g.id" class="m3-person w-full text-left p-3 bg-white" @click="pickWishMe(g)"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></button>
+        </div>
+        <p v-if="wishMe" class="mt-3">Posting as: <b>{{ wishMe.display }}</b></p>
+        <div v-if="wishMe" class="mt-3 space-y-2">
+          <p class="font-bold">Step 2 — what kind of item?</p>
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-sm" :class="{'btn-primary': wishKind==='text'}" @click="wishKind='text'">📝 Plain text</button>
+            <button class="btn btn-sm" :class="{'btn-primary': wishKind==='link'}" @click="wishKind='link'">🔗 Link</button>
+            <button class="btn btn-sm" :class="{'btn-primary': wishKind==='image'}" @click="wishKind='image'">📸 Screenshot</button>
+          </div>
+          <input v-if="wishKind==='text'" class="input input-bordered w-full" v-model="wishText" placeholder="I wish for… e.g. cosy socks, a book, board game">
+          <div v-if="wishKind==='link'" class="space-y-2">
+            <input class="input input-bordered w-full" v-model="wishText" placeholder="What is it? e.g. cosy socks">
+            <input class="input input-bordered w-full" v-model="wishLink" type="url" placeholder="Link to it — paste the shop URL">
+          </div>
+          <div v-if="wishKind==='image'" class="space-y-2">
+            <input class="input input-bordered w-full" v-model="wishText" placeholder="Caption (optional) — e.g. the red one in this photo">
+            <input ref="wishFile" class="file-input file-input-bordered w-full" type="file" accept="image/*" @change="onWishImageFile">
+            <p class="text-sm opacity-70">Pick a screenshot from your phone or computer. Keep it under about 2 MB — it is stored with your wishlist so your giver can see it.</p>
+            <div v-if="wishImage">
+              <img :src="wishImage" class="rounded-xl max-w-full max-h-48 object-contain" alt="Wishlist screenshot preview">
+              <p class="text-sm opacity-70 mt-1">{{ wishImageName }}</p>
+              <button class="btn btn-sm btn-ghost" @click="clearWishImage">Remove screenshot</button>
+            </div>
+          </div>
+          <input class="input input-bordered w-full" v-model="wishNotes" placeholder="Size / colour / notes (optional)">
+          <input v-if="wishMe.needs_pin" class="input input-bordered w-full" v-model="wishPin" inputmode="numeric" placeholder="Your private PIN, if you have one">
+          <button class="btn btn-success w-full" @click="addWishItem">Add to my wishlist</button>
+          <div v-if="wishFormMsg" class="alert mt-2 rounded-2xl" :class="wishFormMsgOk ? 'alert-success' : 'alert-error'">{{ wishFormMsg }}</div>
+        </div>
+      </div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black">Everyone's wishlists</h2>
+        <p class="text-sm opacity-70">Tap Reserve on someone else's item — it shows as Reserved to everyone, but never says who reserved it. Only the reserver can unreserve it.</p>
+        <div v-for="owner in wishBoard" :key="owner.id" class="mt-4">
+          <b>{{ owner.display }}</b><span v-if="owner.nickname"> “{{ owner.nickname }}”</span>
+          <p v-if="!owner.items.length" class="text-sm opacity-60">— no wishlist yet</p>
+          <ul class="list-disc ml-5 mt-1 space-y-1">
+            <li v-for="it in owner.items" :key="it.id">
+              <span v-if="it.kind==='image' && it.image"><a :href="it.image" target="_blank" rel="noopener"><img :src="it.image" class="rounded-xl max-w-full max-h-48 object-contain my-1" :alt="it.text || 'Wishlist screenshot'"></a><br></span>
+              <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'">📸 Screenshot</span>
+              <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link">link ↗</a>
+              <span v-if="it.notes" class="text-sm opacity-60">({{ it.notes }})</span>
+              <span v-if="it.reserved" class="text-error font-bold">{{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
+              <button v-if="wishMe && wishMe.id===owner.id" class="btn btn-sm btn-ghost" @click="deleteWishItem(it.id)">Delete</button>
+              <button v-if="wishMe && wishMe.id!==owner.id" class="btn btn-sm" @click="reserveWishItem(owner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- POLL -->
+    <section v-show="tab==='poll'">
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h2 class="text-2xl font-black flex gap-2 items-center"><i data-lucide="vote"></i> Christmas theme poll</h2>
+        <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
+        <p class="font-bold mt-4">Step 1 — who are you?</p>
+        <input class="input input-bordered w-full mt-2" v-model="pollSearch" placeholder="Search your name or nickname…">
+        <div class="mt-2 space-y-2">
+          <button v-for="g in filteredPollGuests" :key="g.id" class="m3-person w-full text-left p-3 bg-white" @click="pickPollMe(g)"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></button>
+        </div>
+        <p v-if="pollMe" class="mt-3">Voting as: <b>{{ pollMe.display }}</b></p>
+        <input v-if="pollMe && pollMe.needs_pin" class="input input-bordered w-full mt-2" v-model="pollPin" inputmode="numeric" placeholder="Your private PIN, if you have one">
+        <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it in the Host tab.</div>
+        <div v-else class="mt-4">
+          <h3 class="text-xl font-black">{{ poll.question }}</h3>
+          <p class="text-sm opacity-70">{{ poll.open ? 'Voting open' : 'Poll closed' }} • {{ poll.total }} vote(s)</p>
+          <div v-for="o in poll.options" :key="o.id" class="mt-3">
+            <b>{{ o.text }}</b> <span v-if="poll.my_vote===o.id">⭐ yours</span> — {{ o.votes }} vote(s) ({{ poll.total ? Math.round(o.votes/poll.total*100) : 0 }}%)
+            <div class="m3-bar mt-1"><div :style="{width: (poll.total ? Math.round(o.votes/poll.total*100) : 0) + '%'}"></div></div>
+            <button v-if="poll.open" class="btn btn-sm w-full sm:w-auto mt-2" :disabled="!pollMe" @click="votePoll(o.id)">Vote for this</button>
+          </div>
+          <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl">🏆 Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
+          <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- HOST -->
+    <section v-show="tab==='host'">
+      <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h2 class="text-2xl font-black">Host setup</h2>
+        <p class="text-sm opacity-70 mt-1">Add each guest once. Nickname shows next to the name. Aliases are extra searchable spellings, so guests can find themselves even if they use a different name.</p>
+        <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
+        <label class="block mt-2">Gift budget (optional) <input class="input input-bordered w-full" v-model="partyBudget" placeholder="e.g. £20"></label>
+        <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
+        <div v-for="(r,i) in guestRows" :key="i" class="grid grid-cols-1 sm:grid-cols-2 gap-2 border border-dashed rounded-2xl p-3 mt-3">
+          <input class="input input-bordered" v-model="r.display" placeholder="Name *">
+          <input class="input input-bordered" v-model="r.nickname" placeholder="Nickname (optional)">
+          <input class="input input-bordered sm:col-span-2" v-model="r.aliasesText" placeholder="Aliases, comma separated (optional)">
+          <input class="input input-bordered" v-model="r.pin" placeholder="Guest PIN (optional)">
+          <button class="btn btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
+        </div>
+        <button class="btn mt-3" @click="guestRows.push({display:'',nickname:'',aliasesText:'',pin:''})">+ Add guest</button>
+        <button class="btn btn-success w-full mt-3" @click="doSetup">Draw names &amp; lock the draw</button>
+        <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
+        <p class="text-sm opacity-70 mt-2">The draw is a derangement: nobody gets themselves. The host dashboard shows only who has / hasn't claimed — never who got whom.</p>
+      </div>
+
+      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
+        <h2 class="text-2xl font-black">Host dashboard</h2>
+        <p class="text-sm opacity-70">Enter your host PIN to see claimed status. Recipients are never shown here.</p>
+        <input class="input input-bordered w-full mt-2" v-model="hostPinCheck" placeholder="Host PIN">
+        <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
+        <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
+        <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
+          {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
+          <button v-if="g.claimed" class="btn btn-sm btn-ghost ml-2" @click="resetOne(g.id)">Reset this name</button>
+        </div>
+        <div v-if="qrUrl" class="text-center mt-4">
+          <h3 class="font-black">📱 Single QR — print this, everyone scans the same one</h3>
+          <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-2" style="max-width:280px;width:100%">
+          <p class="text-sm break-all opacity-70">{{ pageUrl }}</p>
+          <p class="text-sm">Scan → search your name → tap your exact entry → confirm → see your recipient once.</p>
+          <button class="btn mt-2" onclick="window.print()">🖨️ Print this QR sheet</button>
+        </div>
+      </div>
+
+      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <h2 class="text-2xl font-black">🗳️ Theme poll setup (host)</h2>
+        <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
+        <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
+        <label class="block mt-2">Host PIN <input class="input input-bordered w-full" v-model="pollHostPin" placeholder="Host PIN"></label>
+        <button class="btn btn-success w-full mt-3" @click="setupPoll">Create / replace poll</button>
+        <button class="btn w-full mt-2" @click="setPollOpen(true)">Reopen poll</button>
+        <button class="btn w-full mt-2" @click="setPollOpen(false)">Close poll (show final winner)</button>
+        <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
+        <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+      </div>
+
+      <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
+        <button class="btn btn-error w-full" @click="resetAll">Reset everything (starts over)</button>
+      </div>
+    </section>
+
+    <p class="text-sm opacity-60 text-center mt-4">How it stops rescans: SQLite marks a name claimed the moment it reveals. A second scan + the same name only gets “already revealed”, with no recipient shown. The database file lives outside public/, so it can never be downloaded.</p>
+  </main>
+</div>
+<script>
+const { createApp, nextTick } = Vue;
+function norm(s){ return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim(); }
+function lev(a,b){ const m=a.length,n=b.length; if(!m) return n; if(!n) return m; let prev=Array.from({length:n+1},(_,i)=>i), cur=new Array(n+1); for(let i=1;i<=m;i++){ cur[0]=i; for(let j=1;j<=n;j++) cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1)); [prev,cur]=[cur,prev]; } return prev[n]; }
+function searchable(g){ return norm([g.display,g.nickname,(g.aliases||[]).join(' ')].join(' ')); }
+function matches(g,q){ if(!q) return true; const hay=searchable(g).split(' '); return q.split(' ').every(tok => hay.some(h => h.includes(tok) || (tok.length>=3 && lev(tok,h)<=1))); }
+
+createApp({
+  data(){ return {
+    tab:'santa', party:'Christmas Party', budget:'', guests:[], setupDone:false,
+    search:'', selected:null, guestPin:'', confirmMsg:'', recipient:null,
+    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[{display:'',nickname:'',aliasesText:'',pin:''},{display:'',nickname:'',aliasesText:'',pin:''},{display:'',nickname:'',aliasesText:'',pin:''}],
+    setupMsg:'', setupOk:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
+    wishSearch:'', wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
+    pollSearch:'', pollMe:null, poll:null, pollPin:'', pollMsg:'',
+    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollHostPin:'', pollSetupMsg:'', pollSetupOk:false,
+  }; },
+  computed:{
+    filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
+    filteredWishGuests(){ return this.guests.filter(g=>matches(g, norm(this.wishSearch))); },
+    filteredPollGuests(){ return this.guests.filter(g=>matches(g, norm(this.pollSearch))); },
+    qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.pageUrl) : ''; },
+  },
+  updated(){ if(window.lucide) lucide.createIcons(); },
+  async mounted(){
+    if(window.lucide) lucide.createIcons();
+    try{
+      const s=await this.api('status');
+      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
+    }catch(e){ /* server not running yet — host setup will show */ }
+  },
+  methods:{
+    async api(action, body, query){
+      const url='api.php?action='+action+(query?'&'+query:'');
+      const r=await fetch(url,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+      const j=await r.json().catch(()=>({error:'Server error'}));
+      if(!r.ok) throw new Error(j.error||'Server error');
+      return j;
+    },
+    async switchTab(t){ this.tab=t; if(t==='wish') await this.loadWishlists(); if(t==='poll') await this.loadPoll(); },
+    async loadGuests(){ const d=await this.api('list'); this.guests=d.guests; this.party=d.party; this.budget=d.budget; },
+    selectGuest(g){ if(g.claimed) return; this.selected=g; this.confirmMsg=''; this.guestPin=''; },
+    async doReveal(){
+      try{
+        const res=await this.api('reveal',{id:this.selected.id, pin:this.guestPin});
+        this.recipient={name:res.recipient, nickname:res.recipient_nickname, budget:res.budget};
+        this.selected=null; await this.loadGuests();
+      }catch(e){
+        this.confirmMsg = e.message==='already_claimed' ? 'This name has already been revealed — no recipient is shown again. Ask the host if you lost it.'
+          : e.message==='pin_incorrect' ? 'That PIN is incorrect. This name has NOT been revealed yet, try again or ask the host.'
+          : 'Could not reveal: '+e.message;
+      }
+    },
+    async doSetup(){
+      const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
+      if(guests.length<2){ this.setupMsg='Add at least 2 guests.'; this.setupOk=false; return; }
+      if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
+      try{
+        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
+        this.setupMsg='Draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests();
+      }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
+    },
+    async loadHost(){
+      try{
+        const d=await this.api('host_status',{host_pin:this.hostPinCheck});
+        this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
+        this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true;
+      }catch(e){ this.hostMsg=e.message==='host_pin_incorrect'?'Host PIN incorrect.':e.message; this.hostOk=false; }
+    },
+    async resetOne(id){
+      if(!confirm('Reset this name so it can be revealed again? Only do this in person with the real guest.')) return;
+      await this.api('reset_one',{host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests();
+    },
+    async resetAll(){
+      const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return;
+      if(!confirm('This deletes the whole draw and all claims. Are you sure?')) return;
+      try{ await this.api('reset_all',{host_pin:pin}); location.reload(); }catch(e){ alert(e.message); }
+    },
+    // Wishlist
+    pickWishMe(g){ this.wishMe=g; this.loadWishlists(); },
+    async loadWishlists(){
+      try{ const d=await this.api('wishlist_list', null, 'me='+(this.wishMe?this.wishMe.id:'')); this.wishBoard=d.board; }catch(e){ this.wishBoard=[]; }
+    },
+    onWishImageFile(e){
+      const f=e.target.files && e.target.files[0]; if(!f) return;
+      if(!f.type.startsWith('image/')){ this.wishFormMsg='That file is not an image — pick a screenshot (PNG, JPEG, GIF or WebP).'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
+      if(f.size>2*1024*1024){ this.wishFormMsg='That screenshot is over 2 MB — pick a smaller one or crop it first.'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
+      const r=new FileReader();
+      r.onload=()=>{ this.wishImage=r.result; this.wishImageName=f.name; this.wishFormMsg=''; };
+      r.readAsDataURL(f);
+    },
+    clearWishImage(){ this.wishImage=''; this.wishImageName=''; if(this.$refs.wishFile) this.$refs.wishFile.value=''; },
+    async addWishItem(){
+      try{
+        await this.api('wishlist_add',{guest_id:this.wishMe.id, pin:this.wishPin, kind:this.wishKind, text:this.wishText, link:this.wishKind==='link'?this.wishLink:'', image:this.wishKind==='image'?this.wishImage:'', notes:this.wishNotes});
+        this.wishText=''; this.wishLink=''; this.wishNotes=''; this.clearWishImage(); this.wishFormMsg='Added to your wishlist.'; this.wishFormMsgOk=true; await this.loadWishlists();
+      }catch(e){ this.wishFormMsg=e.message==='pin_incorrect'?'PIN incorrect.':'Could not add: '+e.message; this.wishFormMsgOk=false; }
+    },
+    async deleteWishItem(itemId){
+      await this.api('wishlist_delete',{guest_id:this.wishMe.id, pin:this.wishPin, item_id:itemId}); await this.loadWishlists();
+    },
+    async reserveWishItem(ownerId, itemId){
+      if(!this.wishMe){ alert('Pick your name first, so the system knows who is reserving — it will not show your name to anyone.'); return; }
+      try{ await this.api('wishlist_reserve',{guest_id:this.wishMe.id, pin:this.wishPin, owner_id:ownerId, item_id:itemId}); await this.loadWishlists(); }
+      catch(e){ alert(e.message==='already_reserved'?'That item is already reserved by someone else.':'Could not reserve: '+e.message); }
+    },
+    // Poll
+    pickPollMe(g){ this.pollMe=g; this.loadPoll(); },
+    async loadPoll(){
+      try{ const d=await this.api('poll_get', null, 'me='+(this.pollMe?this.pollMe.id:'')); this.poll=d.poll; }catch(e){ this.poll=null; }
+    },
+    async votePoll(optionId){
+      try{ const d=await this.api('poll_vote',{guest_id:this.pollMe.id, pin:this.pollPin, option_id:optionId}); this.poll=d.poll; this.pollMsg=''; }
+      catch(e){ this.pollMsg=e.message==='poll_closed'?'Poll is closed.':'Could not vote: '+e.message; }
+    },
+    async setupPoll(){
+      try{
+        const d=await this.api('poll_setup',{host_pin:this.pollHostPin, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        this.poll=d.poll; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
+      }catch(e){ this.pollSetupMsg=e.message==='host_pin_incorrect'?'Host PIN incorrect.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
+    },
+    async setPollOpen(open){
+      try{ const d=await this.api('poll_set_open',{host_pin:this.pollHostPin, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
+      catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
+    },
+    async resetPoll(){
+      if(!confirm('Delete the theme poll and all its votes?')) return;
+      try{ await this.api('poll_reset',{host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
+      catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
+    },
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
