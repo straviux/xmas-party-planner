@@ -1634,7 +1634,7 @@ const app=createApp({
     },
     closeGuestEntryModal(){ this.showGuestEntryModal=false; },
     async enterGuestWithCode(){
-      if(!this.guestEntryCode.trim()){ this.guestEntryMsg='Enter the invite code from the host.'; return; }
+      if(!this.guestEntryCode.trim()){ this.guestEntryMsg='Enter the invite code from the host.'; this.showToast(this.guestEntryMsg, false); return; }
       try{
         // Invite code only opens the guest page — it never returns the
         // guest list or any draw information.
@@ -1642,7 +1642,7 @@ const app=createApp({
         this.showGuestEntryModal=false; this.guestEntryMsg='';
         if(this.guestMe){ this.guestStep=2; this.goTo('reveal'); } else { this.guestStep=1; this.goTo('who'); } this.guestSearched=false;
       }catch(e){
-        this.guestEntryMsg = e.message==='invite_incorrect' ? 'That invite code is incorrect. Ask the host for the right one.' : 'Could not check that code: '+e.message;
+        this.guestEntryMsg = e.message==='invite_incorrect' ? 'That invite code is incorrect. Ask the host for the right one.' : 'Could not check that code: '+e.message; this.showToast(this.guestEntryMsg, false);
       }
     },
     // ---- Host Google login (replaces the host PIN everywhere) ----
@@ -1672,7 +1672,7 @@ const app=createApp({
         this.showToast('Signed in.'); this.openDashboard();
         if(this.setupDone){ await this.loadInvite(); }
       }catch(e){
-        this.googleMsg = e.message==='google_not_configured' ? 'Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.' : 'Google sign-in failed: '+e.message;
+        this.googleMsg = e.message==='google_not_configured' ? 'Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.' : 'Google sign-in failed: '+e.message; this.showToast(this.googleMsg, false);
       }
     },
     async checkHostSession(){
@@ -1713,7 +1713,7 @@ const app=createApp({
         this.hostPinCheck=this.hostPinEntry;
         this.showHostPinModal=false; this.hostPinEntry=''; this.hostPinEntryError=false;
         this.openDashboard();
-      }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; }
+      }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; this.showToast('Incorrect PIN — try again.', false); }
     },
     openDashboard(){ this.goTo('hostdashboard'); this.loadHost(); },
     openClaimedModal(){ this.showClaimedModal=true; this.loadHost(); },
@@ -1726,7 +1726,7 @@ const app=createApp({
       this.showConfirmDialog=true;
     },
     closeConfirmDialog(){ this.showConfirmDialog=false; this.confirmDialogCallback=null; },
-    confirmDialogOk(){ const cb=this.confirmDialogCallback; this.closeConfirmDialog(); if(cb) cb(); },
+    async confirmDialogOk(){ const cb=this.confirmDialogCallback; this.closeConfirmDialog(); if(cb){ try{ await cb(); }catch(e){ this.showToast('Could not complete: '+e.message, false); } } },
     closeClaimedModal(){ this.showClaimedModal=false; },
     // TEMPORARY: creating a new host does not require Google sign-in until
     // Google is configured after deployment — setup accepts a host PIN.
@@ -1744,7 +1744,7 @@ const app=createApp({
         this.confirmMsg = e.message==='already_claimed' ? 'This name has already been revealed — no recipient is shown again. Ask the host if you lost it.'
           : e.message==='pin_incorrect' ? 'That PIN is incorrect. This name has NOT been revealed yet, try again or ask the host.'
           : 'Could not reveal: '+e.message;
-        if(e.message==='already_claimed') this.guestAlreadyClaimed=true;
+        if(e.message==='already_claimed') this.guestAlreadyClaimed=true; this.showToast(this.confirmMsg, false);
       }
     },
     async goToGuestHome(){
@@ -1788,7 +1788,7 @@ const app=createApp({
     closeGuestModal(){ this.showGuestModal=false; this.guestFormMsg=''; },
     saveGuestModal(){
       const f={display:this.guestForm.display.trim(), nickname:this.guestForm.nickname.trim(), aliasesText:this.guestForm.aliasesText.trim(), pin:this.guestForm.pin.trim()};
-      if(!f.display){ this.guestFormMsg='Guest name is required.'; return; }
+      if(!f.display){ this.guestFormMsg='Guest name is required.'; this.showToast(this.guestFormMsg, false); return; }
       if(this.guestEditIndex>=0) this.guestRows[this.guestEditIndex]=f;
       else this.guestRows.push(f);
       try{ localStorage.setItem('xmasGuestRows', JSON.stringify(this.guestRows)); }catch(e){}
@@ -1796,7 +1796,7 @@ const app=createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Sign in with Google or choose a host PIN (at least 4 characters).'; this.setupOk=false; return; }
+      if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Sign in with Google or choose a host PIN (at least 4 characters).'; this.setupOk=false; this.showToast(this.setupMsg, false); return; }
       this.savingSetup=true;
       try{
         if(this.setupDone){
@@ -1812,8 +1812,8 @@ const app=createApp({
     openResetPinModal(){ this.resetPinCurrent=''; this.resetPinNew=''; this.resetPinConfirm=''; this.resetPinMsg=''; this.resetPinMsgOk=false; this.showResetPinModal=true; },
     closeResetPinModal(){ this.showResetPinModal=false; this.resetPinMsg=''; },
     async doResetPin(){
-      if(this.resetPinNew.length<4){ this.resetPinMsg='New PIN must be at least 4 characters.'; this.resetPinMsgOk=false; return; }
-      if(this.resetPinNew!==this.resetPinConfirm){ this.resetPinMsg='New PINs do not match.'; this.resetPinMsgOk=false; return; }
+      if(this.resetPinNew.length<4){ this.resetPinMsg='New PIN must be at least 4 characters.'; this.resetPinMsgOk=false; this.showToast(this.resetPinMsg, false); return; }
+      if(this.resetPinNew!==this.resetPinConfirm){ this.resetPinMsg='New PINs do not match.'; this.resetPinMsgOk=false; this.showToast(this.resetPinMsg, false); return; }
       this.resettingPin=true;
       try{
         await this.api('host_pin_reset',{session:this.hostSession, host_pin:this.resetPinCurrent||this.hostPinCheck, new_pin:this.resetPinNew});
@@ -1830,14 +1830,14 @@ const app=createApp({
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
         this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true; this.hostLoaded=true;
         await this.loadInvite();
-      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
+      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; this.showToast(this.hostMsg, false); if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     resetOne(id){
       this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
     },
     resetAll(){
       if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
-      this.openConfirmDialog({title:'Reset everything?', message:'This deletes the whole draw and all claims. Are you sure?', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message); } }});
+      this.openConfirmDialog({title:'Reset everything?', message:'This deletes the whole draw and all claims. Are you sure?', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ this.showToast(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message, false); } }});
     },
     // Wishlist (guestMe is the session identity; wishMe/wishPin are synced in goToGifts)
     async loadWishlists(){
@@ -1845,8 +1845,8 @@ const app=createApp({
     },
     async onWishImageFile(e){
       const f=e.target.files && e.target.files[0]; if(!f) return;
-      if(!f.type.startsWith('image/')){ this.wishFormMsg='That file is not an image — pick a screenshot (PNG, JPEG, GIF, WebP or AVIF).'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
-      if(f.size>10*1024*1024){ this.wishFormMsg='That screenshot is over 10 MB — pick a smaller one or crop it first.'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
+      if(!f.type.startsWith('image/')){ this.wishFormMsg='That file is not an image — pick a screenshot (PNG, JPEG, GIF, WebP or AVIF).'; this.wishFormMsgOk=false; this.showToast(this.wishFormMsg, false); this.clearWishImage(); return; }
+      if(f.size>10*1024*1024){ this.wishFormMsg='That screenshot is over 10 MB — pick a smaller one or crop it first.'; this.wishFormMsgOk=false; this.showToast(this.wishFormMsg, false); this.clearWishImage(); return; }
       const readAsDataUrl=(file)=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
       // Convert to AVIF in the browser when it can (smaller, same quality); otherwise upload the original and let the server convert it.
       if(f.type!=='image/avif' && window.createImageBitmap){
@@ -1875,11 +1875,11 @@ const app=createApp({
     },
     async deleteWishItem(itemId){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
-      await this.api('wishlist_delete',{guest_id:this.wishMe.id, pin:this.wishPin, item_id:itemId}); await this.loadWishlists(); this.showToast('Wishlist item deleted.');
+      try{ await this.api('wishlist_delete',{guest_id:this.wishMe.id, pin:this.wishPin, item_id:itemId}); await this.loadWishlists(); this.showToast('Wishlist item deleted.'); }catch(e){ this.showToast('Could not delete: '+e.message, false); }
     },
     async reserveWishItem(ownerId, itemId){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
-      if(!this.wishMe){ alert('Pick your name first, so the system knows who is reserving — it will not show your name to anyone.'); return; }
+      if(!this.wishMe){ this.showToast('Pick your name first, so the system knows who is reserving — it will not show your name to anyone.', false); return; }
       try{ await this.api('wishlist_reserve',{guest_id:this.wishMe.id, pin:this.wishPin, owner_id:ownerId, item_id:itemId}); await this.loadWishlists(); this.showToast('Reservation updated.'); if(this.showWishOwnerModal && this.wishModalOwner){ const o=this.wishBoard.find(x=>x.id===this.wishModalOwner.id); if(o) this.wishModalOwner=o; } }
       catch(e){ this.showToast(e.message==='already_reserved'?'That item is already reserved by someone else.':'Could not reserve: '+e.message, false); }
     },
@@ -1897,7 +1897,7 @@ const app=createApp({
     closeEditPollModal(){ this.showEditPollModal=false; },
     async doEditPoll(){
       const opts=this.editPollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean);
-      if(!this.editPollQuestion.trim() || opts.length<2){ this.editPollMsg='Poll needs a question and at least 2 options.'; this.editPollMsgOk=false; return; }
+      if(!this.editPollQuestion.trim() || opts.length<2){ this.editPollMsg='Poll needs a question and at least 2 options.'; this.editPollMsgOk=false; this.showToast(this.editPollMsg, false); return; }
       try{
         await this.api('poll_edit',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:this.editPollId, question:this.editPollQuestion, options:opts});
         await this.loadPoll(); this.showEditPollModal=false; this.pollSetupMsg='Poll updated.'; this.pollSetupOk=true; this.showToast('Poll updated.');
