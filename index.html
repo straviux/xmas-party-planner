@@ -1395,7 +1395,14 @@ const app=createApp({
   updated(){ if(window.lucide) lucide.createIcons(); },
   watch:{
     guestRows:{ handler(v){ try{ localStorage.setItem('xmasGuestRows', JSON.stringify(v)); }catch(e){} }, deep:true },
-    $route(to){ this.view=to.name || 'home'; window.scrollTo(0,0); },
+    $route(to){
+      this.view=to.name || 'home'; window.scrollTo(0,0);
+      // A modal is not a page, so it must never survive a page change and
+      // keep rendering over the new page (e.g. home after a cancel).
+      this.showWishModal=false; this.showQrModal=false;
+      this.showGuestEntryModal=false; this.showHostEntryModal=false;
+      this.showGuestModal=false; this.fabOpen=false;
+    },
   },
   async mounted(){
     window.addEventListener('keydown', this.handleFabEscape);
