@@ -1494,7 +1494,7 @@ createApp({
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
         this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); this.goTo('host');
-      }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
+      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message; this.setupOk=false; }
       this.savingSetup=false;
     },
     async loadHost(){
