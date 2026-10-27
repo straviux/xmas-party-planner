@@ -801,10 +801,6 @@
     <!-- ============ GUEST FLOW ============ -->
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
-      <div class="flex gap-2 items-start">
-        <scor-santa size="4"></scor-santa>
-        <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Welcome in! Your party is below — use the dock to peek at wishlists and cast your vote.</div>
-      </div>
       <div v-if="guestMe" class="flex items-center gap-2 text-sm mt-1"><p class="text-left">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -833,6 +829,10 @@
             <i data-lucide="shopping-bag" class="w-6 h-6 mt-2"></i>
           </div>
         </div>
+      <div class="flex gap-2 items-start">
+        <scor-santa size="4"></scor-santa>
+        <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Welcome in! Use the dock to peek at wishlists and cast your vote.</div>
+      </div>
     </section>
 
 <section v-show="view==='who'">
