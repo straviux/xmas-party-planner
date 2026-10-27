@@ -26,7 +26,7 @@ define('GUARD', "<?php http_response_code(403); exit; ?>\n");
 // Arc: replace this with the real client ID from Google Cloud, and add the
 // deployed site origin (e.g. https://your-site.com) to that client's
 // Authorized JavaScript origins, or Google sign-in will refuse to load.
-define('GOOGLE_CLIENT_ID', '829355882959-r5dail3ga00lrus5la857eeu5i8euvot.apps.googleusercontent.com');
+define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
 // Superadmin: a site-owner account that can reset and control the host's
 // config and data (party, invite code, host PIN, guests' claimed status,
 // polls, wishlists, full reset). It is NOT a host account and it NEVER
@@ -228,14 +228,14 @@ if ($action === 'google_login') {
   if (!$tok) send(['error' => ($tok_err ?? 'google_token_invalid')], 403);
   $session = bin2hex(random_bytes(32));
   $s = ['google_sub' => $tok['sub'], 'email' => $tok['email'] ?? '', 'name' => $tok['name'] ?? '',
-        'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c')];
+        'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c'), 'picture' => $tok['picture'] ?? ''];
   save_host_session($s);
-  send(['ok' => true, 'session' => $session, 'email' => $s['email'], 'name' => $s['name']]);
+  send(['ok' => true, 'session' => $session, 'email' => $s['email'], 'name' => $s['name'], 'picture' => $tok['picture'] ?? '']);
 }
 if ($action === 'google_session') {
   $s = host_session_valid($input);
   if (!$s) send(['signed_in' => false]);
-  send(['signed_in' => true, 'email' => $s['email'] ?? '', 'name' => $s['name'] ?? '']);
+  send(['signed_in' => true, 'email' => $s['email'] ?? '', 'name' => $s['name'] ?? '', 'picture' => $s['picture'] ?? '']);
 }
 if ($action === 'google_logout') {
   if (host_session_valid($input)) save_host_session(null);

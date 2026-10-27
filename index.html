@@ -1095,7 +1095,7 @@
         <h2 class="text-2xl font-black">Host dashboard</h2>
         <p class="text-sm opacity-70 mt-1">Who has revealed, and how guests join. Recipients are never shown here.</p>
         <div v-if="hostSignedIn" class="flex items-center justify-between gap-3 mt-3">
-          <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
+          <p class="text-sm opacity-70 flex items-center gap-2"><img v-if="hostPicture" :src="hostPicture" alt="" style="width:32px;height:32px;border-radius:9999px">Signed in as {{ hostEmail }}</p>
           <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
         </div>
         <div class="grid grid-cols-3 gap-2 mt-4">
@@ -1174,7 +1174,10 @@
         </div>
         <label class="block mt-2">Party date <input class="input input-bordered w-full" type="date" v-model="partyDate"></label>
         <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
-        <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+        <div v-else class="flex items-center justify-between gap-3 mt-2">
+          <p class="text-sm opacity-70 flex items-center gap-2"><img v-if="hostPicture" :src="hostPicture" alt="" style="width:32px;height:32px;border-radius:9999px">Signed in as {{ hostEmail }}</p>
+          <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
+        </div>
         <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupDone" class="mt-2"><button class="btn btn-sm btn-compact btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
         
@@ -1364,7 +1367,10 @@
       <label class="block mt-3">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
       <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
       <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
-      <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+      <div v-else class="flex items-center justify-between gap-3 mt-2">
+        <p class="text-sm opacity-70 flex items-center gap-2"><img v-if="hostPicture" :src="hostPicture" alt="" style="width:32px;height:32px;border-radius:9999px">Signed in as {{ hostEmail }}</p>
+        <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
+      </div>
       
       <button class="btn btn-success w-full mt-3" @click="setupPoll">Create poll</button>
       <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Cancel</button>
@@ -1598,7 +1604,7 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'', superadminSet:false, superadminSignedIn:false, superadminSession:'', superadminUser:'', superadminFormUser:'', superadminFormPass:'', superadminExists:false, superadminParty:'', superadminBudget:'', superadminDate:'', superadminInvite:'', superadminHostEmail:'', superadminHostPinSet:false, superadminGuests:[], superadminPolls:[], superadminWishlistItems:0, superadminNewPin:'', superadminNewPass:'', superadminNewPassConfirm:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', hostPicture:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'', superadminSet:false, superadminSignedIn:false, superadminSession:'', superadminUser:'', superadminFormUser:'', superadminFormPass:'', superadminExists:false, superadminParty:'', superadminBudget:'', superadminDate:'', superadminInvite:'', superadminHostEmail:'', superadminHostPinSet:false, superadminGuests:[], superadminPolls:[], superadminWishlistItems:0, superadminNewPin:'', superadminNewPass:'', superadminNewPassConfirm:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
@@ -1846,7 +1852,7 @@ const app=createApp({
       try{
         const d=await this.api('google_login',{id_token:resp.credential});
         this.hostSession=d.session; try{ localStorage.setItem('xmasHostSession',d.session); }catch(e){}
-        this.hostSignedIn=true; this.hostEmail=d.email||'';
+        this.hostSignedIn=true; this.hostEmail=d.email||''; this.hostPicture=d.picture||'';
         this.showHostEntryModal=false;
         // Redirect automatically to the dashboard (the new host home) once logged in.
         this.showToast('Signed in.'); this.openDashboard();
@@ -1859,13 +1865,13 @@ const app=createApp({
       if(!this.hostSession) return;
       try{
         const d=await this.api('google_session',{session:this.hostSession});
-        if(d.signed_in){ this.hostSignedIn=true; this.hostEmail=d.email||''; if(this.setupDone) await this.loadInvite(); }
+        if(d.signed_in){ this.hostSignedIn=true; this.hostEmail=d.email||''; this.hostPicture=d.picture||''; if(this.setupDone) await this.loadInvite(); }
         else{ this.hostSignedIn=false; this.hostSession=''; try{ localStorage.removeItem('xmasHostSession'); }catch(e){} }
       }catch(e){ this.hostSignedIn=false; }
     },
     async googleSignOut(){
       try{ if(this.hostSession) await this.api('google_logout',{session:this.hostSession}); }catch(e){}
-      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
+      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostPicture=''; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
       try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
       this.hostMsg='Signed out.'; this.hostOk=true; this.showToast('Signed out.');
       this.goTo('hostdashboard');
