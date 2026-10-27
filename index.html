@@ -1139,6 +1139,22 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
     </div>
   </div>
+  <!-- Guest entry dialog: Scan QR or enter host PIN -->
+  <div v-if="showGuestEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeGuestEntryModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Join as a guest</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeGuestEntryModal">✕</button>
+      </div>
+      <p class="text-sm opacity-70 mt-1">Scan the host's QR code, or enter the host PIN.</p>
+      <button class="btn btn-primary w-full mt-4" @click="showGuestEntryModal=false; openQrModal()"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <p class="text-sm opacity-70 text-center mt-4">or</p>
+      <input class="input input-bordered w-full mt-2" v-model="guestEntryPin" placeholder="Host PIN" @keyup.enter="enterGuestWithPin">
+      <button class="btn btn-success w-full mt-3" @click="enterGuestWithPin">Continue with host PIN</button>
+      <div v-if="guestEntryMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestEntryMsg }}</div>
+      <button class="btn btn-ghost w-full mt-2" @click="closeGuestEntryModal">Cancel</button>
+    </div>
+  </div>
   <!-- Scan QR modal -->
   <div v-if="showQrModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeQrModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
@@ -1293,7 +1309,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1336,7 +1352,7 @@ createApp({
       if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
     }catch(e){ /* server not running yet — host setup will show */ }
     // QR scan only: ?guest=1 opens the guest page. Everyone else stays on home.
-    if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest();
+    if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest(true);
   },
   methods:{
     async api(action, body, query){
@@ -1352,8 +1368,8 @@ createApp({
     handleFabEscape(e){ if(e.key==='Escape') this.fabOpen=false; },
     goBack(){ if(this.viewStack.length){ this.view=this.viewStack.pop(); window.scrollTo(0,0); } else this.goHome(); },
     goHome(){ this.viewStack=[]; this.view='home'; window.scrollTo(0,0); },
-    openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.goTo('guest'); },
-    openVotePage(){ if(this.guestMe) this.goToVote(); else this.goTo('guest'); },
+    openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
+    openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
     openHostSetupModal(){ this.showHostSetupModal=true; },
     closeHostSetupModal(){ this.showHostSetupModal=false; },
     openPollModal(){ this.showPollModal=true; },
@@ -1363,6 +1379,45 @@ createApp({
     openQrModal(){ this.qrMsg=''; this.showQrModal=true; },
     closeQrModal(){ this.showQrModal=false; },
     openGuestTemp(){ this.closeQrModal(); this.goTo('guest'); this.guestStep=1; this.guestSearched=false; },
+    waveSanta(){ this.santaWaving=true; setTimeout(()=>{ this.santaWaving=false; }, 1200); },
+    startGuest(bypassDialog=false){
+      if(!this.setupDone) return;
+      if(this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)){ this.goToGifts(); return; }
+      if(!bypassDialog){ this.guestEntryPin=''; this.guestEntryMsg=''; this.showGuestEntryModal=true; return; }
+      this.goTo('guest');
+      this.guestStep = this.guestMe ? 2 : 1;
+      this.guestSearched=false;
+    },
+    closeGuestEntryModal(){ this.showGuestEntryModal=false; },
+    async enterGuestWithPin(){
+      if(!this.guestEntryPin.trim()){ this.guestEntryMsg='Enter the host PIN.'; return; }
+      try{
+        // Same host PIN check the host dashboard uses; the returned list is
+        // discarded — a correct PIN only opens the guest page, nothing else.
+        await this.api('host_status',{host_pin:this.guestEntryPin});
+        this.showGuestEntryModal=false; this.guestEntryMsg='';
+        this.goTo('guest'); this.guestStep = this.guestMe ? 2 : 1; this.guestSearched=false;
+      }catch(e){
+        this.guestEntryMsg = e.message==='host_pin_incorrect' ? 'That host PIN is incorrect. Ask the host for the right one.' : 'Could not check that PIN: '+e.message;
+      }
+    },
+    startHost(){ this.goTo('host'); },
+    selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
+    confirmClaimedGuest(){ this.guestStep=2; },
+    async doReveal(){
+      try{
+        const res=await this.api('reveal',{id:this.selected.id, pin:this.guestPin});
+        this.guestRecipient={name:res.recipient, nickname:res.recipient_nickname, budget:res.budget};
+        this.recipient=this.guestRecipient;
+        this.selected=null; await this.loadGuests();
+      }catch(e){
+        this.confirmMsg = e.message==='already_claimed' ? 'This name has already been revealed — no recipient is shown again. Ask the host if you lost it.'
+          : e.message==='pin_incorrect' ? 'That PIN is incorrect. This name has NOT been revealed yet, try again or ask the host.'
+          : 'Could not reveal: '+e.message;
+        if(e.message==='already_claimed') this.guestAlreadyClaimed=true;
+      }
+    },
+    async goToDone(){ if(this.guestMe){ await this.loadWishlists(); await this.loadPoll(); } this.goTo('done'); },
     async goToGifts(){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
       await this.loadWishlists();
