@@ -1383,13 +1383,17 @@ createApp({
     qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.guestUrl) : ''; },
   },
   updated(){ if(window.lucide) lucide.createIcons(); },
+  watch:{
+    guestRows:{ handler(v){ try{ localStorage.setItem('xmasGuestRows', JSON.stringify(v)); }catch(e){} }, deep:true },
+  },
   async mounted(){
     window.addEventListener('keydown', this.handleFabEscape);
     if(window.lucide) lucide.createIcons();
     try{
       const s=await this.api('status');
-      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
-    }catch(e){ /* server not running yet — host setup will show */ }
+      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} }
+      else { try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved)) this.guestRows=saved; }catch(e){} }
+    }catch(e){ /* server not running yet — host setup will show */ try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved)) this.guestRows=saved; }catch(e2){} }
     // QR scan only: ?guest=1 opens the guest page. Everyone else stays on home.
     if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest(true);
   },
@@ -1484,12 +1488,12 @@ createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(guests.length<2){ this.setupMsg='Add at least 2 guests on the Guests page.'; this.setupOk=false; return; }
+      if(guests.length<2){ this.setupMsg=`Add at least 2 guests on the Guests page (you have ${guests.length}).`; this.setupOk=false; return; }
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
       this.savingSetup=true;
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
-        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests(); this.goTo('host');
+        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); this.goTo('host');
       }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
       this.savingSetup=false;
     },
