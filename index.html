@@ -947,7 +947,7 @@
                 <p class="text-sm opacity-70 mt-1">{{ o.votes }} vote(s) • {{ poll.total ? Math.round(o.votes/poll.total*100) : 0 }}%</p>
                 <div class="m3-bar mt-1"><div :style="{width: (poll.total ? Math.round(o.votes/poll.total*100) : 0) + '%'}"></div></div>
               </div>
-              <button v-if="poll.open" class="btn shrink-0" :class="poll.my_vote===o.id ? 'btn-success' : ''" style="width:44px;height:44px;min-height:44px;padding:0" :aria-label="'Vote for ' + o.text" @click="votePoll(o.id)"><i data-lucide="check" class="w-5 h-5"></i></button>
+              <button v-if="poll.open" class="shrink-0" role="radio" :aria-checked="poll.my_vote===o.id" :style="{width:'28px',height:'28px',borderRadius:'9999px',border:'2px solid ' + (poll.my_vote===o.id ? '#34D399' : 'rgba(255,255,255,0.4)'),background:'transparent',display:'flex',alignItems:'center',justifyContent:'center',padding:'0',cursor:'pointer',flexShrink:'0'}" :aria-label="'Vote for ' + o.text" @click="votePoll(o.id)"><span v-if="poll.my_vote===o.id" style="width:14px;height:14px;border-radius:9999px;background:#34D399;display:block"></span></button>
             </div>
           </div>
           <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
