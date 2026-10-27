@@ -813,7 +813,7 @@
       </div>
       <!-- TEMPORARY: Scan button enabled without setup until the real scanner returns -->
       <button class="btn btn-outline w-full mt-3 scan-qr-glow scan-qr-btn" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
-      <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
+      
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
       <p v-if="setupDone" class="text-sm opacity-80 text-center">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name. Host? Tap "I'm the host" to create your party.</p>
@@ -896,7 +896,7 @@
           <p class="mt-2">This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
           <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
           <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
-          <div v-if="confirmMsg" class="alert alert-error mt-3 rounded-2xl">{{ confirmMsg }}</div>
+          
         </div>
         <div v-else class="text-center">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> You are buying for:</h2>
@@ -924,7 +924,7 @@
             <button class="btn btn-success shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Add item to my wishlist" @click="openWishModal"><i data-lucide="plus" class="w-5 h-5"></i></button>
           </div>
           <p class="text-sm opacity-70 mt-1">Only you can add or delete your own items.</p>
-          <div v-if="wishFormMsg" class="alert mt-2 rounded-2xl" :class="wishFormMsgOk ? 'alert-success' : 'alert-error'">{{ wishFormMsg }}</div>
+          
             <p v-if="!myBoardItems.length" class="text-sm opacity-60">— you haven't added anything yet.</p>
             <div class="mt-1 space-y-2">
               <div v-for="it in myBoardItems" :key="it.id" class="flex items-stretch rounded-xl overflow-hidden" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
@@ -1001,7 +1001,7 @@
             <div v-if="!p.open && p.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ p.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
           </div>
         </div>
-        <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
+        
       </div>
     </section>
 
@@ -1052,7 +1052,7 @@
             <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="copyInvite">Copy code</button>
             <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="regenInvite">New code</button>
           </div>
-          <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
+          
         </div>
 
         <div v-if="qrUrl && (hostSignedIn || hostLoaded)" class="mt-5 pt-5 border-t border-white/10">
@@ -1095,7 +1095,7 @@
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
         <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupDone" class="mt-2"><button class="btn btn-sm btn-compact btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
-        <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
+        
 
       </div>
     </section>
@@ -1122,7 +1122,7 @@
             </div>
           </div>
         </div>
-        <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+        
         <div class="flex justify-end mt-4">
           <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openPollModal"><i data-lucide="plus" class="w-4 h-4 inline"></i> Create poll</button>
         </div>
@@ -1252,7 +1252,7 @@
             </div>
             <textarea class="textarea textarea-bordered w-full wish-input" rows="3" v-model="wishNotes" placeholder="Where to buy it — shop, directions, size / colour (optional)"></textarea>
             <button class="btn btn-success w-full" @click="addWishItem">Add to my wishlist</button>
-            <div v-if="wishFormMsg" class="alert mt-2 rounded-2xl" :class="wishFormMsgOk ? 'alert-success' : 'alert-error'">{{ wishFormMsg }}</div>
+            
           </div>
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
     </div>
@@ -1268,7 +1268,7 @@
         <input class="input input-bordered w-full" type="password" v-model="resetPinNew" placeholder="New PIN (at least 4 characters)">
         <input class="input input-bordered w-full" type="password" v-model="resetPinConfirm" placeholder="Confirm new PIN">
         <button class="btn btn-success w-full" :disabled="resettingPin" @click="doResetPin">{{ resettingPin ? 'Resetting…' : 'Reset PIN' }}</button>
-        <div v-if="resetPinMsg" class="alert mt-2 rounded-2xl" :class="resetPinMsgOk ? 'alert-success' : 'alert-error'">{{ resetPinMsg }}</div>
+        
       </div>
       <button class="btn btn-ghost w-full mt-2" @click="closeResetPinModal">Cancel</button>
     </div>
@@ -1283,7 +1283,7 @@
       <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
       <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
       <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-      <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+      
       <button class="btn btn-success w-full mt-3" @click="setupPoll">Create poll</button>
       <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Cancel</button>
     </div>
@@ -1297,7 +1297,7 @@
       <label class="block mt-3">Poll question <input class="input input-bordered w-full" v-model="editPollQuestion"></label>
       <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="editPollOptionsText"></textarea></label>
       <p class="text-sm opacity-70 mt-2">Votes on kept options are preserved; new options start at 0 votes.</p>
-      <div v-if="editPollMsg" class="alert mt-3 rounded-2xl" :class="editPollMsgOk ? 'alert-success' : 'alert-error'">{{ editPollMsg }}</div>
+      
       <button class="btn btn-success w-full mt-3" @click="doEditPoll">Save changes</button>
       <button class="btn btn-ghost w-full mt-2" @click="closeEditPollModal">Cancel</button>
     </div>
@@ -1344,7 +1344,7 @@
         <span class="pin-pill-sep" aria-hidden="true"></span>
         <button class="pin-pill-action" :disabled="!guestEntryCode.trim()" @click="enterGuestWithCode">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
       </div>
-      <div v-if="guestEntryMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestEntryMsg }}</div>
+      
       <button class="btn btn-ghost w-full mt-2" @click="closeGuestEntryModal">Cancel</button>
     </div>
   </div>
@@ -1364,7 +1364,7 @@
         <i data-lucide="qr-code" class="w-16 h-16"></i>
         <p class="text-sm opacity-70">Camera preview goes here</p>
       </div>
-      <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
+      
       <button class="btn btn-success w-full mt-3" @click="openGuestTemp">Continue to guest page</button>
       <p class="text-sm opacity-70 text-center mt-2">Temporary — opens the guest page without scanning, until the real scanner is added.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeQrModal">Cancel</button>
@@ -1378,7 +1378,7 @@
             <label class="block mt-2">Nickname (optional) <input class="input input-bordered w-full" v-model="guestForm.nickname" placeholder="Nickname"></label>
             <label class="block mt-2">Aliases, comma separated (optional) <input class="input input-bordered w-full" v-model="guestForm.aliasesText" placeholder="e.g. Al, Xander"></label>
             <label class="block mt-2">Guest PIN (optional) <input class="input input-bordered w-full" v-model="guestForm.pin" placeholder="Guest PIN"></label>
-            <div v-if="guestFormMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestFormMsg }}</div>
+            
             <div class="flex gap-2 mt-4">
               <button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button>
               <button class="btn btn-success flex-1" @click="saveGuestModal">Save</button>
