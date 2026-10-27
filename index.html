@@ -102,10 +102,10 @@
   /* TEMPORARY for Santa Scor: Santa offsets were margin-top:-82px; margin-left:-60px; — restore those with Santa. */
   .landing .santa-bubble{ margin-top:40px; margin-left:0; }
   @media (max-width:640px){
-    .santa-bubble{ padding:14px; letter-spacing:1px; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; }
-    .santa-bubble::after{ bottom:-18px; width:34px; height:8px; }
-    .santa-bubble::before{ bottom:-30px; left:12px; width:34px; height:8px; }
-    .bubble-dot{ bottom:-42px; left:14px; width:9px; height:9px; }
+    .santa-bubble{ padding:10px; letter-spacing:1px; box-shadow:6px 6px #83af9b; margin-right:6px; margin-bottom:50px; }
+    .santa-bubble::after{ bottom:-15px; width:30px; height:7px; }
+    .santa-bubble::before{ bottom:-25px; left:10px; width:30px; height:7px; }
+    .bubble-dot{ bottom:-35px; left:12px; width:8px; height:8px; }
   }
   .landing .santa-shadow{ width:180px; }
   /* Buttons sit directly on the background: the pill wrapper stays in the
@@ -150,13 +150,13 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:16px; padding:20px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:12px; line-height:1.35; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:10px 10px #83af9b; margin-right:10px; margin-bottom:68px; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:14px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; animation:float 5s ease-in-out infinite; }
   @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
   @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
-  .santa-bubble::before{ content:''; position:absolute; left:16px; bottom:-36px; width:40px; height:9px; border-radius:9px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
-  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-22px; width:40px; height:9px; border-radius:9px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
-  .bubble-dot{ position:absolute; left:18px; bottom:-50px; width:10px; height:10px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
+  .santa-bubble::before{ content:''; position:absolute; left:14px; bottom:-30px; width:34px; height:8px; border-radius:8px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
+  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-18px; width:34px; height:8px; border-radius:8px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
+  .bubble-dot{ position:absolute; left:16px; bottom:-42px; width:9px; height:9px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
   .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
   .step-dot.active{ background:var(--m3-secondary); color:#000; }
   .step-dot.done{ background:var(--m3-secondary); color:#000; }
@@ -748,7 +748,7 @@
   0%, 93%, 100% { transform: scaleY(1); }
   95%, 97% { transform: scaleY(0.08); }
 }
-.scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; }
+.scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(12px); }
 
 </style>
 </head>
@@ -770,7 +770,6 @@
           <scor-santa size="6" @click="waveSanta"></scor-santa>
         </div>
         <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
-          <b>Santa says:</b>
           <span v-if="!setupDone"> Ho ho ho! Host, set up the party first and I'll print your QR code for everyone.</span>
           <span v-else> Ho ho ho! Scan the QR, find your name, and let's get gifting — I'll walk you through it, one step at a time.</span>
         </div>
