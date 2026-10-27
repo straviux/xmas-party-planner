@@ -1146,6 +1146,22 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeWishModal">Cancel</button>
     </div>
   </div>
+  <!-- Host entry dialog: Enter PIN or new host -->
+  <div v-if="showHostEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostEntryModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Host access</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostEntryModal">✕</button>
+      </div>
+      <p class="text-sm opacity-70 mt-1">Are you returning to a party, or setting up a new one?</p>
+      <button class="btn btn-primary w-full mt-4" :disabled="!setupDone" @click="enterHostWithPin"><i data-lucide="key-round" class="w-5 h-5 inline"></i> Enter PIN</button>
+      <p v-if="!setupDone" class="text-sm opacity-70 text-center mt-2">No party set up yet — start as a new host.</p>
+      <p class="text-sm opacity-70 text-center mt-4">or</p>
+      <button class="btn btn-success w-full mt-3" @click="newHost"><i data-lucide="plus" class="w-5 h-5 inline"></i> I'm a new host</button>
+      <p v-if="setupDone" class="text-sm opacity-70 text-center mt-2">Starting as a new host replaces the current party.</p>
+      <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
+    </div>
+  </div>
   <!-- Guest entry dialog: Scan QR or enter host PIN -->
   <div v-if="showGuestEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeGuestEntryModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
@@ -1320,7 +1336,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1412,7 +1428,10 @@ createApp({
         this.guestEntryMsg = e.message==='host_pin_incorrect' ? 'That host PIN is incorrect. Ask the host for the right one.' : 'Could not check that PIN: '+e.message;
       }
     },
-    startHost(){ this.goTo('host'); },
+    startHost(){ this.showHostEntryModal=true; },
+    closeHostEntryModal(){ this.showHostEntryModal=false; },
+    enterHostWithPin(){ this.showHostEntryModal=false; this.goTo('host'); },
+    newHost(){ this.showHostEntryModal=false; this.goTo('host'); this.openHostSetupModal(); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
     confirmClaimedGuest(){ this.guestStep=2; },
     async doReveal(){
