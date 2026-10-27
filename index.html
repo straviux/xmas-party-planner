@@ -1046,8 +1046,8 @@
 
       <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll</h2>
-        <p class="text-sm opacity-70 mt-1">Create, reopen, close or delete the poll in a modal. Results stay counts only — never who voted for what.</p>
-        <button class="btn btn-success w-full mt-3" @click="openPollModal">Open poll setup</button>
+        <p class="text-sm opacity-70 mt-1">Create, reopen, close or delete the poll on its own page. Results stay counts only — never who voted for what.</p>
+        <button class="btn btn-success w-full mt-3" @click="goTo('hostpoll')">Open poll page</button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       </div>
 
@@ -1087,16 +1087,10 @@
       </div>
     </section>
 
-  </main>
+    <section v-show="view==='hostpoll'">
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Theme poll</h2></div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
 
-  <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
-  <!-- Poll setup modal -->
-  <div v-if="showPollModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closePollModal">
-    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
-      <div class="flex items-center justify-between">
-        <h3 class="text-xl font-black">Theme poll setup (host)</h3>
-        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closePollModal">✕</button>
-      </div>
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll setup (host)</h2>
         <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
@@ -1106,9 +1100,13 @@
         <button class="btn w-full mt-2" @click="setPollOpen(false)">Close poll (show final winner)</button>
         <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-      <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Close</button>
-    </div>
-  </div>
+      <button class="btn btn-ghost w-full mt-2" @click="goBack">Close</button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ MODALS (at app root, so fixed positioning is never clipped by a glass card) ============ -->
   <!-- Wishlist add modal -->
   <div v-if="showWishModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeWishModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
@@ -1334,7 +1332,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showPollModal:false, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryPin:'', guestEntryMsg:'', showHostEntryModal:false,
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -1396,8 +1394,6 @@ createApp({
     goHome(){ this.viewStack=[]; this.view='home'; window.scrollTo(0,0); },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
-    openPollModal(){ this.showPollModal=true; },
-    closePollModal(){ this.showPollModal=false; },
     openWishModal(){ this.wishFormMsg=''; this.showWishModal=true; },
     closeWishModal(){ this.showWishModal=false; },
     openQrModal(){ this.qrMsg=''; this.showQrModal=true; },
