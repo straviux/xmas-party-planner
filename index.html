@@ -739,6 +739,13 @@
   .search-pill-sep{ width:1px; height:24px; background:rgba(255,255,255,0.2); flex-shrink:0; }
   .search-pill-action{ display:flex; align-items:center; gap:4px; background:none; border:none; color:#60a5fa; font-weight:600; white-space:nowrap; cursor:pointer; flex-shrink:0; }
   .search-pill-action:disabled{ opacity:0.4; cursor:not-allowed; }
+  .pin-pill{ display:flex; align-items:center; gap:12px; padding:10px 16px; border:1px solid transparent; border-radius:16px; background:linear-gradient(#111111, #111111) padding-box, linear-gradient(90deg, #ef4444, #22c55e) border-box; }
+  .pin-pill-icon{ width:20px; height:20px; color:#f87171; flex-shrink:0; }
+  .pin-pill-input{ flex:1; min-width:0; background:transparent; border:none; outline:none; color:#fafafa; font-size:16px; }
+  .pin-pill-input::placeholder{ color:#71717a; }
+  .pin-pill-sep{ width:1px; height:24px; background:rgba(255,255,255,0.2); flex-shrink:0; }
+  .pin-pill-action{ display:flex; align-items:center; gap:4px; background:none; border:none; color:#34d399; font-weight:600; white-space:nowrap; cursor:pointer; flex-shrink:0; }
+  .pin-pill-action:disabled{ opacity:0.4; cursor:not-allowed; }
 </style>
 </head>
 <body>
@@ -1149,8 +1156,12 @@
       <p class="text-sm opacity-70 mt-1">Scan the host's QR code, or enter the host PIN.</p>
       <button class="btn btn-primary w-full mt-4" @click="showGuestEntryModal=false; openQrModal()"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <p class="text-sm opacity-70 text-center mt-4">or</p>
-      <input class="input input-bordered w-full mt-2" v-model="guestEntryPin" placeholder="Host PIN" @keyup.enter="enterGuestWithPin">
-      <button class="btn btn-success w-full mt-3" @click="enterGuestWithPin">Continue with host PIN</button>
+      <div class="pin-pill mt-2">
+        <i data-lucide="key-round" class="pin-pill-icon"></i>
+        <input class="pin-pill-input" v-model="guestEntryPin" placeholder="Host PIN" @keyup.enter="enterGuestWithPin">
+        <span class="pin-pill-sep" aria-hidden="true"></span>
+        <button class="pin-pill-action" :disabled="!guestEntryPin.trim()" @click="enterGuestWithPin">Continue <i data-lucide="arrow-right" class="w-4 h-4"></i></button>
+      </div>
       <div v-if="guestEntryMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestEntryMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="closeGuestEntryModal">Cancel</button>
     </div>
