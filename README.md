@@ -11,9 +11,11 @@ A general Christmas party app:
   fuzzy) so spelling can't mismatch. A name is marked claimed in SQLite
   the moment it reveals; rescanning with the same name only says
   "already revealed", with no recipient.
-- **Wishlist posting** — guests post what they'd like; givers check their
-  recipient's list after revealing, and can anonymously reserve an item
-  so gifts don't duplicate (reserve shows "Reserved", never who).
+- **Wishlist posting** — guests post what they'd like as plain text, a
+  link, or a screenshot (image upload, under about 2 MB, stored in
+  SQLite with the item); givers check their recipient's list after
+  revealing, and can anonymously reserve an item so gifts don't
+  duplicate (reserve shows "Reserved", never who).
 - **Christmas theme voting poll** — host sets question/options, guests
   vote once each (changeable until closed), results are counts only.
 

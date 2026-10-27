@@ -19,7 +19,17 @@ const db = new DatabaseSync(DB_PATH);
 db.exec(`
   CREATE TABLE IF NOT EXISTS meta (id INTEGER PRIMARY KEY CHECK (id=1), party TEXT, budget TEXT, host_pin_hash TEXT, created_at TEXT);
   CREATE TABLE IF NOT EXISTS guests (id TEXT PRIMARY KEY, display_name TEXT NOT NULL, nickname TEXT DEFAULT '', aliases TEXT DEFAULT '[]', pin_hash TEXT, recipient_id TEXT, claimed INTEGER DEFAULT 0, claimed_at TEXT);
-  CREATE TABLE IF NOT EXISTS wishlists (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, text TEXT NOT NULL, link TEXT DEFAULT '', notes TEXT DEFAULT '', reserved_by TEXT, created_at TEXT);
+  CREATE TABLE IF NOT EXISTS wishlists (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL, text TEXT NOT NULL, link TEXT DEFAULT '', notes TEXT DEFAULT '', reserved_by TEXT, created_at TEXT, kind TEXT DEFAULT 'text', image TEXT DEFAULT '');
+`);
+// Migration for databases created before wishlist item types existed:
+// add kind/image columns, and treat old items that had a link as link items.
+const wishCols = db.prepare('PRAGMA table_info(wishlists)').all().map(c => c.name);
+if (!wishCols.includes('kind')) {
+  db.exec("ALTER TABLE wishlists ADD COLUMN kind TEXT DEFAULT 'text'");
+  db.prepare("UPDATE wishlists SET kind='link' WHERE link IS NOT NULL AND link != ''").run();
+}
+if (!wishCols.includes('image')) db.exec("ALTER TABLE wishlists ADD COLUMN image TEXT DEFAULT ''");
+db.exec(`
   CREATE TABLE IF NOT EXISTS poll (id INTEGER PRIMARY KEY CHECK (id=1), question TEXT, open INTEGER DEFAULT 1);
   CREATE TABLE IF NOT EXISTS poll_options (id TEXT PRIMARY KEY, text TEXT NOT NULL, sort_order INTEGER);
   CREATE TABLE IF NOT EXISTS poll_votes (guest_id TEXT PRIMARY KEY, option_id TEXT NOT NULL);
@@ -77,7 +87,7 @@ function requireHost(body, meta) {
 function readBody(req) {
   return new Promise(resolve => {
     let data = '';
-    req.on('data', c => { data += c; if (data.length > 1e6) req.destroy(); });
+    req.on('data', c => { data += c; if (data.length > 5e6) req.destroy(); });
     req.on('end', () => { try { resolve(data ? JSON.parse(data) : {}); } catch { resolve({}); } });
   });
 }
@@ -174,6 +184,7 @@ const server = http.createServer(async (req, res) => {
           id: g.id, display: g.display_name, nickname: g.nickname,
           items: db.prepare('SELECT * FROM wishlists WHERE owner_id=? ORDER BY created_at').all(g.id).map(it => ({
             id: it.id, text: it.text, link: it.link, notes: it.notes,
+            kind: it.kind || (it.link ? 'link' : 'text'), image: it.image || '',
             reserved: !!it.reserved_by, reserved_by_me: me !== '' && it.reserved_by === me }))
         }));
         return send(res, 200, { board });
@@ -184,12 +195,25 @@ const server = http.createServer(async (req, res) => {
         if (!g) return send(res, 404, { error: 'Guest not found' });
         if (g.pin_hash && !verifyPin(body.pin || '', g.pin_hash)) return send(res, 403, { error: 'pin_incorrect' });
         const text = String(body.text || '').trim();
-        if (!text) return send(res, 400, { error: 'Wishlist item is empty' });
         let link = String(body.link || '').trim();
         if (link && !/^https?:\/\//i.test(link)) link = 'https://' + link;
-        const item = { id: newId('w'), owner_id: g.id, text, link, notes: String(body.notes || '').trim(), created_at: new Date().toISOString() };
-        db.prepare('INSERT INTO wishlists (id, owner_id, text, link, notes, reserved_by, created_at) VALUES (?,?,?,?,?,NULL,?)')
-          .run(item.id, item.owner_id, item.text, item.link, item.notes, item.created_at);
+        const kind = ['text', 'link', 'image'].includes(body.kind) ? body.kind : (link ? 'link' : 'text');
+        let image = String(body.image || '').trim();
+        if (image) {
+          if (!/^data:image\/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$/.test(image))
+            return send(res, 400, { error: 'Screenshot must be a PNG, JPEG, GIF or WebP image' });
+          if (image.length > 3000000)
+            return send(res, 400, { error: 'Screenshot is too large — keep it under about 2 MB' });
+        }
+        if (kind === 'image' && !image) return send(res, 400, { error: 'Add a screenshot image' });
+        if (kind === 'link' && !link) return send(res, 400, { error: 'Add a link for a link item' });
+        if (kind !== 'image' && !text) return send(res, 400, { error: 'Wishlist item is empty' });
+        if (kind === 'text') { link = ''; image = ''; }
+        if (kind === 'link') image = '';
+        if (kind === 'image') link = '';
+        const item = { id: newId('w'), owner_id: g.id, text, link, notes: String(body.notes || '').trim(), kind, image, created_at: new Date().toISOString() };
+        db.prepare('INSERT INTO wishlists (id, owner_id, text, link, notes, reserved_by, created_at, kind, image) VALUES (?,?,?,?,?,NULL,?,?,?)')
+          .run(item.id, item.owner_id, item.text, item.link, item.notes, item.created_at, item.kind, item.image);
         return send(res, 200, { ok: true, item: { ...item, reserved_by: null } });
       }
       if (action === 'wishlist_delete') {
