@@ -92,12 +92,13 @@
   @media (min-width: 641px){
     .landing{ min-height:calc(100dvh - 1rem - 96px); padding-left:0; padding-right:0; }
   }
-  .landing-santa-row{ padding:0; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:nowrap; }
+  .landing-santa-row{ padding:0; gap:12px; align-items:flex-start; margin-bottom:24px; flex-wrap:nowrap; }
+  .landing .santa-bubble{ margin-top:14px; }
   @media (max-width:640px){
-    .santa-bubble{ padding:18px; letter-spacing:1px; box-shadow:10px 10px #83af9b; margin-right:10px; margin-bottom:70px; }
-    .santa-bubble::after{ bottom:-20px; width:40px; height:9px; }
-    .santa-bubble::before{ bottom:-36px; left:14px; width:40px; height:9px; }
-    .bubble-dot{ bottom:-52px; left:16px; width:11px; height:11px; }
+    .santa-bubble{ padding:14px; letter-spacing:1px; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; }
+    .santa-bubble::after{ bottom:-18px; width:34px; height:8px; }
+    .santa-bubble::before{ bottom:-30px; left:12px; width:34px; height:8px; }
+    .bubble-dot{ bottom:-42px; left:14px; width:9px; height:9px; }
   }
   .landing .santa-shadow{ width:128px; }
   /* Buttons sit directly on the background: the pill wrapper stays in the
@@ -118,9 +119,10 @@
   .fab{ width:60px; height:60px; border-radius:50%; background:#ffffff; color:#ff3954; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 15px -5px rgba(0,0,0,0.2); transition:box-shadow 200ms ease-in-out, transform 200ms ease-in-out; cursor:pointer; }
   @media (hover:hover){ .fab:hover{ transform:translateY(-5px); box-shadow:0 20px 20px -5px rgba(0,0,0,0.15); } }
   .fab:focus-visible{ outline:2px solid #ff3954; outline-offset:3px; }
-  .button-three{ --button-color:#ff3954; overflow:hidden; }
+  .button-three{ --button-color:#34D399; overflow:hidden; }
+  .button-three[aria-expanded="true"]{ --button-color:#ff3954; }
   .button-three .hamburger{ transition:translate 1s, rotate 1s; transform-origin:center; }
-  .button-three[aria-expanded="true"] .hamburger{ translate:0 0; rotate:0.125turn; }
+  .button-three[aria-expanded="true"] .hamburger{ translate:2px -5px; rotate:0.125turn; }
   .button-three .line{ transition:1s; stroke-dasharray:60 31 60 300; }
   .button-three[aria-expanded="true"] .line{ stroke-dasharray:60 105 60 300; stroke-dashoffset:-90; }
   @keyframes fab-menu-in{ from{ opacity:0; transform:translate(-50%,-48%) scale(0.98); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
@@ -141,13 +143,13 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:20px; padding:32px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:2px; text-align:center; box-shadow:14px 14px #83af9b; margin-right:14px; margin-bottom:82px; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:16px; padding:20px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:12px; line-height:1.35; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:10px 10px #83af9b; margin-right:10px; margin-bottom:68px; animation:float 5s ease-in-out infinite; }
   @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
   @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
-  .santa-bubble::before{ content:''; position:absolute; left:18px; bottom:-44px; width:48px; height:10px; border-radius:10px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
-  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-26px; width:48px; height:11px; border-radius:11px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
-  .bubble-dot{ position:absolute; left:20px; bottom:-62px; width:12px; height:12px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
+  .santa-bubble::before{ content:''; position:absolute; left:16px; bottom:-36px; width:40px; height:9px; border-radius:9px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
+  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-22px; width:40px; height:9px; border-radius:9px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
+  .bubble-dot{ position:absolute; left:18px; bottom:-50px; width:10px; height:10px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
   .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
   .step-dot.active{ background:var(--m3-secondary); color:#000; }
   .step-dot.done{ background:var(--m3-secondary); color:#000; }
@@ -165,7 +167,7 @@
     <!-- ============ HOME ============ -->
     <section v-show="view==='home'" class="landing">
       <!-- Mascot hero: Santa next to his chat bubble, like a chat avatar + message -->
-      <div class="flex items-center gap-3 landing-santa-row">
+      <div class="flex items-start gap-3 landing-santa-row">
         <div class="shrink-0 text-center">
           <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:128px;max-width:128px;height:auto;cursor:pointer" @click="waveSanta">
           <div class="santa-shadow" aria-hidden="true"></div>
