@@ -1274,7 +1274,7 @@
             <input class="input input-bordered w-full wish-input" v-model="wishLink" type="url" placeholder="Link to it — paste the shop URL (optional)">
             <div class="space-y-2">
               <input ref="wishFile" class="file-input file-input-bordered w-full wish-input" type="file" accept="image/*" @change="onWishImageFile">
-              <p class="text-sm opacity-70">Screenshot (optional) — pick one from your phone or computer. Keep it under about 2 MB.</p>
+              <p class="text-sm opacity-70">Screenshot (optional) — pick one from your phone or computer, up to 10 MB. It will be converted to AVIF to keep it small.</p>
               <div v-if="wishImage">
                 <img :src="wishImage" class="rounded-xl max-w-full max-h-48 object-contain" alt="Wishlist screenshot preview">
                 <p class="text-sm opacity-70 mt-1">{{ wishImageName }}</p>
@@ -1798,13 +1798,26 @@ const app=createApp({
     async loadWishlists(){
       try{ const d=await this.api('wishlist_list', null, 'me='+(this.wishMe?this.wishMe.id:'')); this.wishBoard=d.board; }catch(e){ this.wishBoard=[]; }
     },
-    onWishImageFile(e){
+    async onWishImageFile(e){
       const f=e.target.files && e.target.files[0]; if(!f) return;
-      if(!f.type.startsWith('image/')){ this.wishFormMsg='That file is not an image — pick a screenshot (PNG, JPEG, GIF or WebP).'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
-      if(f.size>2*1024*1024){ this.wishFormMsg='That screenshot is over 2 MB — pick a smaller one or crop it first.'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
-      const r=new FileReader();
-      r.onload=()=>{ this.wishImage=r.result; this.wishImageName=f.name; this.wishFormMsg=''; };
-      r.readAsDataURL(f);
+      if(!f.type.startsWith('image/')){ this.wishFormMsg='That file is not an image — pick a screenshot (PNG, JPEG, GIF, WebP or AVIF).'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
+      if(f.size>10*1024*1024){ this.wishFormMsg='That screenshot is over 10 MB — pick a smaller one or crop it first.'; this.wishFormMsgOk=false; this.clearWishImage(); return; }
+      const readAsDataUrl=(file)=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); });
+      // Convert to AVIF in the browser when it can (smaller, same quality); otherwise upload the original and let the server convert it.
+      if(f.type!=='image/avif' && window.createImageBitmap){
+        try{
+          const bmp=await createImageBitmap(f);
+          const c=document.createElement('canvas'); c.width=bmp.width; c.height=bmp.height;
+          c.getContext('2d').drawImage(bmp,0,0);
+          const blob=await new Promise(res=>c.toBlob(res,'image/avif',0.8));
+          if(blob && blob.size<f.size){
+            this.wishImage=await readAsDataUrl(blob);
+            this.wishImageName=f.name.replace(/\.[^.]+$/,'')+'.avif';
+            this.wishFormMsg=''; return;
+          }
+        }catch(err){ /* fall through to original upload */ }
+      }
+      this.wishImage=await readAsDataUrl(f); this.wishImageName=f.name; this.wishFormMsg='';
     },
     clearWishImage(){ this.wishImage=''; this.wishImageName=''; if(this.$refs.wishFile) this.$refs.wishFile.value=''; },
     async addWishItem(){

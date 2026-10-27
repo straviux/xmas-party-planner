@@ -381,10 +381,23 @@ if ($action === 'wishlist_add') {
   $kind = in_array(($input['kind'] ?? ''), ['text', 'link', 'image'], true) ? $input['kind'] : ($link !== '' ? 'link' : 'text');
   $image = trim((string)($input['image'] ?? ''));
   if ($image !== '') {
-    if (!preg_match('#^data:image/(png|jpeg|gif|webp);base64,[A-Za-z0-9+/=]+$#', $image))
-      send(['error' => 'Screenshot must be a PNG, JPEG, GIF or WebP image'], 400);
-    if (strlen($image) > 3000000)
-      send(['error' => 'Screenshot is too large — keep it under about 2 MB'], 400);
+    if (!preg_match('#^data:image/(png|jpeg|gif|webp|avif);base64,[A-Za-z0-9+/=]+$#', $image))
+      send(['error' => 'Screenshot must be a PNG, JPEG, GIF, WebP or AVIF image'], 400);
+    if (strlen($image) > 14000000)
+      send(['error' => 'Screenshot is too large — keep it under 10 MB'], 400);
+  }
+  // Convert to AVIF on the server when GD supports it, to shrink stored screenshots.
+  // If GD/AVIF is unavailable (or conversion fails), the original upload is stored as-is.
+  if ($image !== '' && function_exists('imageavif') && function_exists('imagecreatefromstring')) {
+    $raw = base64_decode(preg_replace('#^data:image/[^;]+;base64,#', '', $image));
+    $img = $raw !== false ? @imagecreatefromstring($raw) : false;
+    if ($img !== false) {
+      if (function_exists('imageistruecolor') && !imageistruecolor($img)) imagepalettetotruecolor($img);
+      if (function_exists('imagesavealpha')) imagesavealpha($img, true);
+      ob_start(); $avifOk = imageavif($img, null, 80); $avifData = ob_get_clean();
+      imagedestroy($img);
+      if ($avifOk && $avifData !== '') $image = 'data:image/avif;base64,' . base64_encode($avifData);
+    }
   }
   if ($text === '' && $link === '' && $image === '') send(['error' => 'Wishlist item is empty'], 400);
   $item = ['id' => 'w' . bin2hex(random_bytes(6)), 'text' => $text, 'link' => $link,
