@@ -161,8 +161,12 @@ function invite_code_new() {
   for ($i = 0; $i < 6; $i++) $c .= $chars[random_int(0, strlen($chars) - 1)];
   return $c;
 }
+// Returns [token-or-null, error-or-null]. The error is a short code only
+// (no token or personal data) so a failed sign-in can be diagnosed from
+// the message instead of the generic google_token_invalid.
 function verify_google_token($id_token) {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' || GOOGLE_CLIENT_ID === '' || $id_token === '') return null;
+  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' || GOOGLE_CLIENT_ID === '') return [null, 'google_not_configured'];
+  if ($id_token === '') return [null, 'google_token_empty'];
   $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($id_token);
   $body = false;
   if (function_exists('curl_init')) {
@@ -170,18 +174,22 @@ function verify_google_token($id_token) {
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 8);
     $body = curl_exec($ch); curl_close($ch);
-  } else {
+  }
+  // Fallback when curl is missing or its request failed (e.g. outbound
+  // requests blocked for curl but allowed for file access, or vice versa).
+  if ($body === false) {
     $ctx = stream_context_create(['http' => ['timeout' => 8]]);
     $body = @file_get_contents($url, false, $ctx);
   }
-  if ($body === false) return null;
+  if ($body === false) return [null, 'google_tokeninfo_unreachable'];
   $j = json_decode($body, true);
-  if (!is_array($j)) return null;
-  if (($j['aud'] ?? '') !== GOOGLE_CLIENT_ID) return null;
-  if (!in_array($j['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) return null;
-  if (empty($j['exp']) || $j['exp'] < time()) return null;
-  if (empty($j['sub'])) return null;
-  return $j;
+  if (!is_array($j)) return [null, 'google_tokeninfo_bad_response'];
+  if (!empty($j['error'])) return [null, 'google_tokeninfo_rejected'];
+  if (($j['aud'] ?? '') !== GOOGLE_CLIENT_ID) return [null, 'google_aud_mismatch'];
+  if (!in_array($j['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) return [null, 'google_iss_mismatch'];
+  if (empty($j['exp']) || $j['exp'] < time()) return [null, 'google_token_expired'];
+  if (empty($j['sub'])) return [null, 'google_token_no_sub'];
+  return [$j, null];
 }
 function public_guest($g) {
   return [
@@ -216,8 +224,8 @@ if ($action === 'config') {
   send(['google_client_id' => GOOGLE_CLIENT_ID]);
 }
 if ($action === 'google_login') {
-  $tok = verify_google_token((string)($input['id_token'] ?? ''));
-  if (!$tok) send(['error' => (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' ? 'google_not_configured' : 'google_token_invalid')], 403);
+  list($tok, $tok_err) = verify_google_token((string)($input['id_token'] ?? ''));
+  if (!$tok) send(['error' => ($tok_err ?? 'google_token_invalid')], 403);
   $session = bin2hex(random_bytes(32));
   $s = ['google_sub' => $tok['sub'], 'email' => $tok['email'] ?? '', 'name' => $tok['name'] ?? '',
         'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c')];
