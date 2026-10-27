@@ -1820,7 +1820,7 @@ const app=createApp({
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
     resetPoll(){
-      this.openConfirmDialog({title:'Delete poll?', message:'Delete the theme poll and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
+      this.openConfirmDialog({title:'Delete poll?', message:'Delete the theme poll and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; } }});
     },
   }
 });
