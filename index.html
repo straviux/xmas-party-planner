@@ -1064,6 +1064,20 @@
           <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
           <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
         </div>
+        <div v-if="hostSignedIn || hostLoaded" class="grid grid-cols-3 gap-2 mt-4">
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+            <div class="text-2xl font-black">{{ hostList.length }}</div>
+            <div class="text-xs opacity-70">Guests</div>
+          </div>
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+            <div class="text-2xl font-black">{{ hostList.filter(g=>g.claimed).length }}</div>
+            <div class="text-xs opacity-70">Revealed</div>
+          </div>
+          <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+            <div class="text-2xl font-black">{{ hostList.filter(g=>!g.claimed).length }}</div>
+            <div class="text-xs opacity-70">Awaiting</div>
+          </div>
+        </div>
 
         <div v-if="!hostSignedIn && !hostLoaded" class="mt-4">
           <p class="font-black">Host sign-in</p>
@@ -1400,9 +1414,9 @@
     <button class="dock-item" :class="{'dock-item-active': view==='vote'}" @click="goToVote"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
   </nav>
   <nav v-if="['host','hostdashboard','hostguests','hostpoll','hostsetup'].includes(view)" class="dock" aria-label="Host navigation">
-    <button class="dock-item" :class="{'dock-item-active': view==='host'}" @click="goTo('host')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='hostdashboard'}" :disabled="!setupDone" @click="openDashboard"><i data-lucide="layout-dashboard" class="w-6 h-6"></i><span>Dashboard</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='hostguests'}" @click="goTo('hostguests')"><i data-lucide="users" class="w-6 h-6"></i><span>Guests</span></button>
+    <button class="dock-item" @click="openGuestModal(-1)" aria-label="Add guest"><span class="dock-plus"><i data-lucide="user-round-plus" class="w-7 h-7"></i></span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='hostpoll'}" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="vote" class="w-6 h-6"></i><span>Poll</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='hostsetup'}" @click="goTo('hostsetup')"><i data-lucide="settings" class="w-6 h-6"></i><span>Setup</span></button>
   </nav>
