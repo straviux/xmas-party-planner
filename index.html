@@ -937,7 +937,7 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
         <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
-        <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it. You can skip straight to Done.</div>
+        <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it.</div>
         <div v-else class="mt-4">
           <h3 class="text-xl font-black">{{ poll.question }}</h3>
           <p class="text-sm opacity-70">{{ poll.open ? 'Voting open' : 'Poll closed' }} • {{ poll.total }} vote(s)</p>
@@ -954,30 +954,10 @@
           <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
           <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
         </div>
-        <div class="flex justify-end mt-4">
-          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="goToDone">Done</button>
-        </div>
       </div>
 
     </section>
 
-    <!-- ============ DONE PAGE ============ -->
-    <section v-show="view==='done'">
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
-        <scor-santa size="8"></scor-santa>
-        <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set<span v-if="guestMe">, {{ guestMe.display }}</span>!</h2>
-        <div class="text-left mt-3 space-y-1">
-          <p><i data-lucide="gift" class="w-4 h-4 inline"></i> Buying for: <b>{{ guestRecipient ? guestRecipient.name : (manualRecipient ? manualRecipient.display : 'revealed earlier — check your notes') }}</b></p>
-          <p><i data-lucide="shopping-bag" class="w-4 h-4 inline"></i> Items you reserved: <b>{{ reservedByMeCount }}</b></p>
-          <p><i data-lucide="file-text" class="w-4 h-4 inline"></i> Your wishlist items: <b>{{ myBoardItems.length }}</b></p>
-          <p><i data-lucide="vote" class="w-4 h-4 inline"></i> Theme vote: <b>{{ poll && poll.my_vote ? poll.options.find(o=>o.id===poll.my_vote).text : 'Not voted yet' }}</b></p>
-        </div>
-        <p class="text-sm opacity-70 mt-3">Your recipient card stays here while this page is open. A fresh scan will only say “already revealed”, so keep your note safe!</p>
-        <button class="btn btn-primary w-full mt-4" @click="goHome"><i data-lucide="home" class="w-4 h-4 inline"></i> Back to main home</button>
-        
-        
-      </div>
-    </section>
 
     <!-- ============ HOST HOME (hub) ============ -->
     <section v-show="view==='host'">
@@ -1356,8 +1336,8 @@
         </div>
 
   <!-- FAB menu: replaces the bottom dock. Same 5 items, icons and destinations, in the same order. -->
-  <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
-    <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab-menu" id="fab-menu">
+  <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
+    <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-menu" id="fab-menu">
       <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
       <button class="fab-item" :class="{'fab-item-active': ['who','reveal'].includes(view)}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-6 h-6"></i><span>Guest</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
@@ -1365,14 +1345,14 @@
       <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
     </div>
   <div class="fab-wrap">
-    <button v-show="!['hostsetup','who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
+    <button v-show="!['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <svg stroke="var(--button-color)" fill="none" class="hamburger" viewBox="-10 -10 120 120" width="36" height="36" aria-hidden="true">
         <path class="line" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="m 20 40 h 60 a 1 1 0 0 1 0 20 h -60 a 1 1 0 0 1 0 -40 h 30 v 70"></path>
       </svg>
     </button>
   </div>
   <!-- MascotPlayer temporarily disabled — original Santa only: <mascot-player></mascot-player> -->
-  <nav v-if="guestMe && ['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="dock" aria-label="Guest navigation">
+  <nav v-if="guestMe && ['who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="dock" aria-label="Guest navigation">
     <button class="dock-item" :class="{'dock-item-active': view==='guesthome'}" @click="goToGuestHome"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='gifts'}" @click="goToGifts"><i data-lucide="gift" class="w-6 h-6"></i><span>Gifts</span></button>
     <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="star-plus" class="w-7 h-7"></i></span></button>
@@ -1481,7 +1461,7 @@ const app=createApp({
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
-    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
+    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
@@ -1494,9 +1474,6 @@ const app=createApp({
       if(!this.guestMe) return [];
       const o=this.wishBoard.find(x=>x.id===this.guestMe.id);
       return o ? o.items : [];
-    },
-    reservedByMeCount(){
-      let n=0; this.wishBoard.forEach(o=>o.items.forEach(it=>{ if(it.reserved_by_me) n++; })); return n;
     },
     guestUrl(){ return this.pageUrl + (this.inviteCode ? '?guest=1&code='+encodeURIComponent(this.inviteCode) : '?guest=1'); },
     qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.guestUrl) : ''; },
@@ -1531,7 +1508,7 @@ const app=createApp({
     // unless it is a guest page with no party set up yet.
     {
       const start=this.$route.name || 'home';
-      if(['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
+      if(['who','reveal','gifts','wishlists','vote','guesthome'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
       else this.view=start;
     }
     try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
@@ -1706,7 +1683,6 @@ const app=createApp({
         if(e.message==='already_claimed') this.guestAlreadyClaimed=true;
       }
     },
-    async goToDone(){ if(this.guestMe){ await this.loadWishlists(); await this.loadPoll(); } this.goTo('done'); },
     async goToGuestHome(){
       await this.loadGuests();
       this.goTo('guesthome');
@@ -1846,7 +1822,6 @@ const router=VueRouter.createRouter({
     { path:'/wishlists', name:'wishlists', component:_dummy },
     { path:'/guest-home', name:'guesthome', component:_dummy },
     { path:'/vote', name:'vote', component:_dummy },
-    { path:'/done', name:'done', component:_dummy },
     { path:'/host', name:'host', component:_dummy },
     { path:'/host/dashboard', name:'hostdashboard', component:_dummy },
     { path:'/host/setup', name:'hostsetup', component:_dummy },
