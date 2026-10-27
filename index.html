@@ -20,12 +20,12 @@
   body{ background-color:#000000; color:#fafafa; font-family:'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-weight:400; -webkit-tap-highlight-color: transparent; background-attachment:fixed; min-height:100dvh; }
   input, textarea, select{ font-size:16px !important; }
   .btn{ min-height:48px; }
-  main{ padding-top: calc(1rem + env(safe-area-inset-top)); padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+  main{ padding-top: calc(1rem + env(safe-area-inset-top)); padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
   @media (max-width: 640px){
     /* !important: the Tailwind py-3 class on <main> (class selector) used to beat this
        element-selector rule, leaving only 0.75rem at the bottom — the fixed dock (~100px)
        then covered the last card and no amount of scrolling could reveal it. */
-    #app main{ padding-left:.75rem; padding-right:.75rem; padding-bottom:calc(7.5rem + env(safe-area-inset-bottom)) !important; }
+    #app main{ padding-left:.75rem; padding-right:.75rem; padding-bottom:calc(96px + env(safe-area-inset-bottom)) !important; }
     .card{ padding:1rem !important; }
     h1{ font-size:1.5rem !important; } h2{ font-size:1.35rem !important; }
     .btn{ width:100%; }
@@ -64,10 +64,10 @@
      below modals (z-50) and the dock, and never intercepting clicks.
      On mobile the dock is fixed at the bottom, so the mascot sits just
      above it instead of covering the Host button. */
-  .mascot-player{ position:fixed; right:16px; bottom:16px; z-index:40; pointer-events:none; background:transparent; border:none; line-height:0; }
+  .mascot-player{ position:fixed; right:16px; bottom:calc(88px + env(safe-area-inset-bottom)); z-index:40; pointer-events:none; background:transparent; border:none; line-height:0; }
   .mascot-player video{ width:220px; height:auto; display:block; background:transparent; border:none; outline:none; box-shadow:none; pointer-events:none; }
   @media (max-width: 640px){
-    .mascot-player{ right:8px; bottom:calc(6.5rem + env(safe-area-inset-bottom)); }
+    .mascot-player{ right:8px; bottom:calc(88px + env(safe-area-inset-bottom)); }
     .mascot-player video{ width:140px; }
   }
   .grain{ position:fixed; inset:0; pointer-events:none; z-index:30; opacity:0.15; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); }
@@ -85,11 +85,11 @@
     /* Stack centred between top safe area and the bottom nav:
        nav height is ~64px (12px pad + 20px icon + 4px gap + ~16px label + 12px pad),
        so bottom padding below equals nav height + safe area. */
-    .landing{ min-height:calc(100dvh - 1rem - env(safe-area-inset-top) - 4rem - env(safe-area-inset-bottom)); }
-    #app main.landing-main{ padding-bottom:calc(4rem + env(safe-area-inset-bottom)) !important; }
+    .landing{ min-height:calc(100dvh - 1rem - env(safe-area-inset-top) - 96px - env(safe-area-inset-bottom)); }
+    #app main.landing-main{ padding-bottom:calc(96px + env(safe-area-inset-bottom)) !important; }
   }
   @media (min-width: 641px){
-    .landing{ min-height:calc(100dvh - 2rem); padding-left:0; padding-right:0; }
+    .landing{ min-height:calc(100dvh - 1rem - 96px); padding-left:0; padding-right:0; }
   }
   .landing-santa-row{ padding:0; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:nowrap; }
   .landing .santa-shadow{ width:72px; }
@@ -103,11 +103,18 @@
   .section-label{ font-weight:700; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; margin:1.25rem .25rem .5rem; color:#71717A; }
   .dark-card{ background:#18181B; color:#fafafa; border-radius:1.5rem; border:1px solid rgba(255,255,255,0.1); animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .dark-card .card-label{ color:#71717A; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; font-weight:700; }
-  .bottom-nav{ position:fixed; left:50%; transform:translateX(-50%); bottom:0; width:100%; max-width:42rem; z-index:40; background:rgba(0,0,0,0.8); backdrop-filter:blur(12px); border-top:1px solid rgba(255,255,255,0.1); border-radius:1.5rem 1.5rem 0 0; padding:.75rem 1rem calc(.75rem + env(safe-area-inset-bottom)); display:flex; justify-content:space-around; align-items:center; }
-  .bottom-nav .nav-btn{ display:flex; flex:1; flex-direction:column; align-items:center; gap:4px; color:#e4e4e7; font-size:.7rem; font-weight:700; background:none; border:none; cursor:pointer; }
-  .bottom-nav .nav-btn:disabled{ opacity:.4; cursor:not-allowed; }
-  @media (min-width:641px){ .bottom-nav{ display:none; } }
 
+  /* FAB menu (replaces the bottom dock): 56px circular primary button,
+     fixed bottom-right, with a pill menu stacked above it, right-aligned. */
+  .fab-backdrop{ position:fixed; inset:0; z-index:39; background:transparent; }
+  .fab-wrap{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:41; display:flex; flex-direction:column; align-items:flex-end; gap:12px; pointer-events:none; }
+  .fab-wrap > *{ pointer-events:auto; }
+  .fab{ width:56px; height:56px; border-radius:50%; background:#34D399; color:#000; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(0,0,0,.35); cursor:pointer; }
+  @keyframes fab-menu-in{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
+  .fab-menu{ display:flex; flex-direction:column; gap:12px; align-items:flex-end; max-height:calc(100dvh - 110px); overflow:auto; animation:fab-menu-in 200ms cubic-bezier(0.16,1,0.3,1) both; }
+  .fab-item{ display:flex; align-items:center; gap:8px; min-height:48px; padding:0 16px; border-radius:9999px; border:1px solid rgba(255,255,255,0.1); background:#18181B; color:#fafafa; font-weight:700; white-space:nowrap; box-shadow:0 8px 20px rgba(0,0,0,.35); cursor:pointer; }
+  .fab-item-active{ background:#34D399; color:#000; border-color:#34D399; }
+  .fab-item:disabled{ opacity:.4; cursor:not-allowed; }
   .m3-card{ border-radius:2.5rem !important; box-shadow:0 10px 30px rgba(0,0,0,.4) !important; border:1px solid rgba(255,255,255,0.1) !important; }
   .card{ background:rgba(255,255,255,0.05) !important; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1) !important; color:#fafafa; animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform 300ms cubic-bezier(0.16,1,0.3,1), background-color 300ms, box-shadow 300ms; }
@@ -537,13 +544,21 @@
           </div>
         </div>
 
-  <nav class="bottom-nav">
-    <button class="nav-btn" @click="goHome"><i data-lucide="home" class="w-5 h-5"></i><span>Home</span></button>
-    <button class="nav-btn" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-5 h-5"></i><span>Guest</span></button>
-    <button class="nav-btn" :disabled="!setupDone" @click="openGiftsPage"><i data-lucide="shopping-bag" class="w-5 h-5"></i><span>Gifts</span></button>
-    <button class="nav-btn" :disabled="!setupDone" @click="openVotePage"><i data-lucide="vote" class="w-5 h-5"></i><span>Vote</span></button>
-    <button class="nav-btn" @click="startHost"><i data-lucide="key-round" class="w-5 h-5"></i><span>Host</span></button>
-  </nav>
+  <!-- FAB menu: replaces the bottom dock. Same 5 items, icons and destinations, in the same order. -->
+  <div v-if="fabOpen" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
+  <div class="fab-wrap">
+    <div v-if="fabOpen" class="fab-menu">
+      <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-5 h-5"></i><span>Home</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='guest'}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-5 h-5"></i><span>Guest</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-5 h-5"></i><span>Gifts</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='vote'}" :disabled="!setupDone" @click="fabGo('vote')"><i data-lucide="vote" class="w-5 h-5"></i><span>Vote</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-5 h-5"></i><span>Host</span></button>
+    </div>
+    <button class="fab" @click="fabOpen=!fabOpen" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
+      <i v-if="!fabOpen" data-lucide="menu" class="w-6 h-6"></i>
+      <i v-else data-lucide="x" class="w-6 h-6"></i>
+    </button>
+  </div>
   <!-- MascotPlayer temporarily disabled — original Santa only: <mascot-player></mascot-player> -->
 </div>
 <script>
@@ -604,7 +619,7 @@ createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false,
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false,
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
@@ -639,6 +654,7 @@ createApp({
   },
   updated(){ if(window.lucide) lucide.createIcons(); },
   async mounted(){
+    window.addEventListener('keydown', this.handleFabEscape);
     if(window.lucide) lucide.createIcons();
     try{
       const s=await this.api('status');
@@ -655,6 +671,8 @@ createApp({
     },
     async loadGuests(){ const d=await this.api('list'); this.guests=d.guests; this.party=d.party; this.budget=d.budget; },
     goTo(v){ if(v===this.view) return; this.viewStack.push(this.view); this.view=v; window.scrollTo(0,0); },
+    fabGo(dest){ this.fabOpen=false; if(dest==='home') this.goHome(); else if(dest==='guest') this.startGuest(); else if(dest==='gifts') this.openGiftsPage(); else if(dest==='vote') this.openVotePage(); else if(dest==='host') this.startHost(); },
+    handleFabEscape(e){ if(e.key==='Escape') this.fabOpen=false; },
     goBack(){ if(this.viewStack.length){ this.view=this.viewStack.pop(); window.scrollTo(0,0); } else this.goHome(); },
     goHome(){ this.viewStack=[]; this.view='home'; window.scrollTo(0,0); },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.goTo('guest'); },
