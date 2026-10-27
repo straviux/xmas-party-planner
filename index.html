@@ -94,12 +94,12 @@
   }
   .landing-santa-row{ padding:0; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:nowrap; }
   @media (max-width:640px){
-    .santa-bubble{ padding:24px; letter-spacing:1px; box-shadow:12px 12px #83af9b; margin-right:12px; margin-bottom:80px; }
-    .santa-bubble::after{ bottom:-22px; width:44px; height:10px; }
-    .santa-bubble::before{ bottom:-38px; left:16px; width:44px; height:10px; }
-    .bubble-dot{ bottom:-62px; left:18px; width:12px; height:12px; }
+    .santa-bubble{ padding:18px; letter-spacing:1px; box-shadow:10px 10px #83af9b; margin-right:10px; margin-bottom:70px; }
+    .santa-bubble::after{ bottom:-20px; width:40px; height:9px; }
+    .santa-bubble::before{ bottom:-36px; left:14px; width:40px; height:9px; }
+    .bubble-dot{ bottom:-52px; left:16px; width:11px; height:11px; }
   }
-  .landing .santa-shadow{ width:72px; }
+  .landing .santa-shadow{ width:128px; }
   /* Buttons sit directly on the background: the pill wrapper stays in the
      DOM (so nothing functional changes) but is transparent, borderless
      and padding-free, so the nested inset look is gone. */
@@ -119,8 +119,8 @@
   @media (hover:hover){ .fab:hover{ transform:translateY(-5px); box-shadow:0 20px 20px -5px rgba(0,0,0,0.15); } }
   .fab:focus-visible{ outline:2px solid #ff3954; outline-offset:3px; }
   .button-three{ --button-color:#ff3954; overflow:hidden; }
-  .button-three .hamburger{ transition:translate 1s, rotate 1s; }
-  .button-three[aria-expanded="true"] .hamburger{ translate:10px -10px; rotate:0.125turn; }
+  .button-three .hamburger{ transition:translate 1s, rotate 1s; transform-origin:center; }
+  .button-three[aria-expanded="true"] .hamburger{ translate:0 0; rotate:0.125turn; }
   .button-three .line{ transition:1s; stroke-dasharray:60 31 60 300; }
   .button-three[aria-expanded="true"] .line{ stroke-dasharray:60 105 60 300; stroke-dashoffset:-90; }
   @keyframes fab-menu-in{ from{ opacity:0; transform:translate(-50%,-48%) scale(0.98); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
@@ -141,13 +141,13 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:20px; padding:50px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:15px; text-transform:uppercase; letter-spacing:3px; text-align:center; box-shadow:20px 20px #83af9b; margin-right:20px; margin-bottom:100px; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:20px; padding:32px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:13px; text-transform:uppercase; letter-spacing:2px; text-align:center; box-shadow:14px 14px #83af9b; margin-right:14px; margin-bottom:82px; animation:float 5s ease-in-out infinite; }
   @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
   @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
-  .santa-bubble::before{ content:''; position:absolute; left:22px; bottom:-52px; width:55px; height:11px; border-radius:11px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
-  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-30px; width:55px; height:11px; border-radius:11px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
-  .bubble-dot{ position:absolute; left:24px; bottom:-82px; width:14px; height:14px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
+  .santa-bubble::before{ content:''; position:absolute; left:18px; bottom:-44px; width:48px; height:10px; border-radius:10px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
+  .santa-bubble::after{ content:''; position:absolute; left:0; bottom:-26px; width:48px; height:11px; border-radius:11px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
+  .bubble-dot{ position:absolute; left:20px; bottom:-62px; width:12px; height:12px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
   .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
   .step-dot.active{ background:var(--m3-secondary); color:#000; }
   .step-dot.done{ background:var(--m3-secondary); color:#000; }
@@ -167,7 +167,7 @@
       <!-- Mascot hero: Santa next to his chat bubble, like a chat avatar + message -->
       <div class="flex items-center gap-3 landing-santa-row">
         <div class="shrink-0 text-center">
-          <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:72px;max-width:72px;height:auto;cursor:pointer" @click="waveSanta">
+          <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:128px;max-width:128px;height:auto;cursor:pointer" @click="waveSanta">
           <div class="santa-shadow" aria-hidden="true"></div>
         </div>
         <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
@@ -241,7 +241,7 @@
 <!-- Step 1: Who are you? -->
       <div v-show="guestStep===1" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:64px;height:64px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type any part of your name or nickname, then tap your exact entry — you never type a name, so spelling can't mismatch.</div>
         </div>
         <input class="input input-bordered w-full mt-3" v-model="search" placeholder="Search your name or nickname…">
@@ -300,7 +300,7 @@
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
           <div class="flex gap-3 items-start mt-2">
-            <img :src="santaSrc" alt="" class="rounded-xl" style="width:64px;height:64px;object-fit:cover">
+            <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
             <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
           </div>
 
@@ -415,7 +415,7 @@
       <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Host</h2></div>
       <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:64px;height:64px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
@@ -466,7 +466,7 @@
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostSetupModal">✕</button>
       </div>
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:64px;height:64px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
