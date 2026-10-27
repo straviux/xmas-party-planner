@@ -964,7 +964,7 @@
     <section v-show="view==='done'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
         <scor-santa size="8"></scor-santa>
-        <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
+        <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set<span v-if="guestMe">, {{ guestMe.display }}</span>!</h2>
         <div class="text-left mt-3 space-y-1">
           <p><i data-lucide="gift" class="w-4 h-4 inline"></i> Buying for: <b>{{ guestRecipient ? guestRecipient.name : (manualRecipient ? manualRecipient.display : 'revealed earlier — check your notes') }}</b></p>
           <p><i data-lucide="shopping-bag" class="w-4 h-4 inline"></i> Items you reserved: <b>{{ reservedByMeCount }}</b></p>
@@ -972,6 +972,7 @@
           <p><i data-lucide="vote" class="w-4 h-4 inline"></i> Theme vote: <b>{{ poll && poll.my_vote ? poll.options.find(o=>o.id===poll.my_vote).text : 'Not voted yet' }}</b></p>
         </div>
         <p class="text-sm opacity-70 mt-3">Your recipient card stays here while this page is open. A fresh scan will only say “already revealed”, so keep your note safe!</p>
+        <button class="btn btn-primary w-full mt-4" @click="goHome"><i data-lucide="home" class="w-4 h-4 inline"></i> Back to main home</button>
         
         
       </div>
