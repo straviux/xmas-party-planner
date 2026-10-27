@@ -1079,20 +1079,12 @@
           <p class="text-sm opacity-70 mt-2">Or go back to Host home to sign in with Google.</p>
         </div>
 
-        <div v-if="hostSignedIn || hostLoaded" class="mt-4">
-          <div class="flex items-center justify-between gap-3">
+        <div v-if="hostSignedIn || hostLoaded" class="mt-4 flex items-center justify-between gap-3">
+          <div>
             <h3 class="font-black">Claimed status</h3>
-            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="loadHost">Refresh</button>
+            <p class="text-sm opacity-70 mt-1">See who has revealed, and reset a name.</p>
           </div>
-          <p v-if="hostMsg" class="text-sm mt-2" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
-          <div class="divide-y divide-white/10 mt-1">
-            <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
-              <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
-              <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
-              <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
-              <button v-if="g.claimed" class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
-            </div>
-          </div>
+          <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openClaimedModal">View</button>
         </div>
 
         <div v-if="hostSignedIn || hostLoaded" class="mt-5 pt-5 border-t border-white/10">
@@ -1209,6 +1201,28 @@
         <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
         <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="showConfirmModal=false; guestStep=2">Yes, that's me</button>
         <button v-if="selected && selected.claimed" class="btn btn-success flex-1" @click="confirmClaimedGuest">Yes, that's me</button>
+      </div>
+    </div>
+  </div>
+  <!-- Claimed status modal (from the dashboard) -->
+  <div v-if="showClaimedModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeClaimedModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between gap-3">
+        <h3 class="text-xl font-black">Claimed status</h3>
+        <button class="btn btn-ghost btn-sm btn-compact shrink-0" style="width:auto" @click="closeClaimedModal">✕</button>
+      </div>
+      <p class="text-sm opacity-70 mt-1">Recipients are never shown here — only whether each name has revealed.</p>
+      <div class="flex items-center justify-between gap-3 mt-3">
+        <p v-if="hostMsg" class="text-sm flex-1" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
+        <button class="btn btn-sm btn-compact shrink-0 ml-auto" style="width:auto" @click="loadHost">Refresh</button>
+      </div>
+      <div class="divide-y divide-white/10 mt-1">
+        <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
+          <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
+          <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
+          <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
+          <button v-if="g.claimed" class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1449,7 +1463,7 @@ const app=createApp({
   data(){ return {
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
-    search:'', guestSearched:false, selected:null, showConfirmModal:false, guestPin:'', confirmMsg:'', recipient:null,
+    search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
@@ -1488,7 +1502,7 @@ const app=createApp({
       this.view=to.name || 'home'; window.scrollTo(0,0);
       // A modal is not a page, so it must never survive a page change and
       // keep rendering over the new page (e.g. home after a cancel).
-      this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false;
+      this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
@@ -1543,7 +1557,7 @@ const app=createApp({
       // Definitive cancel: do not rely only on the route watcher to hide
       // setup — close every overlay, switch to home now, and replace the
       // history entry so Back does not return to setup either.
-      this.showWishModal=false; this.showQrModal=false;
+      this.showWishModal=false; this.showQrModal=false; this.showClaimedModal=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
       this.showGuestModal=false; this.fabOpen=false;
       this.view='home';
@@ -1651,6 +1665,8 @@ const app=createApp({
       }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; }
     },
     openDashboard(){ this.goTo('hostdashboard'); this.loadHost(); },
+    openClaimedModal(){ this.showClaimedModal=true; this.loadHost(); },
+    closeClaimedModal(){ this.showClaimedModal=false; },
     // TEMPORARY: creating a new host does not require Google sign-in until
     // Google is configured after deployment — setup accepts a host PIN.
     newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
