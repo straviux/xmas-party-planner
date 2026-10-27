@@ -1816,7 +1816,7 @@ const app=createApp({
       }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
     async setPollOpen(open){
-      try{ const d=await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
+      try{ const d=await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
     resetPoll(){
