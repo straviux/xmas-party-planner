@@ -107,15 +107,15 @@
 
   /* FAB menu (replaces the bottom dock): 56px circular primary button,
      fixed bottom-right, with a pill menu stacked above it, right-aligned. */
-  .fab-backdrop{ position:fixed; inset:0; z-index:39; background:transparent; }
-  .fab-wrap{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:41; display:flex; flex-direction:column; align-items:flex-end; gap:12px; pointer-events:none; }
+  .fab-backdrop{ position:fixed; inset:0; z-index:39; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); }
+  .fab-wrap{ position:fixed; right:16px; bottom:calc(16px + env(safe-area-inset-bottom)); z-index:41; pointer-events:none; }
   .fab-wrap > *{ pointer-events:auto; }
   .fab{ width:60px; height:60px; border-radius:50%; background:#ffffff; color:#ff3954; border:none; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 15px -5px rgba(0,0,0,0.2); transition:box-shadow 200ms ease-in-out, transform 200ms ease-in-out; cursor:pointer; }
   @media (hover:hover){ .fab:hover{ transform:translateY(-5px); box-shadow:0 20px 20px -5px rgba(0,0,0,0.15); } }
   .fab:focus-visible{ outline:2px solid #ff3954; outline-offset:3px; }
-  @keyframes fab-menu-in{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:translateY(0); } }
-  .fab-menu{ display:flex; flex-direction:column; gap:12px; align-items:flex-end; max-height:calc(100dvh - 110px); overflow:auto; animation:fab-menu-in 200ms cubic-bezier(0.16,1,0.3,1) both; }
-  .fab-item{ display:flex; align-items:center; gap:8px; min-height:48px; padding:0 16px; border-radius:9999px; border:1px solid rgba(255,255,255,0.1); background:#18181B; color:#fafafa; font-weight:700; white-space:nowrap; box-shadow:0 8px 20px rgba(0,0,0,.35); cursor:pointer; }
+  @keyframes fab-menu-in{ from{ opacity:0; transform:translate(-50%,-48%) scale(0.98); } to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+  .fab-menu{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); z-index:40; display:flex; flex-direction:column; gap:12px; align-items:stretch; width:min(90vw, 420px); padding:16px; background:rgba(255,255,255,0.08); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1); border-radius:2.5rem; box-shadow:0 20px 40px rgba(0,0,0,0.5); max-height:calc(100dvh - 120px); overflow:auto; animation:fab-menu-in 200ms cubic-bezier(0.16,1,0.3,1) both; }
+  .fab-item{ display:flex; align-items:center; gap:12px; width:100%; min-height:60px; padding:0 20px; border-radius:9999px; border:1px solid rgba(255,255,255,0.1); background:#18181B; color:#fafafa; font-size:1.05rem; font-weight:700; white-space:nowrap; box-shadow:0 8px 20px rgba(0,0,0,.35); cursor:pointer; }
   .fab-item-active{ background:#34D399; color:#000; border-color:#34D399; }
   .fab-item:disabled{ opacity:.4; cursor:not-allowed; }
   .m3-card{ border-radius:2.5rem !important; box-shadow:0 10px 30px rgba(0,0,0,.4) !important; border:1px solid rgba(255,255,255,0.1) !important; }
@@ -550,13 +550,13 @@
 
   <!-- FAB menu: replaces the bottom dock. Same 5 items, icons and destinations, in the same order. -->
   <div v-if="fabOpen" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
-  <div class="fab-wrap">
     <div v-if="fabOpen" class="fab-menu">
-      <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-5 h-5"></i><span>Home</span></button>
-      <button class="fab-item" :class="{'fab-item-active': view==='guest'}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-5 h-5"></i><span>Guest</span></button>
-      <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-5 h-5"></i><span>Gifts</span></button>
-      <button class="fab-item" :class="{'fab-item-active': view==='vote'}" :disabled="!setupDone" @click="fabGo('vote')"><i data-lucide="vote" class="w-5 h-5"></i><span>Vote</span></button>
-      <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-5 h-5"></i><span>Host</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='guest'}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-6 h-6"></i><span>Guest</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='vote'}" :disabled="!setupDone" @click="fabGo('vote')"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
+      <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
+  <div class="fab-wrap">
     </div>
     <button class="fab" @click="fabOpen=!fabOpen" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <i v-if="!fabOpen" data-lucide="menu" class="w-6 h-6"></i>
