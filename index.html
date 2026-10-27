@@ -43,26 +43,27 @@
   @media (prefers-reduced-motion: reduce){ .santa-anim{ animation:none; } .snow, .scor-snow{ display:none; } body{ animation:none; } .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot{ animation:none; } .button-three .hamburger, .button-three .line{ transition:none; } .card, .dark-card, .segmented{ animation:none; } }
 
   @keyframes snow-fall{ from{ transform:translateY(-20px); } to{ transform:translateY(105vh); } }
-  .snow{ position:fixed; inset:0; pointer-events:none; z-index:30; overflow:hidden; }
-  /* Kept snow effect: Scor's drifting dot snowfall, as its own layer (z-29, just
+  .snow{ position:fixed; inset:0; pointer-events:none; z-index:32; overflow:hidden; }
+  /* Kept snow effect: Scor's drifting dot snowfall, as its own layer (z-31, just
      under the app's falling flakes) so it adds to, never replaces, the app snow. */
-  .scor-snow{ position:fixed; inset:0; pointer-events:none; z-index:29;
-    background-image: radial-gradient(circle, #fff 1.5px, transparent 2.5px), radial-gradient(circle, #fff 1px, transparent 2px);
-    background-size:180px 180px, 260px 260px; animation:scor-snowfall 18s linear infinite; opacity:0.9; }
+  .scor-snow{ position:fixed; inset:0; pointer-events:none; z-index:31;
+    background-image: radial-gradient(circle, #fff 3px, transparent 4px), radial-gradient(circle, #fff 2px, transparent 3px);
+    background-size:120px 120px, 180px 180px; animation:scor-snowfall 18s linear infinite; opacity:1; }
   @keyframes scor-snowfall{ from{ background-position:0 0, 0 0; } to{ background-position:60px 600px, -40px 600px; } }
-  .snow i{ position:absolute; top:-20px; display:block; background:#fff; border-radius:50%; opacity:.7; animation:snow-fall linear infinite; }
-  .snow i:nth-child(1){ left:4%; width:6px; height:6px; animation-duration:13s; animation-delay:0s; }
-  .snow i:nth-child(2){ left:12%; width:4px; height:4px; animation-duration:10s; animation-delay:2s; }
-  .snow i:nth-child(3){ left:22%; width:8px; height:8px; animation-duration:16s; animation-delay:1s; }
-  .snow i:nth-child(4){ left:33%; width:5px; height:5px; animation-duration:11s; animation-delay:4s; }
-  .snow i:nth-child(5){ left:45%; width:7px; height:7px; animation-duration:14s; animation-delay:0s; }
-  .snow i:nth-child(6){ left:55%; width:4px; height:4px; animation-duration:9s; animation-delay:3s; }
-  .snow i:nth-child(7){ left:65%; width:6px; height:6px; animation-duration:12s; animation-delay:5s; }
-  .snow i:nth-child(8){ left:74%; width:8px; height:8px; animation-duration:17s; animation-delay:2s; }
-  .snow i:nth-child(9){ left:84%; width:5px; height:5px; animation-duration:10s; animation-delay:1s; }
-  .snow i:nth-child(10){ left:92%; width:6px; height:6px; animation-duration:13s; animation-delay:4s; }
-  .snow i:nth-child(11){ left:28%; width:4px; height:4px; animation-duration:15s; animation-delay:6s; }
-  .snow i:nth-child(12){ left:58%; width:7px; height:7px; animation-duration:11s; animation-delay:7s; }
+  .snow i{ position:absolute; top:-20px; display:block; background:#fff; border-radius:50%; opacity:.9; animation:snow-fall linear infinite; }
+  .snow i:nth-child(1){ left:4%; width:10px; height:10px; animation-duration:13s; animation-delay:0s; }
+  .snow i:nth-child(2){ left:12%; width:8px; height:8px; animation-duration:10s; animation-delay:2s; }
+  .snow i:nth-child(3){ left:22%; width:14px; height:14px; animation-duration:16s; animation-delay:1s; }
+  .snow i:nth-child(4){ left:33%; width:9px; height:9px; animation-duration:11s; animation-delay:4s; }
+  .snow i:nth-child(5){ left:45%; width:12px; height:12px; animation-duration:14s; animation-delay:0s; }
+  .snow i:nth-child(6){ left:55%; width:8px; height:8px; animation-duration:9s; animation-delay:3s; }
+  .snow i:nth-child(7){ left:65%; width:11px; height:11px; animation-duration:12s; animation-delay:5s; }
+  .snow i:nth-child(8){ left:74%; width:13px; height:13px; animation-duration:17s; animation-delay:2s; }
+  .snow i:nth-child(9){ left:84%; width:9px; height:9px; animation-duration:10s; animation-delay:1s; }
+  .snow i:nth-child(10){ left:92%; width:10px; height:10px; animation-duration:13s; animation-delay:4s; }
+  .snow i:nth-child(11){ left:28%; width:8px; height:8px; animation-duration:15s; animation-delay:6s; }
+  .snow i:nth-child(12){ left:58%; width:12px; height:12px; animation-duration:11s; animation-delay:7s; }
+     .snow i:nth-child(13){ left:8%; width:9px; height:9px; animation-duration:12s; animation-delay:1s; }   .snow i:nth-child(14){ left:18%; width:12px; height:12px; animation-duration:10s; animation-delay:3s; }   .snow i:nth-child(15){ left:27%; width:8px; height:8px; animation-duration:15s; animation-delay:0s; }   .snow i:nth-child(16){ left:38%; width:11px; height:11px; animation-duration:11s; animation-delay:5s; }   .snow i:nth-child(17){ left:48%; width:9px; height:9px; animation-duration:13s; animation-delay:2s; }   .snow i:nth-child(18){ left:52%; width:13px; height:13px; animation-duration:9s; animation-delay:6s; }   .snow i:nth-child(19){ left:62%; width:8px; height:8px; animation-duration:14s; animation-delay:1s; }   .snow i:nth-child(20){ left:70%; width:10px; height:10px; animation-duration:12s; animation-delay:4s; }   .snow i:nth-child(21){ left:78%; width:12px; height:12px; animation-duration:10s; animation-delay:0s; }   .snow i:nth-child(22){ left:88%; width:9px; height:9px; animation-duration:16s; animation-delay:2s; }   .snow i:nth-child(23){ left:95%; width:11px; height:11px; animation-duration:11s; animation-delay:5s; }   .snow i:nth-child(24){ left:15%; width:8px; height:8px; animation-duration:13s; animation-delay:3s; }
   h1, h2{ font-weight:600; letter-spacing:-0.05em; line-height:1.05; }
   @keyframes fade-in-up{ from{ opacity:0; transform:translateY(20px); } to{ opacity:1; transform:translateY(0); } }
 
@@ -102,7 +103,7 @@
   /* TEMPORARY for Santa Scor: Santa offsets were margin-top:-82px; margin-left:-60px; — restore those with Santa. */
   .landing .santa-bubble{ margin-top:40px; margin-left:0; }
   @media (max-width:640px){
-    .santa-bubble{ padding:10px; letter-spacing:1px; box-shadow:6px 6px #83af9b; margin-right:6px; margin-bottom:50px; }
+    .santa-bubble{ padding:10px; letter-spacing:1px; box-shadow:6px 6px #83af9b; margin-right:6px; margin-bottom:50px; max-width:200px; }
     .santa-bubble::after{ bottom:-15px; width:30px; height:7px; }
     .santa-bubble::before{ bottom:-25px; left:10px; width:30px; height:7px; }
     .bubble-dot{ bottom:-35px; left:12px; width:8px; height:8px; }
@@ -150,7 +151,7 @@
   .m3-person:hover{ transform:translateY(-2px) scale(1.05); border-color:var(--m3-secondary); }
   .m3-bar{ height:16px; border-radius:9999px; background:rgba(255,255,255,0.1); overflow:hidden; }
   .m3-bar > div{ height:100%; background:var(--m3-secondary); border-radius:9999px; transition:width .4s cubic-bezier(.34,1.56,.64,1); }
-  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:14px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; animation:float 5s ease-in-out infinite; }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:14px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; max-width:340px; animation:float 5s ease-in-out infinite; }
   @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
   @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
   @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
@@ -748,7 +749,7 @@
   0%, 93%, 100% { transform: scaleY(1); }
   95%, 97% { transform: scaleY(0.08); }
 }
-.scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(12px); }
+.scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(28px); }
 
 </style>
 </head>
@@ -756,7 +757,7 @@
 <div id="app">
   <div class="grain" aria-hidden="true"></div>
   <div class="scor-snow" aria-hidden="true"></div>
-  <div class="snow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <div class="snow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
   
 
   <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4" :class="{'landing-main': view==='home'}">
