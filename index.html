@@ -1078,7 +1078,7 @@
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
         <button class="btn btn-ghost" style="width:auto" @click="goBack"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
-        <button class="btn btn-success" style="width:auto" @click="doSetup"><i data-lucide="check" class="w-5 h-5"></i> Save</button>
+        <button class="btn btn-success" style="width:auto" :disabled="savingSetup" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
       </div>
       </div>
     </section>
@@ -1353,7 +1353,7 @@ createApp({
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
-    setupMsg:'', setupOk:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
+    setupMsg:'', setupOk:false, savingSetup:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
     pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollHostPin:'', pollSetupMsg:'', pollSetupOk:false,
@@ -1486,10 +1486,12 @@ createApp({
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
       if(guests.length<2){ this.setupMsg='Add at least 2 guests on the Guests page.'; this.setupOk=false; return; }
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
+      this.savingSetup=true;
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
         this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests(); this.goTo('host');
       }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
+      this.savingSetup=false;
     },
     async loadHost(){
       try{
