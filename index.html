@@ -1124,12 +1124,9 @@
     <section v-if="view==='hostsetup'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
 
-        <div class="flex gap-2 items-start">
-          <scor-santa size="6"></scor-santa>
-          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
+        <div class="flex justify-end">
+          <button class="btn btn-success" style="width:auto" :disabled="savingSetup || (!hostSignedIn && hostPin.length<4)" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
         </div>
-        <h2 class="text-2xl font-black mt-3">Host setup</h2>
-        <p class="text-sm opacity-70 mt-1">Nickname shows next to the name. Aliases are extra searchable spellings, so guests can find themselves even if they use a different name.</p>
         <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
         <p class="block mt-2">Gift budget</p>
         <div class="flex flex-wrap gap-2 mt-2 items-center">
@@ -1147,10 +1144,7 @@
         <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupDone" class="mt-2"><button class="btn btn-sm btn-compact btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
-      <div class="flex justify-between gap-3 mt-3">
-        <button class="btn btn-ghost" style="width:auto" @click="cancelSetup"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
-        <button class="btn btn-success" style="width:auto" :disabled="savingSetup || (!hostSignedIn && hostPin.length<4)" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
-      </div>
+
       </div>
     </section>
 
@@ -1177,9 +1171,8 @@
         </div>
         <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       </div>
-      <div class="flex items-center justify-between gap-3 mt-4">
+      <div class="flex mt-4">
         <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="openPollModal">Create poll</button>
-        <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goBack">Close</button>
       </div>
     </section>
 
