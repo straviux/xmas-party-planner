@@ -26,6 +26,10 @@ define('GUARD', "<?php http_response_code(403); exit; ?>\n");
 // deployed site origin (e.g. https://your-site.com) to that client's
 // Authorized JavaScript origins, or Google sign-in will refuse to load.
 define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
+// TEMPORARY: host sign-in/PIN check disabled for poll management only
+// (poll_setup, poll_set_open, poll_reset). Set this to false to re-enable
+// it. Guest voting is unchanged — it never required host sign-in.
+define('TEMP_POLL_HOST_CHECK_DISABLED', true);
 
 function send($data, $code = 200) {
   http_response_code($code);
@@ -454,7 +458,7 @@ if ($action === 'poll_get') {
 if ($action === 'poll_setup') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input, $d);
+  if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
   $q = trim((string)($input['question'] ?? 'What should our Christmas theme be?'));
   $opts_in = [];
   foreach ((array)($input['options'] ?? []) as $o) { $o = trim((string)$o); if ($o !== '') $opts_in[] = $o; }
@@ -484,7 +488,7 @@ if ($action === 'poll_vote') {
 if ($action === 'poll_set_open') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input, $d);
+  if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
   if (empty($d['poll'])) send(['error' => 'No poll yet'], 404);
   $d['poll']['open'] = !empty($input['open']);
   save_data($d);
@@ -493,7 +497,7 @@ if ($action === 'poll_set_open') {
 if ($action === 'poll_reset') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input, $d);
+  if (!TEMP_POLL_HOST_CHECK_DISABLED) require_host($input, $d); // TEMPORARY: see flag above
   $d['poll'] = null;
   save_data($d);
   send(['ok' => true]);
