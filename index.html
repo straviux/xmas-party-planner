@@ -126,6 +126,7 @@
   .m3-card{ border-radius:2.5rem !important; box-shadow:0 10px 30px rgba(0,0,0,.4) !important; border:1px solid rgba(255,255,255,0.1) !important; }
   .card{ background:rgba(255,255,255,0.05) !important; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1) !important; color:#fafafa; animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform 300ms cubic-bezier(0.16,1,0.3,1), background-color 300ms, box-shadow 300ms; }
+  .btn-compact{ height:36px !important; min-height:36px !important; padding:0 14px !important; font-size:0.875rem !important; }
   .btn:hover{ transform:scale(1.05); } .btn:active{ transform:scale(.97); }
   .guest-hero{ min-height:64px !important; box-shadow:0 12px 28px rgba(52,211,153,.35) !important; border:2px solid rgba(255,255,255,.9) !important; }
   .btn-primary{ background:var(--m3-primary) !important; border-color:var(--m3-primary) !important; color:#000 !important; }
@@ -1059,57 +1060,68 @@
 
     <!-- ============ HOST DASHBOARD ============ -->
     <section v-show="view==='hostdashboard'">
-      <div class="flex items-center gap-2 mb-1"><h2 class="text-xl font-black">Host dashboard</h2></div>
-      <p class="text-sm opacity-70">Who has revealed, and how guests join. Recipients are never shown here.</p>
-      <div v-if="hostSignedIn" class="flex items-center justify-between gap-3 mt-3">
-        <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
-        <button class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
-      </div>
-
-      <div class="mt-6">
-        <div class="flex items-center justify-between gap-3">
-          <h3 class="font-black">Claimed status</h3>
-          <button class="btn btn-sm shrink-0" style="width:auto" @click="loadHost">Refresh</button>
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host dashboard</h2></div>
+      <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <p class="text-sm opacity-70">Who has revealed, and how guests join. Recipients are never shown here.</p>
+        <div v-if="hostSignedIn" class="flex items-center justify-between gap-3 mt-3">
+          <p class="text-sm opacity-70">Signed in as {{ hostEmail }}</p>
+          <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
         </div>
-        <p v-if="hostMsg" class="text-sm mt-2" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
-        <p v-if="!hostList.length" class="text-sm opacity-70 mt-2">Tap Refresh to load the list.</p>
-        <div class="divide-y divide-white/10 mt-1">
-          <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
-            <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
-            <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
-            <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
-            <button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto;min-height:32px;height:32px" @click="resetOne(g.id)">Reset</button>
+
+        <div v-if="!hostSignedIn && !hostLoaded" class="mt-4">
+          <p class="font-black">Host sign-in</p>
+          <p class="text-sm opacity-70 mt-1">Enter your host PIN to see claimed names, the invite code and the QR.</p>
+          <div class="flex gap-2 mt-3">
+            <input class="input input-bordered flex-1" style="height:36px;min-height:36px" v-model="hostPinCheck" type="password" placeholder="Host PIN" @keyup.enter="loadHost">
+            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="loadHost">Continue</button>
+          </div>
+          <p v-if="hostMsg && !hostOk" class="text-sm text-error mt-2">{{ hostMsg }}</p>
+          <p class="text-sm opacity-70 mt-2">Or go back to Host home to sign in with Google.</p>
+        </div>
+
+        <div v-if="hostSignedIn || hostLoaded" class="mt-4">
+          <div class="flex items-center justify-between gap-3">
+            <h3 class="font-black">Claimed status</h3>
+            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="loadHost">Refresh</button>
+          </div>
+          <p v-if="hostMsg" class="text-sm mt-2" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
+          <div class="divide-y divide-white/10 mt-1">
+            <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
+              <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
+              <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
+              <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
+              <button v-if="g.claimed" class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="hostSignedIn || hostList.length" class="mt-6">
-        <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
-        <p class="text-sm opacity-70 mt-1">Guests enter this code to join. No login needed.</p>
-        <p class="text-xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
-        <div class="flex gap-2 mt-2">
-          <button class="btn btn-sm" style="width:auto" @click="copyInvite">Copy code</button>
-          <button class="btn btn-sm btn-ghost" style="width:auto" @click="regenInvite">New code</button>
+        <div v-if="hostSignedIn || hostLoaded" class="mt-5 pt-5 border-t border-white/10">
+          <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
+          <p class="text-sm opacity-70 mt-1">Guests enter this code to join. No login needed.</p>
+          <p class="text-xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="copyInvite">Copy code</button>
+            <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="regenInvite">New code</button>
+          </div>
+          <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
         </div>
-        <div v-if="inviteMsg" class="text-sm opacity-70 mt-2">{{ inviteMsg }}</div>
-      </div>
 
-      <div v-if="qrUrl" class="mt-6">
-        <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR</h3>
-        <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
-        <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:200px;width:100%">
-        <div class="text-center">
-          <button class="btn btn-sm" style="width:auto" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print QR sheet</button>
+        <div v-if="qrUrl && (hostSignedIn || hostLoaded)" class="mt-5 pt-5 border-t border-white/10">
+          <h3 class="font-black"><i data-lucide="qr-code" class="w-4 h-4 inline"></i> Single QR</h3>
+          <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
+          <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:180px;width:100%">
+          <div class="text-center">
+            <button class="btn btn-sm btn-compact shrink-0" style="width:auto" onclick="window.print()"><i data-lucide="printer" class="w-4 h-4 inline"></i> Print QR sheet</button>
+          </div>
+        </div>
+
+        <div v-if="hostSignedIn || hostLoaded" class="mt-5 pt-5 border-t border-white/10">
+          <h3 class="font-black text-error">Danger zone</h3>
+          <p class="text-sm opacity-70 mt-1">Deletes the whole draw and all claims. This cannot be undone.</p>
+          <button class="btn btn-sm btn-compact btn-error mt-2" style="width:auto" @click="resetAll">Reset everything</button>
         </div>
       </div>
-
-      <div class="mt-6">
-        <h3 class="font-black text-error">Danger zone</h3>
-        <p class="text-sm opacity-70 mt-1">Deletes the whole draw and all claims. This cannot be undone.</p>
-        <button class="btn btn-sm btn-error mt-2" style="width:auto" @click="resetAll">Reset everything</button>
-      </div>
-
-      <button class="btn btn-sm btn-ghost mt-6" style="width:auto" @click="goTo('host')">Back to host home</button>
+      <button class="btn btn-sm btn-compact btn-ghost mt-3" style="width:auto" @click="goTo('host')">Back to host home</button>
     </section>
 
     <section v-if="view==='hostsetup'">
@@ -1440,7 +1452,7 @@ const app=createApp({
     search:'', guestSearched:false, selected:null, showConfirmModal:false, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
-    setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
+    setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
     pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollSetupMsg:'', pollSetupOk:false,
@@ -1606,7 +1618,7 @@ const app=createApp({
     },
     async googleSignOut(){
       try{ if(this.hostSession) await this.api('google_logout',{session:this.hostSession}); }catch(e){}
-      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode='';
+      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
       try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
       this.hostMsg='Signed out.'; this.hostOk=true;
       this.goTo('host');
@@ -1696,13 +1708,13 @@ const app=createApp({
       this.savingSetup=false;
     },
     async loadHost(){
-      if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Sign in with Google or enter the host PIN.'; this.hostOk=false; return; }
+      if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Sign in with Google or enter the host PIN.'; this.hostOk=false; this.hostLoaded=false; return; }
       try{
         const d=await this.api('host_status',{session:this.hostSession, host_pin:this.hostPinCheck});
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
-        this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true;
+        this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true; this.hostLoaded=true;
         await this.loadInvite();
-      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
+      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     async resetOne(id){
       if(!confirm('Reset this name so it can be revealed again? Only do this in person with the real guest.')) return;
