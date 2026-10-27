@@ -912,6 +912,29 @@
             <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
           </div>
 
+          <div class="rounded-2xl p-4 mt-4" style="background:rgba(52,211,153,0.08);border:1px solid rgba(52,211,153,0.35)">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Everyone's wishlists</h3>
+              <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" :aria-label="showAllWishlists ? 'Hide all wishlists' : 'Browse all wishlists'" @click="showAllWishlists=!showAllWishlists"><i v-if="showAllWishlists" data-lucide="eye-off" class="w-5 h-5"></i><i v-else data-lucide="eye" class="w-5 h-5"></i></button>
+            </div>
+            <p class="text-sm opacity-70 mt-1">Find your recipient here and reserve their gifts.</p>
+          <div v-if="showAllWishlists">
+            <div v-for="owner in wishBoard" :key="owner.id" class="mt-4">
+              <b>{{ owner.display }}</b><span v-if="owner.nickname"> “{{ owner.nickname }}”</span>
+              <p v-if="!owner.items.length" class="text-sm opacity-60">— no wishlist yet</p>
+              <div class="divide-y divide-white/10 mt-1">
+                <div v-for="it in owner.items" :key="it.id" class="flex items-start gap-2 py-2">
+                  <div class="flex-1 min-w-0">
+                    <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
+                    <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
+                    <span v-if="it.reserved" class="text-error font-bold"> {{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
+                  </div>
+                  <button v-if="guestMe && guestMe.id!==owner.id" class="btn shrink-0" :class="it.reserved_by_me ? 'btn-success' : ''" style="width:36px;height:36px;min-height:36px;padding:0" :disabled="it.reserved && !it.reserved_by_me" :aria-label="it.reserved_by_me ? 'Unreserve this item' : 'Reserve this item'" @click="reserveWishItem(owner.id, it.id)"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
           <div class="flex items-center justify-between gap-3 mt-5">
             <h3 class="text-xl font-black">My wishlist</h3>
             <button class="btn btn-success shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Add item to my wishlist" @click="openWishModal"><i data-lucide="plus" class="w-5 h-5"></i></button>
@@ -931,26 +954,6 @@
               </div>
             </div>
 
-          <div class="flex items-center justify-between gap-3 mt-5">
-            <h3 class="text-xl font-black">Everyone's wishlists</h3>
-            <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" :aria-label="showAllWishlists ? 'Hide all wishlists' : 'Browse all wishlists'" @click="showAllWishlists=!showAllWishlists"><i v-if="showAllWishlists" data-lucide="eye-off" class="w-5 h-5"></i><i v-else data-lucide="eye" class="w-5 h-5"></i></button>
-          </div>
-          <div v-if="showAllWishlists">
-            <div v-for="owner in wishBoard" :key="owner.id" class="mt-4">
-              <b>{{ owner.display }}</b><span v-if="owner.nickname"> “{{ owner.nickname }}”</span>
-              <p v-if="!owner.items.length" class="text-sm opacity-60">— no wishlist yet</p>
-              <div class="divide-y divide-white/10 mt-1">
-                <div v-for="it in owner.items" :key="it.id" class="flex items-start gap-2 py-2">
-                  <div class="flex-1 min-w-0">
-                    <span v-if="it.text">{{ it.text }}</span><span v-else-if="it.kind==='image'"><i data-lucide="image" class="w-4 h-4 inline"></i> Screenshot</span>
-                    <a v-if="it.kind==='link' && it.link" :href="it.link" target="_blank" rel="noopener" class="link"> link <i data-lucide="external-link" class="w-4 h-4 inline"></i></a>
-                    <span v-if="it.reserved" class="text-error font-bold"> {{ it.reserved_by_me ? 'Reserved by you' : 'Reserved' }}</span>
-                  </div>
-                  <button v-if="guestMe && guestMe.id!==owner.id" class="btn shrink-0" :class="it.reserved_by_me ? 'btn-success' : ''" style="width:36px;height:36px;min-height:36px;padding:0" :disabled="it.reserved && !it.reserved_by_me" :aria-label="it.reserved_by_me ? 'Unreserve this item' : 'Reserve this item'" @click="reserveWishItem(owner.id, it.id)"><i data-lucide="bookmark" class="w-4 h-4"></i></button>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="flex items-center justify-between gap-3 mt-4">
           <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goToReveal"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Reveal</button>
@@ -1483,7 +1486,7 @@ const app=createApp({
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
-    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, showAllWishlists:false,
+    guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, showAllWishlists:true,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
