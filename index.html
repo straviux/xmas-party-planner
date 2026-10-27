@@ -817,17 +817,19 @@
       <div v-show="guestStep===1" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
           <scor-santa size="4"></scor-santa>
-          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type any part of your name or nickname, then tap your exact entry — you never type a name, so spelling can't mismatch.</div>
+          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
         </div>
-        <input class="input input-bordered w-full mt-3" v-model="search" placeholder="Search your name or nickname…">
+        <input class="input input-bordered w-full mt-3" v-model="search" placeholder="Search your name or nickname…" @input="guestSearched=false" @keyup.enter="guestSearched=true">
+        <button class="btn btn-primary w-full mt-3" :disabled="!search.trim()" @click="guestSearched=true"><i data-lucide="search" class="w-4 h-4 inline"></i> Search</button>
         <div class="mt-3 space-y-2">
           <p v-if="!guests.length" class="opacity-70">No draw yet — the host needs to set it up first.</p>
-          <p v-else-if="!filteredGuests.length" class="opacity-70">No match. Try a first name, nickname, or part of a name.</p>
-          <button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" @click="selectGuest(g)">
+          <p v-else-if="guests.length && !guestSearched" class="opacity-70">Tap Search to check if your name is on the list.</p>
+          <p v-else-if="guestSearched && !filteredGuests.length" class="opacity-70">No match — that name isn't on the list. Try a first name, nickname, or part of a name.</p>
+          <template v-if="guestSearched"><button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" @click="selectGuest(g)">
             <b class="text-lg">{{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span></b>
             <span v-if="g.claimed" class="text-error font-bold"> — Already revealed</span>
             <div v-if="g.aliases.length" class="text-sm opacity-60">Also: {{ g.aliases.join(', ') }}</div>
-          </button>
+          </button></template>
         </div>
         <div v-if="selected" class="mt-4 border-t pt-4">
           <h2 class="text-2xl font-black">Is this you?</h2>
@@ -863,7 +865,7 @@
           <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
           <button class="btn btn-primary w-full mt-3" @click="goToGifts">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
-        <button class="btn btn-ghost w-full mt-3" @click="guestStep=1"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Who are you?</button>
+        <button class="btn btn-ghost w-full mt-3" @click="guestStep=1; guestSearched=false"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Who are you?</button>
       </div>
 
     </section>
@@ -1254,7 +1256,7 @@ createApp({
   data(){ return {
     view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showHostSetupModal:false, showPollModal:false, showWishModal:false,
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
-    search:'', selected:null, guestPin:'', confirmMsg:'', recipient:null,
+    search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
     partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
@@ -1323,6 +1325,7 @@ createApp({
       if(this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)){ this.goToGifts(); return; }
       this.goTo('guest');
       this.guestStep = this.guestMe ? 2 : 1;
+      this.guestSearched=false;
     },
     startHost(){ this.goTo('host'); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
