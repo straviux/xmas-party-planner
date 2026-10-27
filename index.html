@@ -100,7 +100,7 @@
     .santa-bubble::before{ bottom:-30px; left:12px; width:34px; height:8px; }
     .bubble-dot{ bottom:-42px; left:14px; width:9px; height:9px; }
   }
-  .landing .santa-shadow{ width:128px; }
+  .landing .santa-shadow{ width:180px; }
   /* Buttons sit directly on the background: the pill wrapper stays in the
      DOM (so nothing functional changes) but is transparent, borderless
      and padding-free, so the nested inset look is gone. */
@@ -169,7 +169,7 @@
       <!-- Mascot hero: Santa next to his chat bubble, like a chat avatar + message -->
       <div class="flex items-start gap-3 landing-santa-row">
         <div class="shrink-0 text-center">
-          <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:128px;max-width:128px;height:auto;cursor:pointer" @click="waveSanta">
+          <img :src="santaSrc" alt="Santa, your party guide — tap to wave" :class="['santa-anim','mx-auto', santaWaving ? 'santa-wave' : '']" style="width:180px;max-width:180px;height:auto;cursor:pointer" @click="waveSanta">
           <div class="santa-shadow" aria-hidden="true"></div>
         </div>
         <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
@@ -243,7 +243,7 @@
 <!-- Step 1: Who are you? -->
       <div v-show="guestStep===1" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:120px;height:120px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type any part of your name or nickname, then tap your exact entry — you never type a name, so spelling can't mismatch.</div>
         </div>
         <input class="input input-bordered w-full mt-3" v-model="search" placeholder="Search your name or nickname…">
@@ -302,7 +302,7 @@
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
           <div class="flex gap-3 items-start mt-2">
-            <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
+            <img :src="santaSrc" alt="" class="rounded-xl" style="width:120px;height:120px;object-fit:cover">
             <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Check what your recipient wants, reserve it so nobody else buys the same thing, and add your own wishes so your giver knows what to get you.</div>
           </div>
 
@@ -398,7 +398,7 @@
     <section v-show="view==='done'">
       <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">All set</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
-        <img :src="santaSrc" alt="Santa" class="mx-auto rounded-2xl" style="max-width:180px;width:100%">
+        <img :src="santaSrc" alt="Santa" class="mx-auto rounded-2xl" style="max-width:240px;width:100%">
         <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
         <div class="text-left mt-3 space-y-1">
           <p><i data-lucide="gift" class="w-4 h-4 inline"></i> Buying for: <b>{{ guestRecipient ? guestRecipient.name : (manualRecipient ? manualRecipient.display : 'revealed earlier — check your notes') }}</b></p>
@@ -417,7 +417,7 @@
       <div class="flex items-center gap-2 mb-3"><button class="btn btn-ghost btn-sm" style="width:auto" @click="goBack"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back</button><h2 class="text-xl font-black">Host</h2></div>
       <div v-if="!setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:120px;height:120px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
@@ -468,7 +468,7 @@
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostSetupModal">✕</button>
       </div>
         <div class="flex gap-3 items-start">
-          <img :src="santaSrc" alt="" class="rounded-xl" style="width:80px;height:80px;object-fit:cover">
+          <img :src="santaSrc" alt="" class="rounded-xl" style="width:120px;height:120px;object-fit:cover">
           <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Ho ho ho, host! Add each guest once, then I'll lock the draw — nobody gets themselves, and I'll never show you who got whom.</div>
         </div>
         <h2 class="text-2xl font-black mt-3">Host setup</h2>
