@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F67280">
-<title>Christmas Party — Secret Santa, Wishlists & Theme Poll</title>
+<title>Secret Santa HQ — Secret Santa, Wishlists & Theme Poll</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@4.12.24/dist/full.min.css">
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
@@ -26,11 +26,13 @@
     .btn-xs, .btn-sm{ min-height:44px; font-size:.95rem; }
     img{ max-width:100%; height:auto; }
   }
+  .m3-header nav .btn{ width:auto; }
   .m3-header{ background:linear-gradient(135deg,#F67280,#F67280 55%,#96DD99); color:#E8D28F; text-shadow:0 1px 4px rgba(0,0,0,0.55); border-radius:0 0 2rem 2rem; }
   .m3-card{ border-radius:1.75rem !important; box-shadow:0 10px 30px rgba(0,0,0,.08) !important; border:1px solid #f3e8d8 !important; }
   .card{ color:#1f2937; text-shadow:none; }
   .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform .15s cubic-bezier(.34,1.56,.64,1), box-shadow .15s; }
   .btn:hover{ transform:scale(1.02); } .btn:active{ transform:scale(.97); }
+  .guest-hero{ min-height:64px !important; box-shadow:0 12px 28px rgba(46,125,50,.45) !important; border:2px solid rgba(255,255,255,.9) !important; }
   .btn-primary{ background:var(--m3-primary) !important; border-color:var(--m3-primary) !important; color:#fff !important; }
   .btn-success, .btn-secondary{ background:var(--m3-secondary) !important; border-color:var(--m3-secondary) !important; color:#fff !important; }
   .input, .textarea{ border-radius:1rem !important; }
@@ -47,10 +49,21 @@
 </head>
 <body>
 <div id="app">
-  <header class="m3-header p-4 sm:p-6 text-center">
-    <h1 class="text-2xl sm:text-3xl font-black">{{ party || 'Christmas Party' }}</h1>
-    <p class="opacity-90 mt-1">Secret Santa • Wishlists • Christmas theme poll</p>
-    <button v-if="view!=='home'" class="btn btn-sm btn-ghost mt-2" @click="goHome"><i data-lucide="home" class="w-4 h-4 inline"></i> Home</button>
+  <header class="m3-header p-4 sm:p-6">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-3 min-w-0">
+        <i data-lucide="tree-pine" class="w-8 h-8 shrink-0"></i>
+        <div class="min-w-0">
+          <h1 class="text-2xl sm:text-3xl font-black leading-none">Secret Santa HQ</h1>
+          <p class="opacity-90 mt-1 text-sm truncate">{{ party || 'Christmas Party' }} • Secret Santa • Wishlists • Theme poll</p>
+        </div>
+      </div>
+      <nav class="flex items-center gap-2 flex-wrap">
+        <button class="btn btn-sm btn-ghost" @click="goHome"><i data-lucide="home" class="w-4 h-4 inline"></i> Home</button>
+        <button class="btn btn-sm btn-ghost" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-4 h-4 inline"></i> Guest</button>
+        <button class="btn btn-sm btn-ghost" @click="startHost"><i data-lucide="key-round" class="w-4 h-4 inline"></i> Host</button>
+      </nav>
+    </div>
   </header>
 
   <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4">
@@ -65,7 +78,7 @@
           <span v-else> Ho ho ho! Scan the QR, find your name, and let's get gifting — I'll walk you through it, one step at a time.</span>
         </div>
         <div class="mt-4 space-y-2">
-          <button class="btn btn-success w-full text-lg" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-5 h-5 inline"></i> I'm a guest — start my journey</button>
+          <button class="btn btn-lg btn-success w-full text-xl font-black guest-hero" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-6 h-6 inline"></i> I'm a guest — start my journey</button>
           <p v-if="!setupDone" class="text-sm opacity-70">No party set up yet — the host needs to set it up first.</p>
           <button class="btn btn-primary w-full text-lg" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
         </div>
@@ -349,7 +362,6 @@
       </div>
     </section>
 
-    <p class="text-sm opacity-80 text-center mt-4" style="color:#E8D28F">How it stops rescans: data.php marks a name claimed the moment it reveals. A second scan + the same name only gets “already revealed”, with no recipient shown. Directly opening data.php returns 403, and .htaccess denies it as a second layer.</p>
   </main>
 </div>
 <script>

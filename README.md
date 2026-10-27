@@ -1,4 +1,4 @@
-# Christmas Party — PHP for Apache (Vue 3, DaisyUI, Lucide, Material 3 Expressive)
+# Secret Santa HQ — PHP for Apache (Vue 3, DaisyUI, Lucide, Material 3 Expressive)
 
 You deploy this, not Muse. No Node, no database server, no build step.
 Just PHP on Apache (or any PHP host) and this folder.
