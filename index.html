@@ -281,14 +281,33 @@
         <label class="block mt-3">Party name <input class="input input-bordered w-full" v-model="partyName" value="Christmas Party"></label>
         <label class="block mt-2">Gift budget (optional) <input class="input input-bordered w-full" v-model="partyBudget" placeholder="e.g. £20"></label>
         <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
-        <div v-for="(r,i) in guestRows" :key="i" class="grid grid-cols-1 sm:grid-cols-2 gap-2 border border-dashed rounded-2xl p-3 mt-3">
-          <input class="input input-bordered" v-model="r.display" placeholder="Name *">
-          <input class="input input-bordered" v-model="r.nickname" placeholder="Nickname (optional)">
-          <input class="input input-bordered sm:col-span-2" v-model="r.aliasesText" placeholder="Aliases, comma separated (optional)">
-          <input class="input input-bordered" v-model="r.pin" placeholder="Guest PIN (optional)">
-          <button class="btn btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
+        <h3 class="font-black mt-4">Guests ({{ guestRows.length }}) — add at least 2</h3>
+        <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
+        <div v-for="(r,i) in guestRows" :key="i" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
+          <b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span>
+          <span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span>
+          <span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span>
+          <div class="flex gap-2 mt-2">
+            <button class="btn btn-sm" @click="openGuestModal(i)">Edit</button>
+            <button class="btn btn-sm btn-ghost" @click="guestRows.splice(i,1)">Remove</button>
+          </div>
         </div>
-        <button class="btn mt-3" @click="guestRows.push({display:'',nickname:'',aliasesText:'',pin:''})">+ Add guest</button>
+        <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
+        <!-- Add / Edit guest modal -->
+        <div v-if="showGuestModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeGuestModal">
+          <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:480px;max-height:90vh;overflow:auto">
+            <h3 class="text-xl font-black">{{ guestEditIndex>=0 ? 'Edit guest' : 'Add guest' }}</h3>
+            <label class="block mt-3">Name * <input class="input input-bordered w-full" v-model="guestForm.display" placeholder="Name"></label>
+            <label class="block mt-2">Nickname (optional) <input class="input input-bordered w-full" v-model="guestForm.nickname" placeholder="Nickname"></label>
+            <label class="block mt-2">Aliases, comma separated (optional) <input class="input input-bordered w-full" v-model="guestForm.aliasesText" placeholder="e.g. Al, Xander"></label>
+            <label class="block mt-2">Guest PIN (optional) <input class="input input-bordered w-full" v-model="guestForm.pin" placeholder="Guest PIN"></label>
+            <div v-if="guestFormMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestFormMsg }}</div>
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-success flex-1" @click="saveGuestModal">{{ guestEditIndex>=0 ? 'Save changes' : 'Add guest' }}</button>
+              <button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button>
+            </div>
+          </div>
+        </div>
         <button class="btn btn-success w-full mt-3" @click="doSetup">Draw names &amp; lock the draw</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       </div>
@@ -346,7 +365,7 @@ createApp({
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
-    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[{display:'',nickname:'',aliasesText:'',pin:''},{display:'',nickname:'',aliasesText:'',pin:''},{display:'',nickname:'',aliasesText:'',pin:''}],
+    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, hostPinCheck:'', hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
@@ -425,6 +444,20 @@ createApp({
       this.guestStep=4;
     },
     pickManualRecipient(g){ this.manualRecipient=g; },
+    openGuestModal(i){
+      this.guestEditIndex=i;
+      if(i>=0){ const r=this.guestRows[i]; this.guestForm={display:r.display, nickname:r.nickname, aliasesText:r.aliasesText, pin:r.pin}; }
+      else this.guestForm={display:'',nickname:'',aliasesText:'',pin:''};
+      this.guestFormMsg=''; this.showGuestModal=true;
+    },
+    closeGuestModal(){ this.showGuestModal=false; this.guestFormMsg=''; },
+    saveGuestModal(){
+      const f={display:this.guestForm.display.trim(), nickname:this.guestForm.nickname.trim(), aliasesText:this.guestForm.aliasesText.trim(), pin:this.guestForm.pin.trim()};
+      if(!f.display){ this.guestFormMsg='Guest name is required.'; return; }
+      if(this.guestEditIndex>=0) this.guestRows[this.guestEditIndex]=f;
+      else this.guestRows.push(f);
+      this.showGuestModal=false;
+    },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
       if(guests.length<2){ this.setupMsg='Add at least 2 guests.'; this.setupOk=false; return; }

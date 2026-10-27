@@ -74,8 +74,10 @@ their recipient manually in the Gifts step to see that list.
    permissions.
 4. Open that URL in your browser, tap **Host**.
 5. Set a party name, optional gift budget, and a host PIN (4+
-   characters), add guests (name, nickname, aliases, optional
-   guest PIN), then **Draw names & lock the draw**.
+   characters), then tap **Add guest** — a modal opens for each
+   guest (name, nickname, aliases, optional guest PIN). Added
+   guests show as a list you can Edit or Remove. Add at least 2,
+   then **Draw names & lock the draw**.
 6. In the Host dashboard (host PIN) you get the **single QR code** —
    print it, everyone scans the same one. It points at the root URL
    of wherever you deploy this.
