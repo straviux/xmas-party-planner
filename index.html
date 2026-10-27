@@ -1081,7 +1081,7 @@
           </div>
         </div>
         <button class="btn mt-3" @click="openGuestModal(-1)">+ Add guest</button>
-        <button class="btn btn-success w-full mt-3" @click="doSetup">Draw names &amp; lock the draw</button>
+        <button class="btn btn-success w-full mt-3" @click="doSetup">Save</button>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="goBack">Cancel</button>
       </div>
@@ -1210,7 +1210,7 @@
             <label class="block mt-2">Guest PIN (optional) <input class="input input-bordered w-full" v-model="guestForm.pin" placeholder="Guest PIN"></label>
             <div v-if="guestFormMsg" class="alert alert-error mt-3 rounded-2xl">{{ guestFormMsg }}</div>
             <div class="flex gap-2 mt-4">
-              <button class="btn btn-success flex-1" @click="saveGuestModal">{{ guestEditIndex>=0 ? 'Save changes' : 'Add guest' }}</button>
+              <button class="btn btn-success flex-1" @click="saveGuestModal">Save</button>
               <button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button>
             </div>
           </div>
@@ -1472,7 +1472,7 @@ createApp({
       if(this.hostPin.length<4){ this.setupMsg='Host PIN must be at least 4 characters.'; this.setupOk=false; return; }
       try{
         await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, host_pin:this.hostPin, guests});
-        this.setupMsg='Draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests(); this.goTo('host');
+        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; await this.loadGuests(); this.goTo('host');
       }catch(e){ this.setupMsg=e.message; this.setupOk=false; }
     },
     async loadHost(){
