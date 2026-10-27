@@ -742,6 +742,7 @@
   .santa-bubble-sm{ padding:10px !important; font-size:10px !important; max-width:170px !important; margin-bottom:50px !important; }
   .santa-bubble-sm::before{ bottom:-25px; }
   .santa-bubble-sm::after{ bottom:-15px; }
+  .santa-bubble-wide{ max-width:none !important; }
 
 
   /* Search pill (guest search bar): gradient border, dark field, pink icon,
@@ -841,7 +842,7 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
-          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
+          <div class="santa-bubble santa-bubble-sm santa-bubble-wide flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
         </div>
         <div class="search-pill mt-3">
           <i data-lucide="search" class="search-pill-icon"></i>
