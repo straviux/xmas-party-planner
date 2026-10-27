@@ -1007,7 +1007,6 @@
 
     <!-- ============ HOST HOME (hub) ============ -->
     <section v-show="view==='host'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Host</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
           <scor-santa size="6"></scor-santa>
@@ -1017,38 +1016,43 @@
       </div>
 
       <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="layout-dashboard" class="w-6 h-6 inline"></i> Dashboard</h2>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-sm opacity-70 flex-1 truncate">Claimed status, invite code and QR.</p>
-          <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open dashboard" :disabled="!setupDone" @click="openDashboard"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+        <div class="divide-y divide-white/10">
+          <div class="flex items-center gap-3 py-3 first:pt-0">
+            <i data-lucide="layout-dashboard" class="w-6 h-6 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xl font-black">Dashboard</h2>
+              <p class="text-sm opacity-70">Claimed status, invite code and QR.</p>
+              <p v-if="!setupDone" class="text-sm opacity-70">Set up a party first.</p>
+            </div>
+            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open dashboard" :disabled="!setupDone" @click="openDashboard"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex items-center gap-3 py-3">
+            <i data-lucide="users" class="w-6 h-6 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xl font-black">Guests</h2>
+              <p class="text-sm opacity-70">Add and edit the guest list.</p>
+            </div>
+            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open guests page" @click="goTo('hostguests')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex items-center gap-3 py-3">
+            <i data-lucide="vote" class="w-6 h-6 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xl font-black">Theme poll</h2>
+              <p class="text-sm opacity-70">Create, reopen, close or delete the poll.</p>
+            </div>
+            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open poll page" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+          </div>
+          <div class="flex items-center gap-3 py-3 last:pb-0">
+            <i data-lucide="settings" class="w-6 h-6 shrink-0"></i>
+            <div class="flex-1 min-w-0">
+              <h2 class="text-xl font-black">Setup</h2>
+              <p class="text-sm opacity-70">Party name, gift budget and the draw.</p>
+            </div>
+            <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" :aria-label="setupDone ? 'Open setup' : 'Create party'" @click="goTo('hostsetup')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
+          </div>
         </div>
-        <p v-if="!setupDone" class="text-sm opacity-70 mt-1">Set up a party first.</p>
       </div>
-
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Guests</h2>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-sm opacity-70 flex-1 truncate">Add and edit the guest list.</p>
-          <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open guests page" @click="goTo('hostguests')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-        </div>
-      </div>
-
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll</h2>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-sm opacity-70 flex-1 truncate">Create, reopen, close or delete the poll.</p>
-          <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" aria-label="Open poll page" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-        </div>
-        <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
-      </div>
-
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black"><i data-lucide="settings" class="w-6 h-6 inline"></i> Setup</h2>
-        <div class="flex items-center gap-3 mt-1">
-          <p class="text-sm opacity-70 flex-1 truncate">Party name, gift budget and the draw.</p>
-          <button class="btn btn-circle shrink-0" style="width:44px;height:44px;min-height:44px;padding:0" :aria-label="setupDone ? 'Open setup' : 'Create party'" @click="goTo('hostsetup')"><i data-lucide="arrow-right" class="w-5 h-5"></i></button>
-        </div>
-      </div>
+      <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
     </section>
 
     <!-- ============ HOST DASHBOARD ============ -->
@@ -1373,8 +1377,8 @@
         </div>
 
   <!-- FAB menu: replaces the bottom dock. Same 5 items, icons and destinations, in the same order. -->
-  <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
-    <div v-if="fabOpen && !['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-menu" id="fab-menu">
+  <div v-if="fabOpen && !['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-backdrop" @click="fabOpen=false" aria-hidden="true"></div>
+    <div v-if="fabOpen && !['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab-menu" id="fab-menu">
       <button class="fab-item" :class="{'fab-item-active': view==='home'}" @click="fabGo('home')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
       <button class="fab-item" :class="{'fab-item-active': ['who','reveal'].includes(view)}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-6 h-6"></i><span>Guest</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
@@ -1382,7 +1386,7 @@
       <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
     </div>
   <div class="fab-wrap">
-    <button v-show="!['hostsetup','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
+    <button v-show="!['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
       <svg stroke="var(--button-color)" fill="none" class="hamburger" viewBox="-10 -10 120 120" width="36" height="36" aria-hidden="true">
         <path class="line" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" d="m 20 40 h 60 a 1 1 0 0 1 0 20 h -60 a 1 1 0 0 1 0 -40 h 30 v 70"></path>
       </svg>
@@ -1395,6 +1399,13 @@
     <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="star-plus" class="w-7 h-7"></i></span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='wishlists'}" @click="goToWishlists"><i data-lucide="users" class="w-6 h-6"></i><span>Wishlists</span></button>
     <button class="dock-item" :class="{'dock-item-active': view==='vote'}" @click="goToVote"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
+  </nav>
+  <nav v-if="['host','hostdashboard','hostguests','hostpoll'].includes(view)" class="dock" aria-label="Host navigation">
+    <button class="dock-item" :class="{'dock-item-active': view==='host'}" @click="goTo('host')"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='hostdashboard'}" :disabled="!setupDone" @click="openDashboard"><i data-lucide="layout-dashboard" class="w-6 h-6"></i><span>Dashboard</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='hostguests'}" @click="goTo('hostguests')"><i data-lucide="users" class="w-6 h-6"></i><span>Guests</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='hostpoll'}" :disabled="!setupDone" @click="goTo('hostpoll')"><i data-lucide="vote" class="w-6 h-6"></i><span>Poll</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='hostsetup'}" @click="goTo('hostsetup')"><i data-lucide="settings" class="w-6 h-6"></i><span>Setup</span></button>
   </nav>
 </div>
 <script>
