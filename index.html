@@ -1391,8 +1391,8 @@ createApp({
     if(window.lucide) lucide.createIcons();
     try{
       const s=await this.api('status');
-      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} }
-      else { try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved)) this.guestRows=saved; }catch(e){} }
+      if(s.exists){ this.setupDone=true; this.party=s.party; this.budget=s.budget; await this.loadGuests(); }
+      try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved) && saved.length) this.guestRows=saved; }catch(e){}
     }catch(e){ /* server not running yet — host setup will show */ try{ const saved=JSON.parse(localStorage.getItem('xmasGuestRows')||'[]'); if(Array.isArray(saved)) this.guestRows=saved; }catch(e2){} }
     // QR scan only: ?guest=1 opens the guest page. Everyone else stays on home.
     if(new URLSearchParams(location.search).get('guest')==='1') this.startGuest(true);
@@ -1484,6 +1484,7 @@ createApp({
       if(!f.display){ this.guestFormMsg='Guest name is required.'; return; }
       if(this.guestEditIndex>=0) this.guestRows[this.guestEditIndex]=f;
       else this.guestRows.push(f);
+      try{ localStorage.setItem('xmasGuestRows', JSON.stringify(this.guestRows)); }catch(e){}
       this.showGuestModal=false;
     },
     async doSetup(){
