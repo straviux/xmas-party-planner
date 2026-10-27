@@ -123,6 +123,10 @@
   .fab-item{ display:flex; align-items:center; gap:12px; width:100%; min-height:60px; padding:0 20px; border-radius:9999px; border:1px solid rgba(255,255,255,0.1); background:#18181B; color:#fafafa; font-size:1.05rem; font-weight:700; white-space:nowrap; box-shadow:0 8px 20px rgba(0,0,0,.35); cursor:pointer; }
   .fab-item-active{ background:#34D399; color:#000; border-color:#34D399; }
   .fab-item:disabled{ opacity:.4; cursor:not-allowed; }
+.dock{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(12px + env(safe-area-inset-bottom)); z-index:40; width:min(92vw,480px); display:flex; align-items:flex-end; justify-content:space-between; gap:4px; padding:8px 10px; background:rgba(24,24,27,0.92); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.12); border-radius:9999px; box-shadow:0 12px 30px rgba(0,0,0,.45); }
+.dock-item{ flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; min-height:52px; justify-content:center; background:none; border:none; color:#fafafa; font-size:11px; font-weight:700; cursor:pointer; }
+.dock-item-active{ color:#34D399; }
+.dock-plus{ width:52px; height:52px; border-radius:9999px; background:#34D399; color:#000; display:flex; align-items:center; justify-content:center; transform:translateY(-14px); box-shadow:0 8px 20px rgba(52,211,153,.45); }
   .m3-card{ border-radius:2.5rem !important; box-shadow:0 10px 30px rgba(0,0,0,.4) !important; border:1px solid rgba(255,255,255,0.1) !important; }
   .card{ background:rgba(255,255,255,0.05) !important; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,0.1) !important; color:#fafafa; animation:fade-in-up 0.8s cubic-bezier(0.16,1,0.3,1) both; }
   .btn{ border-radius:9999px !important; text-transform:none !important; font-size:1rem; transition:transform 300ms cubic-bezier(0.16,1,0.3,1), background-color 300ms, box-shadow 300ms; }
@@ -794,7 +798,7 @@
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
-        <!-- Shared header for all guest pages: progress + Your Party (one place, not per page) -->
+        <!-- Shared header for all guest pages: progress only. Your Party is now the guest home page. -->
     <div v-if="['who','reveal','gifts','wishlists','vote','done'].includes(view)">
 
       <!-- Progress -->
@@ -809,8 +813,13 @@
           <span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
       </div>
 
-      <!-- Your party: only shown once the guest is in (past Who), never on home -->
-      <div v-if="guestMe && view!=='who'">
+
+          </div>
+
+    <!-- ============ GUEST HOME PAGE ============ -->
+    <section v-show="view==='guesthome'">
+      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Home</h2></div>
+      <p v-if="guestMe" class="text-sm mt-1">Playing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
           <div class="dark-card p-4 text-left">
@@ -838,9 +847,7 @@
             <i data-lucide="shopping-bag" class="w-6 h-6 mt-2"></i>
           </div>
         </div>
-      </div>
-
-          </div>
+    </section>
 
 <section v-show="view==='who'">
       <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guest</h2></div>
@@ -1416,6 +1423,13 @@
     </button>
   </div>
   <!-- MascotPlayer temporarily disabled — original Santa only: <mascot-player></mascot-player> -->
+  <nav v-if="guestMe && ['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(view)" class="dock" aria-label="Guest navigation">
+    <button class="dock-item" :class="{'dock-item-active': view==='guesthome'}" @click="goToGuestHome"><i data-lucide="home" class="w-6 h-6"></i><span>Home</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='gifts'}" @click="goToGifts"><i data-lucide="gift" class="w-6 h-6"></i><span>Gifts</span></button>
+    <button class="dock-item" @click="openWishModal" aria-label="Create a wishlist"><span class="dock-plus"><i data-lucide="plus" class="w-7 h-7"></i></span><span>Add wish</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='wishlists'}" @click="goToWishlists"><i data-lucide="users" class="w-6 h-6"></i><span>Wishlists</span></button>
+    <button class="dock-item" :class="{'dock-item-active': view==='vote'}" @click="goToVote"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
+  </nav>
 </div>
 <script>
 const { createApp, nextTick } = Vue;
@@ -1547,6 +1561,7 @@ const app=createApp({
       if(to.name==='who') this.guestStep=1; else if(to.name==='reveal') this.guestStep=2;
       if(to.name==='reveal' && !this.guestMe){ this.$router.replace({name:'who'}); }
       else if(to.name==='reveal' && this.guestAlreadyClaimed && !this.guestRecipient){ this.goToGifts(); }
+      if(to.name==='guesthome' && !this.guestMe){ this.$router.replace({name:'who'}); }
       // A modal is not a page, so it must never survive a page change and
       // keep rendering over the new page (e.g. home after a cancel).
       this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
@@ -1568,7 +1583,7 @@ const app=createApp({
     // unless it is a guest page with no party set up yet.
     {
       const start=this.$route.name || 'home';
-      if(['who','reveal','gifts','wishlists','vote','done'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
+      if(['who','reveal','gifts','wishlists','vote','done','guesthome'].includes(start) && !this.setupDone){ this.$router.replace({name:'home'}); this.view='home'; }
       else this.view=start;
     }
     try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
@@ -1613,7 +1628,7 @@ const app=createApp({
     },
     openGiftsPage(){ if(this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage(){ if(this.guestMe) this.goToVote(); else this.startGuest(); },
-    openWishModal(){ this.wishFormMsg=''; this.showWishModal=true; },
+    openWishModal(){ if(this.guestMe){ this.wishMe=this.guestMe; this.wishPin=this.guestPin; } this.wishFormMsg=''; this.showWishModal=true; },
     closeWishModal(){ this.showWishModal=false; },
     openQrModal(){ this.qrMsg=''; this.showQrModal=true; },
     closeQrModal(){ this.showQrModal=false; },
@@ -1621,7 +1636,7 @@ const app=createApp({
     waveSanta(){ this.santaWaving=true; setTimeout(()=>{ this.santaWaving=false; }, 1200); },
     startGuest(bypassDialog=false){
       if(!this.setupDone) return;
-      if(this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)){ this.goToGifts(); return; }
+      if(this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)){ this.goToGuestHome(); return; }
       if(!bypassDialog){ this.guestEntryCode=''; this.guestEntryMsg=''; this.showGuestEntryModal=true; return; }
       if(this.guestMe){ this.guestStep=2; this.goTo('reveal'); }
       else { this.guestStep=1; this.goTo('who'); }
@@ -1728,7 +1743,7 @@ const app=createApp({
     newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } this.showConfirmModal=true; },
     closeConfirmModal(){ this.showConfirmModal=false; this.selected=null; },
-    confirmClaimedGuest(){ this.showConfirmModal=false; this.goToGifts(); },
+    confirmClaimedGuest(){ this.showConfirmModal=false; this.goToGuestHome(); },
     async doReveal(){
       try{
         const res=await this.api('reveal',{id:this.selected.id, pin:this.guestPin});
@@ -1743,6 +1758,10 @@ const app=createApp({
       }
     },
     async goToDone(){ if(this.guestMe){ await this.loadWishlists(); await this.loadPoll(); } this.goTo('done'); },
+    async goToGuestHome(){
+      await this.loadGuests();
+      this.goTo('guesthome');
+    },
     async goToGifts(){
       this.wishMe=this.guestMe; this.wishPin=this.guestPin;
       await this.loadWishlists();
@@ -1876,6 +1895,7 @@ const router=VueRouter.createRouter({
     { path:'/guest', redirect:{name:'who'} },
     { path:'/gifts', name:'gifts', component:_dummy },
     { path:'/wishlists', name:'wishlists', component:_dummy },
+    { path:'/guest-home', name:'guesthome', component:_dummy },
     { path:'/vote', name:'vote', component:_dummy },
     { path:'/done', name:'done', component:_dummy },
     { path:'/host', name:'host', component:_dummy },
