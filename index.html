@@ -747,7 +747,8 @@
   .pin-pill-sep{ width:1px; height:24px; background:rgba(255,255,255,0.2); flex-shrink:0; }
   .pin-pill-action{ display:flex; align-items:center; gap:4px; background:none; border:none; color:#34d399; font-weight:600; white-space:nowrap; cursor:pointer; flex-shrink:0; }
   .pin-pill-action:disabled{ opacity:0.4; cursor:not-allowed; }
-  .scan-qr-glow{ color:#ffffff; text-shadow:0 0 6px rgba(255,255,255,0.75), 0 0 12px rgba(255,255,255,0.35); }
+  .scan-qr-glow{ color:#e5e5e5; text-shadow:0 0 6px rgba(255,255,255,0.75), 0 0 12px rgba(255,255,255,0.35); }
+  .scan-qr-btn{ border-color:rgba(255,255,255,0.4) !important; }
 </style>
 </head>
 <body>
@@ -777,7 +778,7 @@
         <button class="seg-btn seg-host" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
       </div>
       <!-- TEMPORARY: Scan button enabled without setup until the real scanner returns -->
-      <button class="btn btn-outline w-full mt-3 scan-qr-glow" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
+      <button class="btn btn-outline w-full mt-3 scan-qr-glow scan-qr-btn" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       <div v-if="qrMsg" class="alert alert-error mt-3 rounded-2xl">{{ qrMsg }}</div>
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
