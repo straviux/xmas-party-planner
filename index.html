@@ -738,6 +738,9 @@
   95%, 97% { transform: scaleY(0.08); }
 }
 .scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(28px); }
+  .santa-bubble-sm{ padding:10px !important; font-size:10px !important; max-width:170px !important; margin-bottom:50px !important; }
+  .santa-bubble-sm::before{ bottom:-25px; }
+  .santa-bubble-sm::after{ bottom:-15px; }
 
 
   /* Search pill (guest search bar): gradient border, dark field, pink icon,
@@ -798,6 +801,10 @@
     <!-- ============ GUEST FLOW ============ -->
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
+      <div class="flex gap-2 items-start">
+        <scor-santa size="4"></scor-santa>
+        <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Welcome in! Your party is below — use the dock to peek at wishlists and cast your vote.</div>
+      </div>
       <div v-if="guestMe" class="flex items-center justify-end gap-2 text-sm mt-1"><p class="text-right">Wishing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Log out and return to the main home page" @click="guestLogout"><i data-lucide="log-out" class="w-5 h-5"></i></button></div>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -832,8 +839,8 @@
 <!-- Step 1: Who are you? (now its own page) -->
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
-          <scor-santa size="6"></scor-santa>
-          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
+          <scor-santa size="4"></scor-santa>
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
         </div>
         <div class="search-pill mt-3">
           <i data-lucide="search" class="search-pill-icon"></i>
@@ -857,6 +864,10 @@
     <section v-show="view==='reveal'">
       <!-- Step 2: Reveal (now its own page) -->
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <div class="flex gap-2 items-start">
+          <scor-santa size="4"></scor-santa>
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>One tap and I'll show you who you're buying for — write it down, it only shows once!</div>
+        </div>
         <div v-if="!guestRecipient">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Your Secret Santa reveal</h2>
           <p class="mt-2">Wishing as <b>{{ guestMe ? guestMe.display : '' }}</b>. This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
@@ -881,8 +892,8 @@
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
           <div class="flex gap-2 items-start mt-2">
-            <scor-santa size="6"></scor-santa>
-            <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>Add your own wishes so your giver knows what to get you.</div>
+            <scor-santa size="4"></scor-santa>
+            <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Add your own wishes so your giver knows what to get you.</div>
           </div>
 
 <div class="flex items-center justify-between gap-3 mt-5">
@@ -915,6 +926,10 @@
     <!-- ============ EVERYONE'S WISHLISTS PAGE ============ -->
     <section v-show="view==='wishlists'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <div class="flex gap-2 items-start">
+          <scor-santa size="4"></scor-santa>
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Tap a member to see what they want — reserve one so nobody buys the same gift twice.</div>
+        </div>
         <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Everyone's wishlists</h2>
         <p class="text-sm opacity-70 mt-2">Tap a member's card to see what they want. Reserve it so nobody else buys the same thing.</p>
         <div class="mt-4 space-y-3">
@@ -935,6 +950,10 @@
     <!-- ============ VOTE PAGE ============ -->
     <section v-show="view==='vote'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
+        <div class="flex gap-2 items-start">
+          <scor-santa size="4"></scor-santa>
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Pick a theme! One vote each, and you can change it until the host closes the poll.</div>
+        </div>
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
         <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
         <div v-if="!poll" class="mt-4 opacity-70">No poll yet — the host creates it.</div>
