@@ -861,7 +861,6 @@
         </div>
         <div class="mt-3 space-y-2">
           <p v-if="!guests.length" class="opacity-70">No draw yet — the host needs to set it up first.</p>
-          <p v-else-if="guests.length && !guestSearched" class="opacity-70">Tap Search to check if your name is on the list.</p>
           <p v-else-if="guestSearched && !filteredGuests.length" class="opacity-70">No match — that name isn't on the list. Try a first name, nickname, or part of a name.</p>
           <template v-if="guestSearched"><button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" @click="selectGuest(g)">
             <b class="text-lg">{{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span></b>
