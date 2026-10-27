@@ -1033,18 +1033,22 @@
       <div v-if="setupDone" class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black">Host dashboard</h2>
         <p class="text-sm opacity-70">Sign in with Google to see claimed status. Recipients are never shown here.</p>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-dashboard"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-2">{{ googleMsg }}</p></div>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-dashboard"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-2">{{ googleMsg }}</p>
+          <p class="text-sm opacity-70 text-center mt-3">or, temporarily, log in with a host PIN:</p>
+          <input class="input input-bordered w-full mt-2" v-model="hostPinCheck" placeholder="Host PIN">
+        </div>
         <div v-if="hostSignedIn">
           <p class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-          <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
           <button class="btn btn-ghost w-full mt-2" @click="googleSignOut">Sign out</button>
         </div>
+        <button class="btn btn-primary w-full mt-2" @click="loadHost">Show dashboard</button>
+        <p class="text-sm opacity-70 mt-1">Temporary: PIN login stays until Google sign-in is configured after deployment, then it will be removed.</p>
         <div v-if="hostMsg" class="alert mt-3 rounded-2xl" :class="hostOk ? 'alert-success' : 'alert-error'">{{ hostMsg }}</div>
         <div v-for="g in hostList" :key="g.id" class="card bg-base-100 p-3 mt-2" style="border-radius:1rem">
           {{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span> — <span v-if="g.claimed" class="text-error font-bold">Revealed</span><span v-else>Not yet revealed</span>
           <button v-if="g.claimed" class="btn btn-sm btn-ghost ml-2" @click="resetOne(g.id)">Reset this name</button>
         </div>
-        <div v-if="hostSignedIn" class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
+        <div v-if="hostSignedIn || hostList.length" class="card bg-base-100 p-4 mt-4" style="border-radius:1rem">
           <h3 class="font-black"><i data-lucide="ticket" class="w-4 h-4 inline"></i> Invite code</h3>
           <p class="text-sm opacity-70 mt-1">Share this code with guests — they enter it to join, no login needed.</p>
           <p class="text-2xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
@@ -1101,12 +1105,13 @@
             <input class="input input-sm input-bordered w-full" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount">
           </div>
         </div>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p class="text-sm opacity-70 mt-1">Sign in with Google first — setup needs a signed-in host.</p><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+        <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupMsg" class="alert mt-3 rounded-2xl" :class="setupOk ? 'alert-success' : 'alert-error'">{{ setupMsg }}</div>
       <div class="flex justify-between gap-3 mt-3">
         <button class="btn btn-ghost" style="width:auto" @click="goHome"><i data-lucide="x" class="w-5 h-5"></i> Cancel</button>
-        <button class="btn btn-success" style="width:auto" :disabled="savingSetup || !hostSignedIn" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
+        <button class="btn btn-success" style="width:auto" :disabled="savingSetup || (!hostSignedIn && hostPin.length<4)" @click="doSetup"><span v-if="savingSetup" class="loading loading-spinner loading-sm"></span><i v-else data-lucide="check" class="w-5 h-5"></i> {{ savingSetup ? 'Saving…' : 'Save' }}</button>
       </div>
       </div>
     </section>
@@ -1118,12 +1123,13 @@
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Theme poll setup (host)</h2>
         <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
         <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p class="text-sm opacity-70 mt-1">Sign in with Google to manage the poll.</p><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
+        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
         <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-        <button class="btn btn-success w-full mt-3" :disabled="!hostSignedIn" @click="setupPoll">Create / replace poll</button>
-        <button class="btn w-full mt-2" :disabled="!hostSignedIn" @click="setPollOpen(true)">Reopen poll</button>
-        <button class="btn w-full mt-2" :disabled="!hostSignedIn" @click="setPollOpen(false)">Close poll (show final winner)</button>
-        <button class="btn btn-error w-full mt-2" :disabled="!hostSignedIn" @click="resetPoll">Delete poll</button>
+        <label class="block mt-2">Host PIN (temporary, if not signed in with Google) <input class="input input-bordered w-full" v-model="pollHostPin" placeholder="Host PIN"></label>
+        <button class="btn btn-success w-full mt-3" @click="setupPoll">Create / replace poll</button>
+        <button class="btn w-full mt-2" @click="setPollOpen(true)">Reopen poll</button>
+        <button class="btn w-full mt-2" @click="setPollOpen(false)">Close poll (show final winner)</button>
+        <button class="btn btn-error w-full mt-2" @click="resetPoll">Delete poll</button>
         <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       <button class="btn btn-ghost w-full mt-2" @click="goBack">Close</button>
       </div>
@@ -1197,6 +1203,8 @@
       <p class="text-sm opacity-70 mt-1">Are you returning to a party, or setting up a new one?</p>
       <div id="google-btn-host-entry" class="mt-4"></div>
       <p v-if="googleMsg" class="text-sm opacity-70 text-center mt-2">{{ googleMsg }}</p>
+      <button class="btn btn-primary w-full mt-4" :disabled="!setupDone" @click="enterHostWithPin"><i data-lucide="key-round" class="w-5 h-5 inline"></i> Enter PIN</button>
+      <p class="text-sm opacity-70 text-center mt-2">Temporary PIN login, until Google sign-in is configured.</p>
       <p v-if="!setupDone" class="text-sm opacity-70 text-center mt-2">No party set up yet — sign in, then start as a new host.</p>
       <p class="text-sm opacity-70 text-center mt-4">or</p>
       <button class="btn btn-success w-full mt-3" @click="newHost"><i data-lucide="plus" class="w-5 h-5 inline"></i> I'm a new host</button>
@@ -1378,11 +1386,11 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, recipientSearch:'', showAllWishlists:false,
-    partyName:'Christmas Party', partyBudget:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
+    partyName:'Christmas Party', partyBudget:'', hostPin:'', guestRows:[], showGuestModal:false, guestEditIndex:-1, guestForm:{display:'',nickname:'',aliasesText:'',pin:''}, guestFormMsg:'',
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishKind:'text', wishImage:'', wishImageName:'',
     poll:null, pollPin:'', pollMsg:'',
@@ -1545,7 +1553,7 @@ const app=createApp({
       this.$nextTick(()=>this.renderGoogleButtons());
     },
     async loadInvite(){
-      try{ const d=await this.api('invite_get',{session:this.hostSession}); this.inviteCode=d.invite_code; }catch(e){ this.inviteCode=''; }
+      try{ const d=await this.api('invite_get',{session:this.hostSession, host_pin:this.hostPinCheck}); this.inviteCode=d.invite_code; }catch(e){ this.inviteCode=''; }
     },
     copyInvite(){
       if(!this.inviteCode) return;
@@ -1559,10 +1567,10 @@ const app=createApp({
     },
     startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
-    newHost(){
-      if(this.hostSignedIn){ this.showHostEntryModal=false; this.goTo('hostsetup'); }
-      else{ this.googleMsg='Sign in with Google first — then you can set up a new party.'; this.$nextTick(()=>this.renderGoogleButtons()); }
-    },
+    enterHostWithPin(){ this.showHostEntryModal=false; this.goTo('host'); },
+    // TEMPORARY: creating a new host does not require Google sign-in until
+    // Google is configured after deployment — setup accepts a host PIN.
+    newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } },
     confirmClaimedGuest(){ this.guestStep=2; },
     async doReveal(){
@@ -1607,29 +1615,31 @@ const app=createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(!this.hostSignedIn || !this.hostSession){ this.setupMsg='Sign in with Google first.'; this.setupOk=false; return; }
+      if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Sign in with Google or choose a host PIN (at least 4 characters).'; this.setupOk=false; return; }
       this.savingSetup=true;
       try{
-        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, session:this.hostSession, guests});
+        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, session:this.hostSession, host_pin:this.hostPin, guests});
         this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.goTo('host');
-      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message; this.setupOk=false; }
+      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message; this.setupOk=false; }
       this.savingSetup=false;
     },
     async loadHost(){
-      if(!this.hostSignedIn || !this.hostSession){ this.hostMsg='Sign in with Google to see the dashboard.'; this.hostOk=false; return; }
+      if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Sign in with Google or enter the host PIN.'; this.hostOk=false; return; }
       try{
-        const d=await this.api('host_status',{session:this.hostSession});
+        const d=await this.api('host_status',{session:this.hostSession, host_pin:this.hostPinCheck});
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
         this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true;
-      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; this.hostOk=false; if(e.message==='host_not_signed_in') this.hostSignedIn=false; }
+        await this.loadInvite();
+      }catch(e){ this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     async resetOne(id){
       if(!confirm('Reset this name so it can be revealed again? Only do this in person with the real guest.')) return;
-      await this.api('reset_one',{session:this.hostSession, id}); await this.loadHost(); await this.loadGuests();
+      await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests();
     },
     async resetAll(){
+      if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
       if(!confirm('This deletes the whole draw and all claims. Are you sure?')) return;
-      try{ await this.api('reset_all',{session:this.hostSession}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google first.':e.message); }
+      try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ alert(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message); }
     },
     // Wishlist (guestMe is the session identity; wishMe/wishPin are synced in goToGifts)
     async loadWishlists(){
@@ -1672,17 +1682,17 @@ const app=createApp({
     },
     async setupPoll(){
       try{
-        const d=await this.api('poll_setup',{session:this.hostSession, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        const d=await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
         this.poll=d.poll; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
-      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
+      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
     async setPollOpen(open){
-      try{ const d=await this.api('poll_set_open',{session:this.hostSession, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
+      try{ const d=await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin, open}); this.poll=d.poll; this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
     async resetPoll(){
       if(!confirm('Delete the theme poll and all its votes?')) return;
-      try{ await this.api('poll_reset',{session:this.hostSession}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
+      try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin}); this.poll=null; this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; await this.loadPoll(); }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; }
     },
   }

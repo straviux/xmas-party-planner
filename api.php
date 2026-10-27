@@ -95,8 +95,17 @@ function host_session_valid($input) {
   if (empty($s['expires']) || $s['expires'] < time()) return null;
   return $s;
 }
-function require_host($input) {
-  if (!host_session_valid($input)) send(['error' => 'host_not_signed_in'], 403);
+// TEMPORARY: host PIN is a fallback until Google sign-in is configured
+// after deployment. A host action passes if EITHER the Google session is
+// valid OR the host PIN matches. Remove the PIN branch once Google login
+// is live and the host has signed in with it.
+function require_host($input, $d = null) {
+  if (host_session_valid($input)) return;
+  if ($d !== null) {
+    $pin = (string)($input['host_pin'] ?? '');
+    if ($pin !== '' && !empty($d['host_pin_hash']) && password_verify($pin, $d['host_pin_hash'])) return;
+  }
+  send(['error' => 'host_not_signed_in'], 403);
 }
 function invite_code_new() {
   $chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -186,14 +195,14 @@ if ($action === 'invite_check') {
 if ($action === 'invite_get') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   if (empty($d['invite_code'])) { $d['invite_code'] = invite_code_new(); save_data($d); }
   send(['invite_code' => $d['invite_code']]);
 }
 if ($action === 'invite_regen') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   $d['invite_code'] = invite_code_new(); save_data($d);
   send(['invite_code' => $d['invite_code']]);
 }
@@ -221,8 +230,9 @@ if ($action === 'list') {
 
 if ($action === 'setup') {
   if (load_data()) send(['error' => 'already_set_up'], 409);
-  require_host($input);
   $sess = host_session_valid($input);
+  $pin_in = (string)($input['host_pin'] ?? '');
+  if (!$sess && strlen($pin_in) < 4) send(['error' => 'host_signin_required'], 400);
   $party = trim((string)($input['party'] ?? 'Christmas Party'));
   $budget = trim((string)($input['budget'] ?? ''));
   $guests_in = $input['guests'] ?? [];
@@ -255,6 +265,7 @@ if ($action === 'setup') {
   unset($g);
   $d = ['party' => $party, 'budget' => $budget,
         'invite_code' => invite_code_new(),
+        'host_pin_hash' => ($pin_in !== '') ? password_hash($pin_in, PASSWORD_DEFAULT) : null,
         'host_google_sub' => $sess['google_sub'] ?? '', 'host_email' => $sess['email'] ?? '',
         'created_at' => date('c'), 'guests' => $guests,
         'wishlists' => [], 'poll' => null];
@@ -290,7 +301,7 @@ if ($action === 'reveal') {
 if ($action === 'host_status') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   $out = [];
   foreach (sorted_guests($d) as $g) {
     $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],
@@ -303,7 +314,7 @@ if ($action === 'host_status') {
 if ($action === 'reset_one') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   $id = (string)($input['id'] ?? '');
   foreach ($d['guests'] as &$g) if ($g['id'] === $id) { $g['claimed'] = false; $g['claimed_at'] = null; }
   unset($g);
@@ -314,7 +325,7 @@ if ($action === 'reset_one') {
 if ($action === 'reset_all') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   @unlink(DATA_FILE);
   send(['ok' => true]);
 }
@@ -443,7 +454,7 @@ if ($action === 'poll_get') {
 if ($action === 'poll_setup') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   $q = trim((string)($input['question'] ?? 'What should our Christmas theme be?'));
   $opts_in = [];
   foreach ((array)($input['options'] ?? []) as $o) { $o = trim((string)$o); if ($o !== '') $opts_in[] = $o; }
@@ -473,7 +484,7 @@ if ($action === 'poll_vote') {
 if ($action === 'poll_set_open') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   if (empty($d['poll'])) send(['error' => 'No poll yet'], 404);
   $d['poll']['open'] = !empty($input['open']);
   save_data($d);
@@ -482,7 +493,7 @@ if ($action === 'poll_set_open') {
 if ($action === 'poll_reset') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
-  require_host($input);
+  require_host($input, $d);
   $d['poll'] = null;
   save_data($d);
   send(['ok' => true]);
