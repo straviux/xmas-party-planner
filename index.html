@@ -148,9 +148,6 @@
   .santa-bubble::before{ content:''; position:absolute; left:2px; bottom:-30px; width:28px; height:8px; border-radius:8px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
   .santa-bubble::after{ content:''; position:absolute; left:10px; bottom:-18px; width:34px; height:8px; border-radius:8px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
   .bubble-dot{ position:absolute; left:-6px; bottom:-42px; width:9px; height:9px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
-  .step-dot{ width:2rem; height:2rem; border-radius:9999px; display:flex; align-items:center; justify-content:center; font-weight:800; background:#27272A; color:#fafafa; }
-  .step-dot.active{ background:var(--m3-secondary); color:#000; }
-  .step-dot.done{ background:var(--m3-secondary); color:#000; }
   h1{ letter-spacing:-.02em; } h2{ letter-spacing:-.01em; }
   /* TEMPORARY: Santa Scor replaces Santa — original Santa is untouched in JS (SANTA_SRC) and in the notes below. */
 .scor-wrap {
@@ -798,27 +795,8 @@
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
-        <!-- Shared header for all guest pages: progress only. Your Party is now the guest home page. -->
-    <div v-if="['who','reveal','gifts','wishlists','vote','done'].includes(view)">
-
-      <!-- Progress -->
-      <div class="card bg-base-100 m3-card p-4 mb-4">
-        <div class="flex items-center justify-between">
-          <div v-for="(label,i) in guestSteps" :key="label" class="flex-1 text-center">
-            <div class="step-dot mx-auto" :class="{active: currentStep===i+1, done: currentStep>i+1}"><span v-if="currentStep>i+1"><i data-lucide="check" class="w-4 h-4"></i></span><span v-else>{{ i+1 }}</span></div>
-            <div class="text-xs font-bold mt-1">{{ label }}</div>
-          </div>
-        </div>
-        <p v-if="guestMe" class="text-center text-sm mt-3">Playing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span>
-          <span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
-      </div>
-
-
-          </div>
-
     <!-- ============ GUEST HOME PAGE ============ -->
     <section v-show="view==='guesthome'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Home</h2></div>
       <p v-if="guestMe" class="text-sm mt-1">Playing as: <b>{{ guestMe.display }}</b><span v-if="guestMe.nickname"> “{{ guestMe.nickname }}”</span><span v-if="guestRecipient"> • Buying for: <b>{{ guestRecipient.name }}</b></span></p>
         <p class="section-label">Your party</p>
         <div class="grid grid-cols-2 gap-3 mb-4">
@@ -850,7 +828,6 @@
     </section>
 
 <section v-show="view==='who'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guest</h2></div>
 <!-- Step 1: Who are you? (now its own page) -->
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div class="flex gap-2 items-start">
@@ -874,13 +851,9 @@
           </button></template>
         </div>
       </div>
-      <div v-if="guestMe" class="flex justify-end mt-4">
-        <button class="btn btn-primary btn-compact shrink-0" style="width:auto" @click="goTo('reveal')">Continue to Reveal <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
-      </div>
     </section>
 
     <section v-show="view==='reveal'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Guest</h2></div>
       <!-- Step 2: Reveal (now its own page) -->
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <div v-if="!guestRecipient">
@@ -897,14 +870,12 @@
           <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
           <button class="btn btn-primary w-full mt-3" @click="openRecipientWishlist">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
-        <button class="btn btn-ghost w-full mt-3" @click="guestStep=1; guestSearched=false; goTo('who')"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Who are you?</button>
       </div>
 
     </section>
 
     <!-- ============ GIFTS PAGE ============ -->
     <section v-show="view==='gifts'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Gifts</h2></div>
       <div>
         <div class="card bg-base-100 m3-card p-4 sm:p-5">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Gifts</h2>
@@ -946,17 +917,12 @@
             </div>
 
         </div>
-        <div class="flex items-center justify-between gap-3 mt-4">
-          <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goToReveal"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Reveal</button>
-          <button class="btn btn-primary btn-compact shrink-0" style="width:auto" @click="goToVote">Next: Vote <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
-        </div>
       </div>
 
     </section>
 
     <!-- ============ EVERYONE'S WISHLISTS PAGE ============ -->
     <section v-show="view==='wishlists'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Everyone's wishlists</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black"><i data-lucide="users" class="w-6 h-6 inline"></i> Everyone's wishlists</h2>
         <p class="text-sm opacity-70 mt-2">Tap a member's card to see what they want. Reserve it so nobody else buys the same thing.</p>
@@ -973,14 +939,10 @@
           <p v-if="!wishBoard.length" class="text-sm opacity-60">No members yet.</p>
         </div>
       </div>
-      <div class="flex mt-4">
-        <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goToGifts"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Gifts</button>
-      </div>
     </section>
 
     <!-- ============ VOTE PAGE ============ -->
     <section v-show="view==='vote'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">Christmas theme poll</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Christmas theme poll</h2>
         <p class="text-sm opacity-70 mt-1">One vote per guest. You can change your vote until the host closes the poll. Results show counts only — never who voted for what.</p>
@@ -1001,8 +963,7 @@
           <div v-if="!poll.open && poll.options.length" class="alert alert-success mt-4 rounded-2xl"><i data-lucide="trophy" class="w-4 h-4 inline"></i> Winner: <b>{{ poll.options.reduce((a,b)=>b.votes>a.votes?b:a).text }}</b></div>
           <div v-if="pollMsg" class="alert alert-error mt-3 rounded-2xl">{{ pollMsg }}</div>
         </div>
-        <div class="flex items-center justify-between gap-3 mt-4">
-          <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goToGifts"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Gifts</button>
+        <div class="flex justify-end mt-4">
           <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="goToDone">Done</button>
         </div>
       </div>
@@ -1011,7 +972,6 @@
 
     <!-- ============ DONE PAGE ============ -->
     <section v-show="view==='done'">
-      <div class="flex items-center gap-2 mb-3"><h2 class="text-xl font-black">All set</h2></div>
       <div class="card bg-base-100 m3-card p-4 sm:p-5 text-center">
         <scor-santa size="8"></scor-santa>
         <h2 class="text-2xl font-black mt-3"><i data-lucide="tree-pine" class="w-6 h-6 inline"></i> You're all set, {{ guestMe ? guestMe.display : '' }}!</h2>
@@ -1024,9 +984,6 @@
         <p class="text-sm opacity-70 mt-3">Your recipient card stays here while this page is open. A fresh scan will only say “already revealed”, so keep your note safe!</p>
         
         
-      </div>
-      <div class="flex mt-4">
-        <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goToVote"><i data-lucide="arrow-left" class="w-4 h-4 inline"></i> Back to Vote</button>
       </div>
     </section>
 
@@ -1529,7 +1486,7 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, guestSteps:['Who','Reveal','Gifts','Vote'], showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, manualRecipient:null, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
@@ -1549,7 +1506,6 @@ const app=createApp({
     reservedByMeCount(){
       let n=0; this.wishBoard.forEach(o=>o.items.forEach(it=>{ if(it.reserved_by_me) n++; })); return n;
     },
-    currentStep(){ return {who:1, reveal:2, gifts:3, wishlists:3, vote:4, done:5}[this.view] || 0; },
     guestUrl(){ return this.pageUrl + (this.inviteCode ? '?guest=1&code='+encodeURIComponent(this.inviteCode) : '?guest=1'); },
     qrUrl(){ return this.setupDone ? 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='+encodeURIComponent(this.guestUrl) : ''; },
   },
