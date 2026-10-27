@@ -1165,7 +1165,7 @@
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black"><i data-lucide="vote" class="w-6 h-6 inline"></i> Polls</h2>
         <p class="text-sm opacity-70 mt-1">All polls, newest first. Guests can vote on open polls; closed polls show their final winner.</p>
-        <div v-if="!polls.length" class="mt-4 opacity-70">No polls yet — create your first one below.</div>
+        <div v-if="!polls.length" class="mt-4 opacity-70">No polls yet — tap Create poll to add your first one.</div>
         <div v-else class="mt-4 space-y-3">
           <div v-for="p in polls.slice().reverse()" :key="p.id" class="rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
             <div class="flex items-start gap-3">
@@ -1183,17 +1183,8 @@
         </div>
         <div v-if="pollSetupMsg" class="alert mt-4 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
       </div>
-      <div class="card bg-base-100 m3-card p-4 sm:p-5 mt-4">
-        <h2 class="text-2xl font-black">Create a poll</h2>
-        <label class="block mt-2">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
-        <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
-        <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
-        <div class="flex flex-wrap gap-2 mt-3">
-          <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="setupPoll">Create poll</button>
-        </div>
-      </div>
-      <div class="flex justify-end mt-4">
+      <div class="flex items-center justify-between gap-3 mt-4">
+        <button class="btn btn-success btn-compact shrink-0" style="width:auto" @click="openPollModal">Create poll</button>
         <button class="btn btn-ghost btn-compact shrink-0" style="width:auto" @click="goBack">Close</button>
       </div>
     </section>
@@ -1338,6 +1329,21 @@
         <div v-if="resetPinMsg" class="alert mt-2 rounded-2xl" :class="resetPinMsgOk ? 'alert-success' : 'alert-error'">{{ resetPinMsg }}</div>
       </div>
       <button class="btn btn-ghost w-full mt-2" @click="closeResetPinModal">Cancel</button>
+    </div>
+  </div>
+  <div v-if="showPollModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closePollModal">
+    <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-black">Create a poll</h3>
+        <button class="btn btn-ghost btn-sm" style="width:auto" @click="closePollModal">✕</button>
+      </div>
+      <label class="block mt-3">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
+      <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
+      <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
+      <p v-else class="text-sm opacity-70 mt-2">Signed in as {{ hostEmail }}</p>
+      <div v-if="pollSetupMsg" class="alert mt-3 rounded-2xl" :class="pollSetupOk ? 'alert-success' : 'alert-error'">{{ pollSetupMsg }}</div>
+      <button class="btn btn-success w-full mt-3" @click="setupPoll">Create poll</button>
+      <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Cancel</button>
     </div>
   </div>
   <!-- Host entry dialog: Google sign-in or new host -->
@@ -1562,7 +1568,7 @@ const app=createApp({
     setupMsg:'', setupOk:false, savingSetup:false, hostMsg:'', hostOk:false, hostList:[], hostLoaded:false, pageUrl:location.href.split('#')[0].split('?')[0],
     wishMe:null, wishBoard:[], wishSearch:'', wishText:'', wishLink:'', wishNotes:'', wishPin:'', wishFormMsg:'', wishFormMsgOk:false, wishImage:'', wishImageName:'',
     poll:null, polls:[], pollPin:'', pollMsg:'',
-    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', pollSetupMsg:'', pollSetupOk:false,
+    pollQuestion:'What should our Christmas theme be?', pollOptionsText:'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold', showPollModal:false, pollSetupMsg:'', pollSetupOk:false,
   }; },
   computed:{
     filteredGuests(){ return this.guests.filter(g=>matches(g, norm(this.search))); },
@@ -1588,7 +1594,7 @@ const app=createApp({
       // keep rendering over the new page (e.g. home after a cancel).
       this.showWishModal=false; this.showQrModal=false; this.showConfirmModal=false; this.showClaimedModal=false; this.showConfirmDialog=false;
       this.showGuestEntryModal=false; this.showHostEntryModal=false; this.showHostPinModal=false;
-      this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.fabOpen=false;
+      this.showGuestModal=false; this.showWishOwnerModal=false; this.showResetPinModal=false; this.showPollModal=false; this.fabOpen=false;
       if(to.name==='hostpoll') this.loadPoll();
       if(to.name==='wishlists' && this.pendingWishOwnerId){ const o=this.wishBoard.find(x=>x.id===this.pendingWishOwnerId); if(o){ this.wishModalOwner=o; this.showWishOwnerModal=true; } this.pendingWishOwnerId=null; }
       this.$nextTick(()=>{ this.renderGoogleButtons(); });
@@ -1927,10 +1933,12 @@ const app=createApp({
       try{ const d=await this.api('poll_vote',{guest_id:this.guestMe.id, pin:this.guestPin, poll_id:pollId, option_id:optionId}); if(d.polls) this.polls=d.polls; if(d.poll) this.poll=d.poll; this.pollMsg=''; }
       catch(e){ this.pollMsg=e.message==='poll_closed'?'Poll is closed.':'Could not vote: '+e.message; }
     },
+    openPollModal(){ this.showPollModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
+    closePollModal(){ this.showPollModal=false; },
     async setupPoll(){
       try{
         await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
-        await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
+        await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.showPollModal=false; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true;
       }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; }
     },
     async setPollOpen(pollId, open){
