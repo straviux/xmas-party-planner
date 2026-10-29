@@ -5,9 +5,8 @@
 // Stores the draw in data.php in the same folder. That file starts with a
 // PHP exit guard, so requesting it directly in a browser returns nothing,
 // and .htaccess denies it as a second layer.
-// Host access is Google login, not a PIN: the host signs in with Google
-// (Google Identity Services), api.php verifies the ID token and issues a
-// 30-day session token stored in host_session.php. Guests never log in:
+// Host access is a host PIN set at setup (no Google login): the host
+// enters the PIN to manage the party. Guests never log in:
 // they enter the host's invite code (stored with the party, shown on the
 // dashboard, carried in the QR link) to reach the guest flow. Per-guest
 // PINs (optional, set by the host) still protect individual reveals.
@@ -19,22 +18,8 @@ header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
 
 define('DATA_FILE', __DIR__ . '/data.php');
-define('HOST_SESSION_FILE', __DIR__ . '/host_session.php');
 define('SUPERADMIN_FILE', __DIR__ . '/superadmin.php');
 define('GUARD', "<?php http_response_code(403); exit; ?>\n");
-// Google OAuth client ID (Web application, Google Identity Services).
-// Arc: replace this with the real client ID from Google Cloud, and add the
-// deployed site origin (e.g. https://your-site.com) to that client's
-// Authorized JavaScript origins, or Google sign-in will refuse to load.
-define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID');
-// Superadmin: a site-owner account that can reset and control the host's
-// config and data (party, invite code, host PIN, guests' claimed status,
-// polls, wishlists, full reset). It is NOT a host account and it NEVER
-// receives recipient mappings — the draw stays blind even to superadmin.
-// The account is never in the repo: username + password hash live only in
-// superadmin.php on the server (gitignored, .htaccess-denied, like
-// host_session.php). First visit to /superadmin sets the account; there
-// is no hardcoded username/password anywhere in the code.
 // TEMPORARY: host sign-in/PIN check disabled for poll management only
 // (poll_setup, poll_set_open, poll_reset). Set this to false to re-enable
 // it. Guest voting is unchanged — it never required host sign-in.
@@ -77,78 +62,10 @@ function save_data($d) {
   @chmod(DATA_FILE, 0600);
   return true;
 }
-function load_host_session() {
-  if (!file_exists(HOST_SESSION_FILE)) return null;
-  $raw = file_get_contents(HOST_SESSION_FILE);
-  if ($raw === false) return null;
-  $pos = strpos($raw, "\n");
-  $json = ($pos === false) ? '' : substr($raw, $pos + 1);
-  $s = json_decode($json, true);
-  return is_array($s) ? $s : null;
-}
-function save_host_session($s) {
-  if ($s === null) { @unlink(HOST_SESSION_FILE); return true; }
-  $fp = fopen(HOST_SESSION_FILE, 'c');
-  if (!$fp) return false;
-  if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
-  ftruncate($fp, 0);
-  fwrite($fp, GUARD . json_encode($s, JSON_UNESCAPED_UNICODE));
-  fflush($fp);
-  flock($fp, LOCK_UN);
-  fclose($fp);
-  @chmod(HOST_SESSION_FILE, 0600);
-  return true;
-}
-function load_superadmin() {
-  if (!file_exists(SUPERADMIN_FILE)) return null;
-  $raw = file_get_contents(SUPERADMIN_FILE);
-  if ($raw === false) return null;
-  $pos = strpos($raw, "\n");
-  $json = ($pos === false) ? '' : substr($raw, $pos + 1);
-  $s = json_decode($json, true);
-  return is_array($s) ? $s : null;
-}
-function save_superadmin($s) {
-  if ($s === null) { @unlink(SUPERADMIN_FILE); return true; }
-  $fp = fopen(SUPERADMIN_FILE, 'c');
-  if (!$fp) return false;
-  if (!flock($fp, LOCK_EX)) { fclose($fp); return false; }
-  ftruncate($fp, 0);
-  fwrite($fp, GUARD . json_encode($s, JSON_UNESCAPED_UNICODE));
-  fflush($fp);
-  flock($fp, LOCK_UN);
-  fclose($fp);
-  @chmod(SUPERADMIN_FILE, 0600);
-  return true;
-}
-function superadmin_session_valid($input) {
-  $tok = (string)($input['superadmin_session'] ?? '');
-  if ($tok === '') return null;
-  $s = load_superadmin();
-  if (!$s) return null;
-  if (empty($s['token_hash']) || !hash_equals($s['token_hash'], hash('sha256', $tok))) return null;
-  if (empty($s['expires']) || $s['expires'] < time()) return null;
-  return $s;
-}
-function require_superadmin($input) {
-  if (superadmin_session_valid($input)) return;
-  send(['error' => 'superadmin_not_signed_in'], 403);
-}
-function host_session_valid($input) {
-  $tok = (string)($input['session'] ?? '');
-  if ($tok === '') return null;
-  $s = load_host_session();
-  if (!$s) return null;
-  if (empty($s['token_hash']) || !hash_equals($s['token_hash'], hash('sha256', $tok))) return null;
-  if (empty($s['expires']) || $s['expires'] < time()) return null;
-  return $s;
-}
-// TEMPORARY: host PIN is a fallback until Google sign-in is configured
-// after deployment. A host action passes if EITHER the Google session is
-// valid OR the host PIN matches. Remove the PIN branch once Google login
-// is live and the host has signed in with it.
+// Host access is the host PIN only (Google login removed): a host action
+// passes if the supplied host PIN matches host_pin_hash. The PIN is set at
+// setup and can be changed from Setup (Reset PIN) or by superadmin.
 function require_host($input, $d = null) {
-  if (host_session_valid($input)) return;
   if ($d !== null) {
     $pin = (string)($input['host_pin'] ?? '');
     if ($pin !== '' && !empty($d['host_pin_hash']) && password_verify($pin, $d['host_pin_hash'])) return;
@@ -160,36 +77,6 @@ function invite_code_new() {
   $c = '';
   for ($i = 0; $i < 6; $i++) $c .= $chars[random_int(0, strlen($chars) - 1)];
   return $c;
-}
-// Returns [token-or-null, error-or-null]. The error is a short code only
-// (no token or personal data) so a failed sign-in can be diagnosed from
-// the message instead of the generic google_token_invalid.
-function verify_google_token($id_token) {
-  if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID' || GOOGLE_CLIENT_ID === '') return [null, 'google_not_configured'];
-  if ($id_token === '') return [null, 'google_token_empty'];
-  $url = 'https://oauth2.googleapis.com/tokeninfo?id_token=' . urlencode($id_token);
-  $body = false;
-  if (function_exists('curl_init')) {
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
-    $body = curl_exec($ch); curl_close($ch);
-  }
-  // Fallback when curl is missing or its request failed (e.g. outbound
-  // requests blocked for curl but allowed for file access, or vice versa).
-  if ($body === false) {
-    $ctx = stream_context_create(['http' => ['timeout' => 8]]);
-    $body = @file_get_contents($url, false, $ctx);
-  }
-  if ($body === false) return [null, 'google_tokeninfo_unreachable'];
-  $j = json_decode($body, true);
-  if (!is_array($j)) return [null, 'google_tokeninfo_bad_response'];
-  if (!empty($j['error'])) return [null, 'google_tokeninfo_rejected'];
-  if (($j['aud'] ?? '') !== GOOGLE_CLIENT_ID) return [null, 'google_aud_mismatch'];
-  if (!in_array($j['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) return [null, 'google_iss_mismatch'];
-  if (empty($j['exp']) || $j['exp'] < time()) return [null, 'google_token_expired'];
-  if (empty($j['sub'])) return [null, 'google_token_no_sub'];
-  return [$j, null];
 }
 function public_guest($g) {
   return [
@@ -220,27 +107,6 @@ $action = $_GET['action'] ?? '';
 $input = json_decode(file_get_contents('php://input'), true);
 if (!is_array($input)) $input = $_POST;
 
-if ($action === 'config') {
-  send(['google_client_id' => GOOGLE_CLIENT_ID]);
-}
-if ($action === 'google_login') {
-  list($tok, $tok_err) = verify_google_token((string)($input['id_token'] ?? ''));
-  if (!$tok) send(['error' => ($tok_err ?? 'google_token_invalid')], 403);
-  $session = bin2hex(random_bytes(32));
-  $s = ['google_sub' => $tok['sub'], 'email' => $tok['email'] ?? '', 'name' => $tok['name'] ?? '',
-        'token_hash' => hash('sha256', $session), 'expires' => time() + 30 * 24 * 3600, 'created_at' => date('c'), 'picture' => $tok['picture'] ?? ''];
-  save_host_session($s);
-  send(['ok' => true, 'session' => $session, 'email' => $s['email'], 'name' => $s['name'], 'picture' => $tok['picture'] ?? '']);
-}
-if ($action === 'google_session') {
-  $s = host_session_valid($input);
-  if (!$s) send(['signed_in' => false]);
-  send(['signed_in' => true, 'email' => $s['email'] ?? '', 'name' => $s['name'] ?? '', 'picture' => $s['picture'] ?? '']);
-}
-if ($action === 'google_logout') {
-  if (host_session_valid($input)) save_host_session(null);
-  send(['ok' => true]);
-}
 if ($action === 'invite_check') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
@@ -286,9 +152,8 @@ if ($action === 'list') {
 
 if ($action === 'setup') {
   if (load_data()) send(['error' => 'already_set_up'], 409);
-  $sess = host_session_valid($input);
   $pin_in = (string)($input['host_pin'] ?? '');
-  if (!$sess && strlen($pin_in) < 4) send(['error' => 'host_signin_required'], 400);
+  if (strlen($pin_in) < 4) send(['error' => 'host_signin_required'], 400);
   $party = trim((string)($input['party'] ?? 'Christmas Party'));
   $budget = trim((string)($input['budget'] ?? ''));
   $date = trim((string)($input['date'] ?? ''));
@@ -323,8 +188,8 @@ if ($action === 'setup') {
   unset($g);
   $d = ['party' => $party, 'budget' => $budget, 'date' => $date,
         'invite_code' => invite_code_new(),
-        'host_pin_hash' => ($pin_in !== '') ? password_hash($pin_in, PASSWORD_DEFAULT) : null,
-        'host_google_sub' => $sess['google_sub'] ?? '', 'host_email' => $sess['email'] ?? '',
+        'host_pin_hash' => password_hash($pin_in, PASSWORD_DEFAULT),
+        'host_google_sub' => '', 'host_email' => '',
         'created_at' => date('c'), 'guests' => $guests,
         'wishlists' => [], 'poll' => null, 'polls' => []];
   if (!save_data($d)) send(['error' => 'Could not save. Check folder write permissions.'], 500);
@@ -345,10 +210,8 @@ if ($action === 'party_update') {
 }
 if ($action === 'host_pin_reset') {
   $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
-  if (!host_session_valid($input)) {
-    $cur = (string)($input['host_pin'] ?? '');
-    if ($cur === '' || empty($d['host_pin_hash']) || !password_verify($cur, $d['host_pin_hash'])) send(['error' => 'host_not_signed_in'], 403);
-  }
+  $cur = (string)($input['host_pin'] ?? '');
+  if ($cur === '' || empty($d['host_pin_hash']) || !password_verify($cur, $d['host_pin_hash'])) send(['error' => 'host_not_signed_in'], 403);
   $new = trim((string)($input['new_pin'] ?? ''));
   if (strlen($new) < 4) send(['error' => 'New PIN must be at least 4 characters'], 400);
   $d['host_pin_hash'] = password_hash($new, PASSWORD_DEFAULT);

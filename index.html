@@ -12,7 +12,6 @@
 <script src="https://unpkg.com/vue@3.4.38/dist/vue.global.prod.js"></script>
 <script src="https://unpkg.com/vue-router@4.2.5/dist/vue-router.global.prod.js"></script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --rounded-box: 2.5rem; --rounded-btn: 9999px; --rounded-badge: 9999px; --rounded-input: 1rem;
@@ -792,9 +791,8 @@
 
   <div v-if="hostSignedIn && ['hostdashboard','hostguests','hostpoll','hostsetup'].includes(view)" class="w-full max-w-2xl mx-auto px-3 pt-3 flex justify-end">
   <div class="flex items-center gap-2 px-3 py-1.5 rounded-full" style="background:rgba(24,24,27,0.92);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1)">
-    <img v-if="hostPicture" :src="hostPicture" alt="" style="width:28px;height:28px;border-radius:9999px">
-    <span class="text-sm opacity-80" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ hostEmail }}</span>
-    <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="googleSignOut">Sign out</button>
+    <span class="text-sm opacity-80">Host signed in</span>
+    <button class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="hostSignOut">Sign out</button>
   </div>
 </div>
 <main class="w-full max-w-2xl mx-auto px-3 py-3 sm:p-4" :class="{'landing-main': view==='home'}">
@@ -1115,8 +1113,9 @@
           </div>
         </div>
         <div v-if="!hostSignedIn && !hostLoaded" class="mt-4">
-          <p class="text-sm opacity-70">Sign in with Google to load your party stats.</p>
+          <p class="text-sm opacity-70">Enter your host PIN to load your party stats.</p>
           <button class="btn btn-sm btn-compact mt-2" style="width:auto" @click="startHost">Sign in</button>
+          <button v-if="!setupDone" class="btn btn-sm btn-compact mt-2" style="width:auto" @click="goTo('hostsetup')">Go to Setup</button>
         </div>
         <div v-if="hostSignedIn && !setupDone" class="mt-4">
           <p class="text-sm opacity-70">No party set up yet — set one up first, then this dashboard will show guests, claimed status and the invite code.</p>
@@ -1179,8 +1178,7 @@
           </div>
         </div>
         <label class="block mt-2">Party date <input class="input input-bordered w-full" type="date" v-model="partyDate"></label>
-        <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-setup"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
-        <label class="block mt-2">Host PIN (temporary — optional if signed in with Google, otherwise at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
+        <label class="block mt-2">Host PIN (at least 4 characters) <input class="input input-bordered w-full" v-model="hostPin" placeholder="Choose a host PIN"></label>
         <div v-if="setupDone" class="mt-2"><button class="btn btn-sm btn-compact btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
         
 
@@ -1372,7 +1370,6 @@
       </div>
       <label class="block mt-3">Poll question <input class="input input-bordered w-full" v-model="pollQuestion"></label>
       <label class="block mt-2">Options, one per line <textarea class="textarea textarea-bordered w-full" rows="4" v-model="pollOptionsText"></textarea></label>
-      <div v-if="!hostSignedIn" class="mt-2"><div id="google-btn-poll"></div><p v-if="googleMsg" class="text-sm opacity-70 mt-1">{{ googleMsg }}</p></div>
       
       <button class="btn btn-success w-full mt-3" @click="setupPoll">Create poll</button>
       <button class="btn btn-ghost w-full mt-2" @click="closePollModal">Cancel</button>
@@ -1392,7 +1389,7 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeEditPollModal">Cancel</button>
     </div>
   </div>
-  <!-- Host entry dialog: Google sign-in (returning host only) -->
+  <!-- Host entry dialog: host PIN sign-in -->
   <div v-if="showHostEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostEntryModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
       <div class="flex items-center justify-between">
@@ -1400,10 +1397,7 @@
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostEntryModal">✕</button>
       </div>
       <p class="text-sm opacity-70 mt-1">Sign in to manage your party.</p>
-      <div id="google-btn-host-entry" class="mt-4"></div>
-      <p v-if="googleMsg" class="text-sm opacity-70 text-center mt-2">{{ googleMsg }}</p>
       <button class="btn btn-primary w-full mt-4" :disabled="!setupDone" @click="enterHostWithPin"><i data-lucide="key-round" class="w-5 h-5 inline"></i> Enter PIN</button>
-      <p class="text-sm opacity-70 text-center mt-2">Temporary PIN login, until Google sign-in is configured.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
     </div>
   </div>
@@ -1602,7 +1596,7 @@ const app=createApp({
     },
   },
   data(){ return {
-    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, googleClientId:'', googleReady:false, googleMsg:'', hostSignedIn:false, hostSession:'', hostEmail:'', hostPicture:'', inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'', superadminSet:false, superadminSignedIn:false, superadminSession:'', superadminUser:'', superadminFormUser:'', superadminFormPass:'', superadminExists:false, superadminParty:'', superadminBudget:'', superadminDate:'', superadminInvite:'', superadminHostEmail:'', superadminHostPinSet:false, superadminGuests:[], superadminPolls:[], superadminWishlistItems:0, superadminNewPin:'', superadminNewPass:'', superadminNewPassConfirm:'',
+    view:'home', viewStack:[], fabOpen:false, santaSrc:SANTA_SRC, santaWaving:false, guestStep:1, showWishModal:false, showQrModal:false, qrMsg:'', showGuestEntryModal:false, guestEntryCode:'', guestEntryMsg:'', showHostEntryModal:false, showHostPinModal:false, hostPinEntry:'', hostPinEntryError:false, hostSignedIn:false, inviteCode:'', inviteMsg:'', hostPinCheck:'', pollHostPin:'', superadminSet:false, superadminSignedIn:false, superadminSession:'', superadminUser:'', superadminFormUser:'', superadminFormPass:'', superadminExists:false, superadminParty:'', superadminBudget:'', superadminDate:'', superadminInvite:'', superadminHostEmail:'', superadminHostPinSet:false, superadminGuests:[], superadminPolls:[], superadminWishlistItems:0, superadminNewPin:'', superadminNewPass:'', superadminNewPassConfirm:'',
     party:'Christmas Party', budget:'', guests:[], setupDone:false,
     search:'', guestSearched:false, selected:null, showConfirmModal:false, showClaimedModal:false, showConfirmDialog:false, confirmDialogTitle:'', confirmDialogMessage:'', confirmDialogOkText:'OK', confirmDialogOkClass:'btn-error', confirmDialogCallback:null, guestPin:'', confirmMsg:'', recipient:null,
     guestMe:null, guestRecipient:null, guestAlreadyClaimed:false, wishModalOwner:null, showWishOwnerModal:false, pendingWishOwnerId:null,
@@ -1640,7 +1634,6 @@ const app=createApp({
       if(to.name==='hostpoll') this.loadPoll();
       if(to.name==='superadmin') this.initSuperadmin();
       if(to.name==='wishlists' && this.pendingWishOwnerId){ const o=this.wishBoard.find(x=>x.id===this.pendingWishOwnerId); if(o){ this.wishModalOwner=o; this.showWishOwnerModal=true; } this.pendingWishOwnerId=null; }
-      this.$nextTick(()=>{ this.renderGoogleButtons(); });
     },
   },
   async mounted(){
@@ -1660,9 +1653,6 @@ const app=createApp({
     }
     if(this.view==='hostpoll') this.loadPoll();
     if(this.view==='superadmin') this.initSuperadmin();
-    try{ this.hostSession=localStorage.getItem('xmasHostSession')||''; }catch(e){}
-    await this.initGoogle();
-    await this.checkHostSession();
     // QR scan: ?guest=1&code=CODE opens the guest page directly (the QR
     // carries the invite code). A plain ?guest=1 without a valid code
     // shows the guest entry dialog, so guests enter the invite code.
@@ -1829,54 +1819,14 @@ const app=createApp({
         this.guestEntryMsg = e.message==='invite_incorrect' ? 'That invite code is incorrect. Ask the host for the right one.' : 'Could not check that code: '+e.message; this.showToast(this.guestEntryMsg, false);
       }
     },
-    // ---- Host Google login (replaces the host PIN everywhere) ----
-    async initGoogle(){
-      try{ const c=await this.api('config'); this.googleClientId=c.google_client_id||''; }catch(e){ this.googleClientId=''; }
-      if(!this.googleClientId || this.googleClientId==='YOUR_GOOGLE_CLIENT_ID'){ this.googleMsg='Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.'; return; }
-      for(let i=0;i<20;i++){ if(window.google && window.google.accounts && window.google.accounts.id) break; await new Promise(r=>setTimeout(r,250)); }
-      if(!(window.google && window.google.accounts && window.google.accounts.id)){ this.googleMsg='Could not load Google sign-in. Check your connection and try again.'; return; }
-      window.google.accounts.id.initialize({client_id:this.googleClientId, callback:(resp)=>this.handleGoogleCredential(resp)});
-      this.googleReady=true; this.googleMsg='';
-      this.$nextTick(()=>this.renderGoogleButtons());
-    },
-    renderGoogleButtons(){
-      if(!this.googleReady) return;
-      ['google-btn-setup','google-btn-poll','google-btn-host-entry'].forEach(id=>{
-        const el=document.getElementById(id);
-        if(el && !el.dataset.rendered){ try{ window.google.accounts.id.renderButton(el,{theme:'filled_black',size:'large',width:320}); el.dataset.rendered='1'; }catch(e){} }
-      });
-    },
-    async handleGoogleCredential(resp){
-      try{
-        const d=await this.api('google_login',{id_token:resp.credential});
-        this.hostSession=d.session; try{ localStorage.setItem('xmasHostSession',d.session); }catch(e){}
-        this.hostSignedIn=true; this.hostEmail=d.email||''; this.hostPicture=d.picture||'';
-        this.showHostEntryModal=false;
-        // Redirect automatically to the dashboard (the new host home) once logged in.
-        this.showToast('Signed in.'); this.openDashboard();
-        if(this.setupDone){ await this.loadInvite(); }
-      }catch(e){
-        this.googleMsg = e.message==='google_not_configured' ? 'Google sign-in is not configured yet — set GOOGLE_CLIENT_ID in api.php.' : 'Google sign-in failed: '+e.message; this.showToast(this.googleMsg, false);
-      }
-    },
-    async checkHostSession(){
-      if(!this.hostSession) return;
-      try{
-        const d=await this.api('google_session',{session:this.hostSession});
-        if(d.signed_in){ this.hostSignedIn=true; this.hostEmail=d.email||''; this.hostPicture=d.picture||''; if(this.setupDone) await this.loadInvite(); }
-        else{ this.hostSignedIn=false; this.hostSession=''; try{ localStorage.removeItem('xmasHostSession'); }catch(e){} }
-      }catch(e){ this.hostSignedIn=false; }
-    },
-    async googleSignOut(){
-      try{ if(this.hostSession) await this.api('google_logout',{session:this.hostSession}); }catch(e){}
-      this.hostSession=''; this.hostSignedIn=false; this.hostEmail=''; this.hostPicture=''; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
-      try{ localStorage.removeItem('xmasHostSession'); }catch(e){}
+    // ---- Host sign-out (host PIN) ----
+    hostSignOut(){
+      this.hostPinCheck=''; this.hostSignedIn=false; this.hostList=[]; this.inviteCode=''; this.hostLoaded=false;
       this.hostMsg='Signed out.'; this.hostOk=true; this.showToast('Signed out.');
       this.goTo('hostdashboard');
-      this.$nextTick(()=>this.renderGoogleButtons());
     },
     async loadInvite(){
-      try{ const d=await this.api('invite_get',{session:this.hostSession, host_pin:this.hostPinCheck}); this.inviteCode=d.invite_code; }catch(e){ this.inviteCode=''; }
+      try{ const d=await this.api('invite_get',{host_pin:this.hostPinCheck}); this.inviteCode=d.invite_code; }catch(e){ this.inviteCode=''; }
     },
     copyInvite(){
       if(!this.inviteCode) return;
@@ -1884,9 +1834,9 @@ const app=createApp({
       else this.inviteMsg='Copy this code: '+this.inviteCode;
     },
     regenInvite(){
-      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old code and old QR will stop working.', okText:'Generate', okClass:'btn-error', onOk: async ()=>{ try{ const d=await this.api('invite_regen',{session:this.hostSession}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; this.showToast('New invite code generated.'); }catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; this.showToast(this.inviteMsg, false); } }});
+      this.openConfirmDialog({title:'New invite code?', message:'Generate a new invite code? The old code and old QR will stop working.', okText:'Generate', okClass:'btn-error', onOk: async ()=>{ try{ const d=await this.api('invite_regen',{host_pin:this.hostPinCheck}); this.inviteCode=d.invite_code; this.inviteMsg='New invite code generated — re-print the QR from this dashboard.'; this.showToast('New invite code generated.'); }catch(e){ this.inviteMsg=e.message==='host_not_signed_in'?'Sign in with Google first.':e.message; this.showToast(this.inviteMsg, false); } }});
     },
-    startHost(){ this.showHostEntryModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
+    startHost(){ this.showHostEntryModal=true; },
     closeHostEntryModal(){ this.showHostEntryModal=false; },
     enterHostWithPin(){ this.showHostEntryModal=false; this.hostPinEntry=''; this.hostPinEntryError=false; this.showHostPinModal=true; },
     closeHostPinModal(){ this.showHostPinModal=false; },
@@ -1894,7 +1844,7 @@ const app=createApp({
       if(!this.hostPinEntry.trim()){ this.hostPinEntryError=true; return; }
       try{
         await this.api('host_status',{host_pin:this.hostPinEntry});
-        this.hostPinCheck=this.hostPinEntry;
+        this.hostPinCheck=this.hostPinEntry; this.hostSignedIn=true;
         this.showHostPinModal=false; this.hostPinEntry=''; this.hostPinEntryError=false; this.showToast('Signed in.');
         this.openDashboard();
       }catch(e){ this.hostPinEntryError=true; this.hostPinEntry=''; this.showToast('Incorrect PIN — try again.', false); }
@@ -1978,17 +1928,17 @@ const app=createApp({
     },
     async doSetup(){
       const guests=this.guestRows.map(r=>({display:r.display.trim(), nickname:r.nickname.trim(), aliases:r.aliasesText.split(',').map(s=>s.trim()).filter(Boolean), pin:r.pin.trim()})).filter(g=>g.display);
-      if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Sign in with Google or choose a host PIN (at least 4 characters).'; this.setupOk=false; this.showToast(this.setupMsg, false); return; }
+      if(!this.hostSignedIn && this.hostPin.length<4){ this.setupMsg='Choose a host PIN (at least 4 characters).'; this.setupOk=false; this.showToast(this.setupMsg, false); return; }
       this.savingSetup=true;
       try{
         if(this.setupDone){
-        await this.api('party_update',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPinCheck||this.hostPin});
-        this.setupMsg='Party details updated.'; this.setupOk=true; this.hostPinCheck=this.hostPinCheck||this.hostPin; this.showToast('Party details updated.'); this.openDashboard();
+        await this.api('party_update',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, host_pin:this.hostPinCheck||this.hostPin});
+        this.setupMsg='Party details updated.'; this.setupOk=true; this.hostSignedIn=true; this.hostPinCheck=this.hostPinCheck||this.hostPin; this.showToast('Party details updated.'); this.openDashboard();
       } else {
-        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, session:this.hostSession, host_pin:this.hostPin, guests});
-        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.showToast('Saved — draw locked!'); this.setupDone=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.hostPinCheck=this.hostPinCheck||this.hostPin; this.openDashboard();
+        await this.api('setup',{party:this.partyName||'Christmas Party', budget:this.partyBudget, date:this.partyDate, host_pin:this.hostPin, guests});
+        this.setupMsg='Saved — draw locked!'; this.setupOk=true; this.showToast('Saved — draw locked!'); this.setupDone=true; this.hostSignedIn=true; this.guestRows=[]; try{ localStorage.removeItem('xmasGuestRows'); }catch(e){} await this.loadGuests(); await this.loadInvite(); this.hostPinCheck=this.hostPinCheck||this.hostPin; this.openDashboard();
       }
-      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Sign in with Google or choose a host PIN (at least 4 characters).' : e.message==='host_not_signed_in' ? 'Sign in with Google or enter your current host PIN.' : e.message; this.setupOk=false; this.showToast(this.setupMsg, false); }
+      }catch(e){ this.setupMsg=e.message==='already_set_up' ? 'A party is already set up. To start over, reset everything on the dashboard.' : e.message==='host_signin_required' ? 'Choose a host PIN (at least 4 characters).' : e.message==='host_not_signed_in' ? 'Enter your current host PIN.' : e.message; this.setupOk=false; this.showToast(this.setupMsg, false); }
       this.savingSetup=false;
     },
     openResetPinModal(){ this.resetPinCurrent=''; this.resetPinNew=''; this.resetPinConfirm=''; this.resetPinMsg=''; this.resetPinMsgOk=false; this.showResetPinModal=true; },
@@ -1998,28 +1948,28 @@ const app=createApp({
       if(this.resetPinNew!==this.resetPinConfirm){ this.resetPinMsg='New PINs do not match.'; this.resetPinMsgOk=false; this.showToast(this.resetPinMsg, false); return; }
       this.resettingPin=true;
       try{
-        await this.api('host_pin_reset',{session:this.hostSession, host_pin:this.resetPinCurrent||this.hostPinCheck, new_pin:this.resetPinNew});
-        this.hostPinCheck=this.resetPinNew; this.hostPin=this.resetPinNew;
+        await this.api('host_pin_reset',{host_pin:this.resetPinCurrent||this.hostPinCheck, new_pin:this.resetPinNew});
+        this.hostPinCheck=this.resetPinNew; this.hostPin=this.resetPinNew; this.hostSignedIn=true;
         this.setupMsg='Host PIN reset.'; this.setupOk=true; this.showToast('Host PIN reset.');
         this.showResetPinModal=false;
       }catch(e){ this.resetPinMsg=e.message==='host_not_signed_in'?'Current PIN is incorrect or you are not signed in.':e.message; this.resetPinMsgOk=false; this.showToast(this.resetPinMsg, false); }
       this.resettingPin=false;
     },
     async loadHost(){
-      if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Sign in with Google or enter the host PIN.'; this.hostOk=false; this.hostLoaded=false; return; }
+      if(!this.hostSignedIn && !this.hostPinCheck.trim()){ this.hostMsg='Enter the host PIN to load your party.'; this.hostOk=false; this.hostLoaded=false; return; }
       try{
-        const d=await this.api('host_status',{session:this.hostSession, host_pin:this.hostPinCheck});
+        const d=await this.api('host_status',{host_pin:this.hostPinCheck});
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
         this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true; this.hostLoaded=true;
         await this.loadInvite();
-      }catch(e){ if(e.message==='not_set_up'){ this.hostMsg='No party set up yet.'; this.hostOk=false; this.hostLoaded=false; return; } this.hostMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; this.showToast(this.hostMsg, false); if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
+      }catch(e){ if(e.message==='not_set_up'){ this.hostMsg='No party set up yet.'; this.hostOk=false; this.hostLoaded=false; return; } this.hostMsg=e.message==='host_not_signed_in'?'Enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; this.showToast(this.hostMsg, false); if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     resetOne(id){
-      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{session:this.hostSession, host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
     },
     resetAll(){
       if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
-      this.openConfirmDialog({title:'Reset everything?', message:'This deletes the whole draw and all claims. Are you sure?', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('reset_all',{session:this.hostSession, host_pin:this.hostPinCheck}); location.reload(); }catch(e){ this.showToast(e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':e.message, false); } }});
+      this.openConfirmDialog({title:'Reset everything?', message:'This deletes the whole draw and all claims. Are you sure?', okText:'Reset everything', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('reset_all',{host_pin:this.hostPinCheck}); location.reload(); }catch(e){ this.showToast(e.message==='host_not_signed_in'?'Enter the correct host PIN.':e.message, false); } }});
     },
     // Wishlist (guestMe is the session identity; wishMe/wishPin are synced in goToGifts)
     async loadWishlists(){
@@ -2081,27 +2031,27 @@ const app=createApp({
       const opts=this.editPollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean);
       if(!this.editPollQuestion.trim() || opts.length<2){ this.editPollMsg='Poll needs a question and at least 2 options.'; this.editPollMsgOk=false; this.showToast(this.editPollMsg, false); return; }
       try{
-        await this.api('poll_edit',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:this.editPollId, question:this.editPollQuestion, options:opts});
+        await this.api('poll_edit',{host_pin:this.pollHostPin || this.hostPinCheck, poll_id:this.editPollId, question:this.editPollQuestion, options:opts});
         await this.loadPoll(); this.showEditPollModal=false; this.pollSetupMsg='Poll updated.'; this.pollSetupOk=true; this.showToast('Poll updated.');
       }catch(e){ this.editPollMsg=e.message; this.editPollMsgOk=false; this.showToast(this.editPollMsg, false); }
     },
-    openPollModal(){ this.showPollModal=true; this.$nextTick(()=>this.renderGoogleButtons()); },
+    openPollModal(){ this.showPollModal=true; },
     closePollModal(){ this.showPollModal=false; },
     async setupPoll(){
       try{
-        await this.api('poll_setup',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
+        await this.api('poll_setup',{host_pin:this.pollHostPin || this.hostPinCheck, question:this.pollQuestion, options:this.pollOptionsText.split('\n').map(s=>s.trim()).filter(Boolean)});
         await this.loadPoll(); this.pollQuestion=''; this.pollOptionsText=''; this.showPollModal=false; this.pollSetupMsg='Poll created and open for voting.'; this.pollSetupOk=true; this.showToast('Poll created and open for voting.');
-      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Sign in with Google or enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); }
+      }catch(e){ this.pollSetupMsg=e.message==='host_not_signed_in'?'Enter the correct host PIN.':'Could not create poll: '+e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); }
     },
     async setPollOpen(pollId, open){
       this.pollMenuId=null;
-      try{ await this.api('poll_set_open',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:pollId, open}); await this.loadPoll(); this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; this.showToast(this.pollSetupMsg); }
+      try{ await this.api('poll_set_open',{host_pin:this.pollHostPin || this.hostPinCheck, poll_id:pollId, open}); await this.loadPoll(); this.pollSetupMsg=`Poll ${open?'reopened':'closed'}.`; this.pollSetupOk=true; this.showToast(this.pollSetupMsg); }
       catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); }
     },
     resetPoll(poll){
       this.pollMenuId=null;
       const id=typeof poll==='string'?poll:poll.id; const q=typeof poll==='object'?poll.question:'this poll';
-      this.openConfirmDialog({title:'Delete poll?', message:'Delete "'+q+'" and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{session:this.hostSession, host_pin:this.pollHostPin || this.hostPinCheck, poll_id:id}); this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; this.showToast('Poll deleted.'); await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); } }});
+      this.openConfirmDialog({title:'Delete poll?', message:'Delete "'+q+'" and all its votes?', okText:'Delete', okClass:'btn-error', onOk: async ()=>{ try{ await this.api('poll_reset',{host_pin:this.pollHostPin || this.hostPinCheck, poll_id:id}); this.pollSetupMsg='Poll deleted.'; this.pollSetupOk=true; this.showToast('Poll deleted.'); await this.loadPoll(); }catch(e){ this.pollSetupMsg=e.message; this.pollSetupOk=false; this.showToast(this.pollSetupMsg, false); } }});
     },
   }
 });
