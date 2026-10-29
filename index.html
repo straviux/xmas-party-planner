@@ -816,14 +816,13 @@
       <!-- Segmented control, like Start / My Recent in the concept: Guest is the mint, filled pill; Host is the dark pill -->
       <div class="segmented">
         <button class="seg-btn seg-guest" :disabled="!setupDone" @click="startGuest"><i data-lucide="gift" class="w-6 h-6 inline"></i> I'm a guest</button>
-        <button class="seg-btn seg-host" @click="startHost"><i data-lucide="key-round" class="w-5 h-5 inline"></i> I'm the host</button>
       </div>
       <!-- TEMPORARY: Scan button enabled without setup until the real scanner returns -->
       <button class="btn btn-outline w-full mt-3 scan-qr-glow scan-qr-btn" @click="openQrModal"><i data-lucide="qr-code" class="w-5 h-5 inline"></i> Scan QR code</button>
       
       <p v-if="!setupDone" class="text-sm opacity-80 text-center">No party set up yet — the host needs to set it up first.</p>
 
-      <p v-if="setupDone" class="text-sm opacity-80 text-center">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name. Host? Tap "I'm the host" to create your party.</p>
+      <p v-if="setupDone" class="text-sm opacity-80 text-center">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name.</p>
     </section>
 
     <!-- ============ GUEST FLOW ============ -->
@@ -1393,22 +1392,18 @@
       <button class="btn btn-ghost w-full mt-2" @click="closeEditPollModal">Cancel</button>
     </div>
   </div>
-  <!-- Host entry dialog: Google sign-in or new host -->
+  <!-- Host entry dialog: Google sign-in (returning host only) -->
   <div v-if="showHostEntryModal" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-3" style="background:rgba(0,0,0,.5)" @click.self="closeHostEntryModal">
     <div class="card bg-base-100 m3-card p-4 sm:p-5 w-full" style="max-width:520px;max-height:90vh;overflow:auto">
       <div class="flex items-center justify-between">
-        <h3 class="text-xl font-black">Host access</h3>
+        <h3 class="text-xl font-black">Host sign-in</h3>
         <button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostEntryModal">✕</button>
       </div>
-      <p class="text-sm opacity-70 mt-1">Are you returning to a party, or setting up a new one?</p>
+      <p class="text-sm opacity-70 mt-1">Sign in to manage your party.</p>
       <div id="google-btn-host-entry" class="mt-4"></div>
       <p v-if="googleMsg" class="text-sm opacity-70 text-center mt-2">{{ googleMsg }}</p>
       <button class="btn btn-primary w-full mt-4" :disabled="!setupDone" @click="enterHostWithPin"><i data-lucide="key-round" class="w-5 h-5 inline"></i> Enter PIN</button>
       <p class="text-sm opacity-70 text-center mt-2">Temporary PIN login, until Google sign-in is configured.</p>
-      <p v-if="!setupDone" class="text-sm opacity-70 text-center mt-2">No party set up yet — sign in, then start as a new host.</p>
-      <p class="text-sm opacity-70 text-center mt-4">or</p>
-      <button class="btn btn-success w-full mt-3" @click="newHost"><i data-lucide="plus" class="w-5 h-5 inline"></i> I'm a new host</button>
-      <p v-if="setupDone" class="text-sm opacity-70 text-center mt-2">Starting as a new host replaces the current party.</p>
       <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
     </div>
   </div>
@@ -1484,7 +1479,7 @@
       <button class="fab-item" :class="{'fab-item-active': ['who','reveal'].includes(view)}" :disabled="!setupDone" @click="fabGo('guest')"><i data-lucide="gift" class="w-6 h-6"></i><span>Guest</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='gifts'}" :disabled="!setupDone" @click="fabGo('gifts')"><i data-lucide="shopping-bag" class="w-6 h-6"></i><span>Gifts</span></button>
       <button class="fab-item" :class="{'fab-item-active': view==='vote'}" :disabled="!setupDone" @click="fabGo('vote')"><i data-lucide="vote" class="w-6 h-6"></i><span>Vote</span></button>
-      <button class="fab-item" :class="{'fab-item-active': view==='host'}" @click="fabGo('host')"><i data-lucide="key-round" class="w-6 h-6"></i><span>Host</span></button>
+
     </div>
   <div class="fab-wrap">
     <button v-show="!['hostsetup','host','hostdashboard','hostguests','hostpoll','who','reveal','gifts','wishlists','vote','guesthome','superadmin'].includes(view)" class="fab button-three" @click="fabOpen=!fabOpen" :aria-expanded="fabOpen" aria-controls="fab-menu" :aria-label="fabOpen ? 'Close menu' : 'Open menu'">
@@ -1789,7 +1784,7 @@ const app=createApp({
     formatBudget(b){ if(!b) return 'Not set'; const s=String(b).trim(); if(/^[₱$£€]/.test(s)) return s; return '₱'+s; },
     async loadGuests(){ const d=await this.api('list'); this.guests=d.guests; this.party=d.party; this.budget=d.budget; },
     goTo(v){ if(v===this.view) return; this.$router.push({name:v}); },
-    fabGo(dest){ this.fabOpen=false; if(dest==='home') this.goHome(); else if(dest==='guest') this.startGuest(); else if(dest==='gifts') this.openGiftsPage(); else if(dest==='vote') this.openVotePage(); else if(dest==='host') this.startHost(); },
+    fabGo(dest){ this.fabOpen=false; if(dest==='home') this.goHome(); else if(dest==='guest') this.startGuest(); else if(dest==='gifts') this.openGiftsPage(); else if(dest==='vote') this.openVotePage(); },
     handleFabEscape(e){ if(e.key==='Escape') this.fabOpen=false; },
     goBack(){ const st=this.$router.options.history.state; if(st && st.back) this.$router.back(); else this.goHome(); },
     goHome(){ this.$router.push({name:'home'}); },
@@ -1918,9 +1913,6 @@ const app=createApp({
     closeConfirmDialog(){ this.showConfirmDialog=false; this.confirmDialogCallback=null; },
     async confirmDialogOk(){ const cb=this.confirmDialogCallback; this.closeConfirmDialog(); if(cb){ try{ await cb(); }catch(e){ this.showToast('Could not complete: '+e.message, false); } } },
     closeClaimedModal(){ this.showClaimedModal=false; },
-    // TEMPORARY: creating a new host does not require Google sign-in until
-    // Google is configured after deployment — setup accepts a host PIN.
-    newHost(){ this.showHostEntryModal=false; this.goTo('hostsetup'); },
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } this.showConfirmModal=true; },
     closeConfirmModal(){ this.showConfirmModal=false; this.selected=null; },
     confirmClaimedGuest(){ this.showConfirmModal=false; this.goToGuestHome(); },
