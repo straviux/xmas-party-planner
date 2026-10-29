@@ -11,7 +11,9 @@
 // dashboard, carried in the QR link) to reach the guest flow. Per-guest
 // PINs (optional, set by the host) still protect individual reveals.
 // The host dashboard never receives recipient mappings — only claimed status.
-// A guest reveal returns ONE recipient, and only if that name is unclaimed.
+// A guest entry locks the name: entering with a name marks it claimed
+// before returning ONE recipient, and only if that name is unclaimed.
+// Only a host reset (reset_one / reset_all, or superadmin reset) clears a lock.
 // Wishlist items have a kind: text, link, or image (screenshot, stored as
 // a data URL with the item, under about 2 MB).
 header('Content-Type: application/json; charset=utf-8');
@@ -218,7 +220,7 @@ if ($action === 'host_pin_reset') {
   if (!save_data($d)) send(['error' => 'Could not save'], 500);
   send(['ok' => true]);
 }
-if ($action === 'reveal') {
+if ($action === 'enter' || $action === 'reveal') {
   $d = load_data();
   if (!$d) send(['error' => 'not_set_up'], 404);
   $id = (string)($input['id'] ?? '');

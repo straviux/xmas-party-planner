@@ -837,9 +837,9 @@
             <i data-lucide="users" class="w-6 h-6 mt-2"></i>
           </div>
           <div class="dark-card p-4 text-left">
-            <p class="card-label">Revealed</p>
+            <p class="card-label">Locked</p>
             <p class="font-black text-lg leading-tight mt-1">{{ guests.filter(g=>g.claimed).length }} / {{ guests.length }}</p>
-            <p class="text-sm opacity-80 mt-1">names claimed</p>
+            <p class="text-sm opacity-80 mt-1">names locked</p>
             <i data-lucide="check" class="w-6 h-6 mt-2"></i>
           </div>
           <div class="dark-card p-4 text-left">
@@ -881,7 +881,7 @@
           <p v-else-if="guestSearched && !filteredGuests.length" class="opacity-70">No match — that name isn't on the list. Try a first name, nickname, or part of a name.</p>
           <template v-if="guestSearched"><button v-for="g in filteredGuests" :key="g.id" class="m3-person w-full text-left p-4 bg-white" @click="selectGuest(g)">
             <b class="text-lg">{{ g.display }}<span v-if="g.nickname"> “{{ g.nickname }}”</span></b>
-            <span v-if="g.claimed" class="text-error font-bold"> — Already revealed</span>
+            <span v-if="g.claimed" class="text-error font-bold"> — Locked</span>
             <div v-if="g.aliases.length" class="text-sm opacity-60">Also: {{ g.aliases.join(', ') }}</div>
           </button></template>
         </div>
@@ -898,7 +898,7 @@
         <div v-if="!guestRecipient">
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> Your Secret Santa reveal</h2>
           <p class="mt-2">This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
-          <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say “already revealed”.</div>
+          <div class="alert alert-warning mt-3 rounded-2xl">Note your recipient down before you move on. A fresh scan will only say it is already locked.</div>
           <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
           
         </div>
@@ -906,7 +906,7 @@
           <h2 class="text-2xl font-black"><i data-lucide="gift" class="w-6 h-6 inline"></i> You are buying for:</h2>
           <div class="text-2xl sm:text-3xl font-black my-4 break-words">{{ guestRecipient.name }}<span v-if="guestRecipient.nickname"> “{{ guestRecipient.nickname }}”</span></div>
           <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ formatBudget(guestRecipient.budget) }}</p>
-          <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say “already revealed”.</div>
+          <div class="alert alert-warning mt-3 rounded-2xl text-left">Write it down now. This card stays here while this page is open, but a fresh scan will only say it is already locked.</div>
           <button class="btn btn-primary w-full mt-3" @click="openRecipientWishlist">I've noted it down — show their wishlist <i data-lucide="arrow-right" class="w-4 h-4 inline"></i></button>
         </div>
       </div>
@@ -1053,7 +1053,7 @@
               <h3 class="font-black">Guests ({{ superadminGuests.length }})</h3>
               <div class="divide-y divide-white/10 mt-1">
                 <div v-for="g in superadminGuests" :key="g.id" class="flex items-center gap-2 py-2">
-                  <span class="flex-1"><b>{{ g.display }}</b> <span class="opacity-70 text-sm" v-if="g.nickname"> "{{ g.nickname }}"</span> <span class="opacity-70 text-sm">{{ g.claimed ? '• Revealed' : '• Not yet' }}</span></span>
+                  <span class="flex-1"><b>{{ g.display }}</b> <span class="opacity-70 text-sm" v-if="g.nickname"> "{{ g.nickname }}"</span> <span class="opacity-70 text-sm">{{ g.claimed ? '• Locked' : '• Not yet' }}</span></span>
                   <button v-if="g.claimed" class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="superadminResetOne(g)">Reset claim</button>
                 </div>
               </div>
@@ -1097,7 +1097,7 @@
     <section v-show="view==='hostdashboard'">
       <div class="card bg-base-100 m3-card p-4 sm:p-5">
         <h2 class="text-2xl font-black">Host dashboard</h2>
-        <p class="text-sm opacity-70 mt-1">Who has revealed, and how guests join. Recipients are never shown here.</p>
+        <p class="text-sm opacity-70 mt-1">Who has locked in, and how guests join. Recipients are never shown here.</p>
         <div class="grid grid-cols-3 gap-2 mt-4">
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
             <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.length : '—' }}</div>
@@ -1105,7 +1105,7 @@
           </div>
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
             <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.filter(g=>g.claimed).length : '—' }}</div>
-            <div class="text-xs opacity-70">Revealed</div>
+            <div class="text-xs opacity-70">Locked</div>
           </div>
           <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
             <div class="text-2xl font-black">{{ (hostSignedIn || hostLoaded) ? hostList.filter(g=>!g.claimed).length : '—' }}</div>
@@ -1126,7 +1126,7 @@
         <div v-if="hostSignedIn || hostLoaded" class="mt-4 flex items-center justify-between gap-3">
           <div>
             <h3 class="font-black">Claimed status</h3>
-            <p class="text-sm opacity-70 mt-1">See who has revealed, and reset a name.</p>
+            <p class="text-sm opacity-70 mt-1">See who has locked in, and reset a name.</p>
           </div>
           <button class="btn btn-sm btn-compact shrink-0" style="width:auto" @click="openClaimedModal">View</button>
         </div>
@@ -1254,11 +1254,12 @@
       <h2 class="text-2xl font-black">Is this you?</h2>
       <p class="text-3xl font-black mt-8 text-center">{{ selected ? selected.display : '' }}<span v-if="selected && selected.nickname"> “{{ selected.nickname }}”</span></p>
       <p v-if="selected && selected.aliases.length" class="text-sm opacity-60">Also: {{ selected.aliases.join(', ') }}</p>
-      <p v-if="selected && selected.claimed" class="alert alert-warning mt-3 rounded-2xl">This name has already been revealed on another device, so no recipient will be shown again here. You can still do your wishlist and vote — and if you know who you're buying for, you can pick them in the Gifts step.</p>
+      <p v-if="selected && selected.claimed" class="alert alert-warning mt-3 rounded-2xl">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote — and if you know who you're buying for, you can pick them in the Gifts step.</p>
+      <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it.</p>
       <input v-if="selected && selected.needs_pin" class="input input-bordered w-full mt-3" v-model="guestPin" inputmode="numeric" placeholder="Your private PIN, if you have one">
       <div class="flex gap-2 mt-auto pt-6">
         <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
-        <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="showConfirmModal=false; guestStep=2; goTo('reveal')">Yes, that's me</button>
+        <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="confirmEnter">Yes, that's me</button>
         <button v-if="selected && selected.claimed" class="btn btn-success flex-1" @click="confirmClaimedGuest">Yes, that's me</button>
       </div>
     </div>
@@ -1270,7 +1271,7 @@
         <h3 class="text-xl font-black">Claimed status</h3>
         <button class="btn btn-ghost btn-sm btn-compact shrink-0" style="width:auto" @click="closeClaimedModal">✕</button>
       </div>
-      <p class="text-sm opacity-70 mt-1">Recipients are never shown here — only whether each name has revealed.</p>
+      <p class="text-sm opacity-70 mt-1">Recipients are never shown here — only whether each name is locked.</p>
       <div class="flex items-center justify-between gap-3 mt-3">
         <p v-if="hostMsg" class="text-sm flex-1" :class="hostOk ? 'opacity-70' : 'text-error'">{{ hostMsg }}</p>
         <button class="btn btn-sm btn-compact shrink-0 ml-auto" style="width:auto" @click="refreshClaimed">Refresh</button>
@@ -1278,8 +1279,8 @@
       <div class="divide-y divide-white/10 mt-1">
         <div v-for="g in hostList" :key="g.id" class="flex items-center gap-2 py-2">
           <span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span>
-          <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Revealed</span>
-          <span v-else class="text-sm opacity-60 shrink-0">Not yet revealed</span>
+          <span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Locked</span>
+          <span v-else class="text-sm opacity-60 shrink-0">Not yet locked</span>
           <button v-if="g.claimed" class="btn btn-sm btn-compact btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
         </div>
       </div>
@@ -1740,10 +1741,10 @@ const app=createApp({
       }catch(e){ this.showToast(e.message, false); }
     },
     superadminResetOne(g){
-      this.openConfirmDialog({title:'Reset this name?', message:'Reset '+g.display+' so it can be revealed again?', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_one',{superadmin_session:this.superadminSession, id:g.id}); await this.loadSuperadmin(); this.showToast('Name reset — it can be revealed again.'); }});
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset '+g.display+' so it can be entered again?', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_one',{superadmin_session:this.superadminSession, id:g.id}); await this.loadSuperadmin(); this.showToast('Name reset — it can be revealed again.'); }});
     },
     superadminUnclaimAll(){
-      this.openConfirmDialog({title:'Unclaim all names?', message:'Reset every name so all of them can be revealed again.', okText:'Unclaim all', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_claims',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('All names reset.'); }});
+      this.openConfirmDialog({title:'Unclaim all names?', message:'Reset every name so all of them can be entered again.', okText:'Unclaim all', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_reset_claims',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('All names reset.'); }});
     },
     superadminRedraw(){
       this.openConfirmDialog({title:'Redraw the draw?', message:'Redraws who buys for whom and unclaims everyone. Only do this before anyone has revealed — the server blocks redraw while any name is claimed.', okText:'Redraw', okClass:'btn-error', onOk: async ()=>{ await this.api('superadmin_redraw',{superadmin_session:this.superadminSession}); await this.loadSuperadmin(); this.showToast('Draw redrawn.'); }});
@@ -1866,15 +1867,36 @@ const app=createApp({
     selectGuest(g){ this.selected=g; this.guestMe=g; this.confirmMsg=''; if(g.claimed){ this.guestAlreadyClaimed=true; } else { this.guestAlreadyClaimed=false; } this.showConfirmModal=true; },
     closeConfirmModal(){ this.showConfirmModal=false; this.selected=null; },
     confirmClaimedGuest(){ this.showConfirmModal=false; this.goToGuestHome(); },
+    async confirmEnter(){
+      if(!this.selected) return;
+      if(this.selected.claimed){ this.confirmClaimedGuest(); return; }
+      const id=this.selected.id;
+      this.showConfirmModal=false;
+      try{
+        const res=await this.api('enter',{id, pin:this.guestPin});
+        this.guestRecipient={name:res.recipient, nickname:res.recipient_nickname, budget:res.budget};
+        this.recipient=this.guestRecipient;
+        this.selected=null; await this.loadGuests();
+        this.guestStep=2; this.goTo('reveal');
+      }catch(e){
+        if(e.message==='already_claimed'){
+          this.guestAlreadyClaimed=true; this.showToast('This name is already locked — no recipient is shown again. Ask the host to reset it.', false); this.goToGuestHome();
+        } else if(e.message==='pin_incorrect'){
+          this.showToast('That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.', false); this.showConfirmModal=true;
+        } else {
+          this.showToast('Could not enter: '+e.message, false); this.showConfirmModal=true;
+        }
+      }
+    },
     async doReveal(){
       try{
-        const res=await this.api('reveal',{id:this.selected.id, pin:this.guestPin});
+        const id=this.selected ? this.selected.id : (this.guestMe ? this.guestMe.id : null); if(!id) return; const res=await this.api('reveal',{id, pin:this.guestPin});
         this.guestRecipient={name:res.recipient, nickname:res.recipient_nickname, budget:res.budget};
         this.recipient=this.guestRecipient;
         this.selected=null; await this.loadGuests();
       }catch(e){
-        this.confirmMsg = e.message==='already_claimed' ? 'This name has already been revealed — no recipient is shown again. Ask the host if you lost it.'
-          : e.message==='pin_incorrect' ? 'That PIN is incorrect. This name has NOT been revealed yet, try again or ask the host.'
+        this.confirmMsg = e.message==='already_claimed' ? 'This name is already locked — no recipient is shown again. Ask the host if you lost it.'
+          : e.message==='pin_incorrect' ? 'That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.'
           : 'Could not reveal: '+e.message;
         if(e.message==='already_claimed') this.guestAlreadyClaimed=true; this.showToast(this.confirmMsg, false);
       }
@@ -1960,12 +1982,12 @@ const app=createApp({
       try{
         const d=await this.api('host_status',{host_pin:this.hostPinCheck});
         this.hostList=d.guests; const done=d.guests.filter(g=>g.claimed).length;
-        this.hostMsg=`${done} of ${d.guests.length} revealed.`; this.hostOk=true; this.hostLoaded=true;
+        this.hostMsg=`${done} of ${d.guests.length} locked.`; this.hostOk=true; this.hostLoaded=true;
         await this.loadInvite();
       }catch(e){ if(e.message==='not_set_up'){ this.hostMsg='No party set up yet.'; this.hostOk=false; this.hostLoaded=false; return; } this.hostMsg=e.message==='host_not_signed_in'?'Enter the correct host PIN.':e.message; this.hostOk=false; this.hostLoaded=false; this.showToast(this.hostMsg, false); if(e.message==='host_not_signed_in' && !this.hostPinCheck.trim()) this.hostSignedIn=false; }
     },
     resetOne(id){
-      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be revealed again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
+      this.openConfirmDialog({title:'Reset this name?', message:'Reset this name so it can be entered again? Only do this in person with the real guest.', okText:'Reset', okClass:'btn-error', onOk: async ()=>{ await this.api('reset_one',{host_pin:this.hostPinCheck, id}); await this.loadHost(); await this.loadGuests(); this.showToast('Name reset — it can be revealed again.'); }});
     },
     resetAll(){
       if(!this.hostSignedIn){ const pin=prompt('Enter host PIN to reset everything:'); if(!pin) return; this.hostPinCheck=pin; }
