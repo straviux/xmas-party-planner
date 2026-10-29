@@ -22,22 +22,6 @@ header('Cache-Control: no-store');
 define('DATA_FILE', __DIR__ . '/data.php');
 define('SUPERADMIN_FILE', __DIR__ . '/superadmin.php');
 define('GUARD', "<?php http_response_code(403); exit; ?>\n");
-<<<<<<< HEAD
-// Google OAuth client ID (Web application, Google Identity Services).
-// Arc: replace this with the real client ID from Google Cloud, and add the
-// deployed site origin (e.g. https://your-site.com) to that client's
-// Authorized JavaScript origins, or Google sign-in will refuse to load.
-define('GOOGLE_CLIENT_ID', '829355882959-r5dail3ga00lrus5la857eeu5i8euvot.apps.googleusercontent.com');
-// Superadmin: a site-owner account that can reset and control the host's
-// config and data (party, invite code, host PIN, guests' claimed status,
-// polls, wishlists, full reset). It is NOT a host account and it NEVER
-// receives recipient mappings — the draw stays blind even to superadmin.
-// The account is never in the repo: username + password hash live only in
-// superadmin.php on the server (gitignored, .htaccess-denied, like
-// host_session.php). First visit to /superadmin sets the account; there
-// is no hardcoded username/password anywhere in the code.
-=======
->>>>>>> a60862efe2110e016cd0ecbffd6ccae56c95260e
 // TEMPORARY: host sign-in/PIN check disabled for poll management only
 // (poll_setup, poll_set_open, poll_reset). Set this to false to re-enable
 // it. Guest voting is unchanged — it never required host sign-in.
@@ -83,10 +67,26 @@ function save_data($d) {
 // Host access is the host PIN only (Google login removed): a host action
 // passes if the supplied host PIN matches host_pin_hash. The PIN is set at
 // setup and can be changed from Setup (Reset PIN) or by superadmin.
+function host_default_pin_active($d) {
+  if ($d === null) return false;
+  return empty($d['host_pin_hash']) || password_verify('1234', $d['host_pin_hash']);
+}
+// Default host PIN is 1234: it works only while no custom PIN has been set
+// (empty hash) or while the current PIN is still 1234. Any host action other
+// than host_pin_reset is blocked while the default is active, so the host
+// must set a new 4-digit PIN first. A new PIN can never be 1234.
 function require_host($input, $d = null) {
+  global $action;
   if ($d !== null) {
     $pin = (string)($input['host_pin'] ?? '');
-    if ($pin !== '' && !empty($d['host_pin_hash']) && password_verify($pin, $d['host_pin_hash'])) return;
+    if ($pin !== '' && !empty($d['host_pin_hash']) && password_verify($pin, $d['host_pin_hash'])) {
+      if (host_default_pin_active($d) && ($action ?? '') !== 'host_pin_reset') send(['error' => 'default_pin_change_required'], 403);
+      return;
+    }
+    if ($pin === '1234' && empty($d['host_pin_hash'])) {
+      if (($action ?? '') !== 'host_pin_reset') send(['error' => 'default_pin_change_required'], 403);
+      return;
+    }
   }
   send(['error' => 'host_not_signed_in'], 403);
 }
@@ -171,7 +171,8 @@ if ($action === 'list') {
 if ($action === 'setup') {
   if (load_data()) send(['error' => 'already_set_up'], 409);
   $pin_in = (string)($input['host_pin'] ?? '');
-  if (strlen($pin_in) < 4) send(['error' => 'host_signin_required'], 400);
+  if ($pin_in !== '' && !preg_match('/^\d{4}$/', $pin_in)) send(['error' => 'pin_must_be_4_digits'], 400);
+  if ($pin_in === '') $pin_in = '1234';
   $party = trim((string)($input['party'] ?? 'Christmas Party'));
   $budget = trim((string)($input['budget'] ?? ''));
   $date = trim((string)($input['date'] ?? ''));
@@ -229,9 +230,11 @@ if ($action === 'party_update') {
 if ($action === 'host_pin_reset') {
   $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
   $cur = (string)($input['host_pin'] ?? '');
-  if ($cur === '' || empty($d['host_pin_hash']) || !password_verify($cur, $d['host_pin_hash'])) send(['error' => 'host_not_signed_in'], 403);
+  $cur_ok = ($cur !== '' && !empty($d['host_pin_hash']) && password_verify($cur, $d['host_pin_hash'])) || ($cur === '1234' && empty($d['host_pin_hash']));
+  if (!$cur_ok) send(['error' => 'host_not_signed_in'], 403);
   $new = trim((string)($input['new_pin'] ?? ''));
-  if (strlen($new) < 4) send(['error' => 'New PIN must be at least 4 characters'], 400);
+  if (!preg_match('/^\d{4}$/', $new)) send(['error' => 'pin_must_be_4_digits'], 400);
+  if ($new === '1234') send(['error' => 'pin_cannot_be_default'], 400);
   $d['host_pin_hash'] = password_hash($new, PASSWORD_DEFAULT);
   if (!save_data($d)) send(['error' => 'Could not save'], 500);
   send(['ok' => true]);
@@ -271,7 +274,7 @@ if ($action === 'host_status') {
               'aliases' => $g['aliases'], 'claimed' => !empty($g['claimed']),
               'claimed_at' => $g['claimed_at'] ?? null];
   }
-  send(['party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '', 'guests' => $out]);
+  send(['party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '', 'default_pin_active' => host_default_pin_active($d), 'guests' => $out]);
 }
 
 if ($action === 'reset_one') {
@@ -614,7 +617,8 @@ if ($action === 'superadmin_host_pin_reset') {
   require_superadmin($input);
   $d = load_data(); if (!$d) send(['error' => 'not_set_up'], 404);
   $new = trim((string)($input['new_pin'] ?? ''));
-  if (strlen($new) < 4) send(['error' => 'New host PIN must be at least 4 characters'], 400);
+  if (!preg_match('/^\d{4}$/', $new)) send(['error' => 'pin_must_be_4_digits'], 400);
+  if ($new === '1234') send(['error' => 'pin_cannot_be_default'], 400);
   $d['host_pin_hash'] = password_hash($new, PASSWORD_DEFAULT);
   if (!save_data($d)) send(['error' => 'Could not save'], 500);
   send(['ok' => true]);
