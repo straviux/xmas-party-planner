@@ -435,7 +435,7 @@
         <p v-if="selected && selected.aliases.length" class="text-sm opacity-60 text-center">Also: {{ selected.aliases.join(', ') }}</p>
         <p v-if="selected && selected.claimed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote.</p>
         <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it.</p>
-        <div v-if="selected && (selected.needs_pin || !selected.claimed)" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit code <span class="opacity-60 font-normal">— required to see your recipient</span></p><InputOtp v-model="guestPin" type="password" /></div>
+        <div v-if="selected && selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit code <span class="opacity-60 font-normal">— required to see your recipient</span></p><InputOtp v-model="guestPin" type="password" /></div>
         <div class="flex gap-2 mt-auto pt-6">
           <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
           <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="confirmEnter">Yes, that's me</button>
@@ -477,7 +477,7 @@
         <label class="block mt-3">Name <input class="input" v-model="guestForm.display" /></label>
         <label class="block mt-2">Nickname <input class="input" v-model="guestForm.nickname" /></label>
         <label class="block mt-2">Aliases (comma-separated) <input class="input" v-model="guestForm.aliasesText" /></label>
-        <label class="block mt-2">Guest PIN (required, 4 digits — leave blank on edit to keep the existing code) <InputOtp v-model="guestForm.pin" type="password" /></label>
+        <label class="block mt-2">Guest PIN (4 digits, required for new guests — leave blank on edit to keep the existing code) <InputOtp v-model="guestForm.pin" type="password" /></label>
         <div class="flex gap-2 mt-4"><button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button><button class="btn btn-success flex-1" @click="saveGuestModal">Save</button></div>
       </div>
     </div>
@@ -1013,8 +1013,10 @@ export default {
     closeGuestModal() { this.showGuestModal = false; },
     async saveGuestModal() {
       if (!this.guestForm.display.trim()) { this.showToast('Guest name is required.', false); return; }
-      const savedExisting = this.guestModalContext === 'saved' && this.guestEditIndex >= 0 ? this.hostList.find((x) => x.id === this.guestForm.id) : null;
-      const pinRequired = this.guestModalContext !== 'saved' || this.guestEditIndex < 0 || (savedExisting && !savedExisting.pin_set);
+      // PIN is required only for NEW guests. Editing a saved guest
+      // must never force a code: blank keeps the existing code, or
+      // none for guests created before codes were mandatory.
+      const pinRequired = this.guestEditIndex < 0;
       if (pinRequired && !/^\d{4}$/.test(this.guestForm.pin || '')) { this.showToast('Guest PIN is required — enter exactly 4 digits.', false); return; }
       if (!pinRequired && this.guestForm.pin && !/^\d{4}$/.test(this.guestForm.pin)) { this.showToast('Guest PIN must be exactly 4 digits (or leave it blank to keep the existing code).', false); return; }
       if (this.guestModalContext === 'saved') {

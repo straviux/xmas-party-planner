@@ -179,15 +179,16 @@ class ApiController extends Controller
                         if (!empty($g['claimed'])) {
                             throw new PartyException('already_claimed', 409);
                         }
-                        // Recipient is only shown with the guest's 4-digit
-                        // code. A guest with no code set (legacy parties)
-                        // cannot reveal until the host sets one for them.
-                        if (empty($g['pin_hash'])) {
-                            throw new PartyException('pin_required', 403);
-                        }
-                        $pin = (string) ($input['pin'] ?? '');
-                        if (!password_verify($pin, $g['pin_hash'])) {
-                            throw new PartyException('pin_incorrect', 403);
+                        // A code is required ONLY when one is set for
+                        // this guest. Guests with no code set (parties
+                        // created before codes were mandatory) are NOT
+                        // blocked from revealing — otherwise a guest who
+                        // never got a code could never see their recipient.
+                        if (!empty($g['pin_hash'])) {
+                            $pin = (string) ($input['pin'] ?? '');
+                            if (!password_verify($pin, $g['pin_hash'])) {
+                                throw new PartyException('pin_incorrect', 403);
+                            }
                         }
                         $g['claimed'] = true;
                         $g['claimed_at'] = date('c');
@@ -360,11 +361,11 @@ class ApiController extends Controller
                             $g['aliases'] = $parsed['aliases'];
                             if ($parsed['pin'] !== '') {
                                 $g['pin_hash'] = password_hash($parsed['pin'], PASSWORD_DEFAULT);
-                            } elseif (empty($g['pin_hash'])) {
-                                // Editing a guest who has no code yet must
-                                // set one — blank only keeps an existing code.
-                                throw new PartyException('pin_must_be_4_digits', 400);
                             }
+                            // Blank PIN on edit keeps whatever is there —
+                            // an existing code, or none for guests created
+                            // before codes were mandatory. Editing a name
+                            // must never force a code to be invented.
                             // Blank PIN on edit keeps the existing PIN (a guest
                             // PIN can only be set/changed, never silently wiped
                             // by an edit that leaves the field blank).
