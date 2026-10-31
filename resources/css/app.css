@@ -50,21 +50,6 @@ input, textarea, select { font-family: inherit; }
 .dock-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: transparent; border: none; color: #fafafa; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 4px 8px; }
 .dock-item-active { color: #34d399; }
 .dock-plus { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 9999px; background: #34d399; color: #000; }
-.host-main { max-width: 1100px !important; min-width: 960px; }
-.host-nav { max-width: 1100px; min-width: 960px; margin: 0 auto; padding: 12px 12px 0; }
-.host-nav-inner { display: flex; align-items: center; gap: 8px; background: rgba(24,24,27,0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; padding: 8px 10px; }
-.host-nav-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 9999px; font-weight: 700; color: #fafafa; background: transparent; border: none; cursor: pointer; white-space: nowrap; }
-.host-nav-btn.active { background: #34d399; color: #000; }
-.host-dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
-.host-dash-grid > div { margin: 0 !important; padding: 16px !important; border: 1px solid rgba(255,255,255,0.1) !important; border-radius: 1rem; background: rgba(255,255,255,0.05); }
-.host-guests-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
-.host-guests-grid > div { margin-top: 0 !important; }
-.host-polls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
-.host-polls-grid > div { margin: 0 !important; }
-.host-setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
-.host-brand { font-weight: 900; font-size: 1.05rem; letter-spacing: -0.02em; white-space: nowrap; }
-.host-signin { max-width: 480px; margin: 24px auto; }
-.host-signin .input { margin-top: 4px; }
 
 /* InputOtp */
 .otp-row { display: flex; gap: 8px; justify-content: flex-start; }
@@ -699,3 +684,41 @@ input, textarea, select { font-family: inherit; }
   .santa-bubble-wide{ max-width:none !important; }
 
 @media (prefers-reduced-motion: reduce) { .santa-anim, .santa-wave, .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot, .scor-eye, .scor-ear, .scor-leg-foot { animation: none; } }
+
+/* Admin layout — desktop-only host area. NOT a guest card layout.
+   Sidebar is fixed at 260px; main content is 960px minimum, so the
+   whole admin area is 1220px minimum and scrolls horizontally on
+   narrower windows instead of reflowing for mobile. */
+.admin-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; z-index: 40; display: flex; flex-direction: column; gap: 20px; padding: 20px 16px; background: rgba(24,24,27,0.96); backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.1); overflow-y: auto; }
+.admin-brand-title { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1.1; }
+.admin-brand-party { font-weight: 700; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-brand-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; margin-top: 6px; }
+.admin-nav { display: flex; flex-direction: column; gap: 4px; }
+.admin-nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 0.75rem; font-weight: 700; text-align: left; color: #fafafa; background: transparent; border: none; cursor: pointer; white-space: nowrap; }
+.admin-nav-btn.active { background: #34d399; color: #000; }
+.admin-sidebar-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+.admin-signed-in { font-size: 0.85rem; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-layout { min-width: 1220px; }
+.admin-main { margin-left: 260px; padding: 24px; min-width: 960px; position: relative; z-index: 1; }
+.admin-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+.admin-header h1 { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.15; }
+.admin-subtitle { font-size: 0.9rem; opacity: 0.7; margin-top: 4px; }
+.admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
+.admin-stat { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 16px; text-align: center; }
+.admin-stat-value { font-size: 1.75rem; font-weight: 900; line-height: 1.1; }
+.admin-stat-label { font-size: 0.75rem; opacity: 0.7; margin-top: 2px; }
+.admin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; margin-top: 16px; }
+.admin-grid-main, .admin-grid-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.admin-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 20px; min-width: 0; }
+.admin-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.admin-panel h2 { font-size: 1.1rem; font-weight: 900; }
+.admin-danger { border-color: rgba(255,57,84,0.4); }
+.admin-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+.admin-table th { text-align: left; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; opacity: 0.6; padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+.admin-table td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.08); vertical-align: middle; }
+.admin-table tr:last-child td { border-bottom: none; }
+.admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.admin-field-full { grid-column: 1 / -1; }
+.admin-banner { background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.4); border-radius: 1rem; padding: 12px 16px; font-size: 0.9rem; margin-bottom: 16px; }
+.admin-signin { max-width: 480px; margin: 48px auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 24px; }
+.admin-signin .input { margin-top: 4px; }

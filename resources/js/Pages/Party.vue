@@ -5,29 +5,29 @@
       <span v-for="(s, i) in snow" :key="i" :style="{ left: s.left, top: s.top, fontSize: s.size, opacity: s.opacity }">❄</span>
     </div>
 
-    <nav v-if="isHostView" class="host-nav" aria-label="Host navigation">
-      <div class="host-nav-inner">
-        <span class="host-brand">Host<span v-if="setupDoneLocal"> · {{ localParty }}</span></span>
-        <template v-if="hostSignedInLocal">
-          <button class="host-nav-btn" :class="{ active: view === 'hostdashboard' }" @click="openDashboard"><LayoutDashboard class="w-5 h-5" /><span>Dashboard</span></button>
-          <button class="host-nav-btn" :class="{ active: view === 'hostguests' }" @click="goTo('hostguests', '/host/guests')"><Users class="w-5 h-5" /><span>Guests</span></button>
-          <button class="host-nav-btn" :class="{ active: view === 'hostpoll' }" @click="goTo('hostpoll', '/host/poll')"><Vote class="w-5 h-5" /><span>Poll</span></button>
-          <button class="host-nav-btn" :class="{ active: view === 'hostsetup' }" @click="goTo('hostsetup', '/host/setup')"><Settings class="w-5 h-5" /><span>Party settings</span></button>
-          <span class="flex-1"></span>
-          <span class="text-sm font-bold">Signed in as {{ hostUsernameLocal || 'host' }}</span>
-          <button class="btn btn-sm" style="width:auto" @click="hostSignOut">Sign out</button>
-        </template>
-        <template v-else>
-          <span class="flex-1"></span>
-          <button class="btn btn-sm btn-primary" style="width:auto" @click="startHost">Host sign-in</button>
-        </template>
+    <aside v-if="isHostView && hostSignedInLocal" class="admin-sidebar" aria-label="Host navigation">
+      <div class="admin-brand">
+        <div class="admin-brand-title">Host</div>
+        <div v-if="setupDoneLocal" class="admin-brand-party">{{ localParty }}</div>
+        <div class="admin-brand-label">Admin</div>
       </div>
-    </nav>
+      <nav class="admin-nav">
+        <button class="admin-nav-btn" :class="{ active: view === 'hostdashboard' }" @click="openDashboard"><LayoutDashboard class="w-5 h-5" /><span>Dashboard</span></button>
+        <button class="admin-nav-btn" :class="{ active: view === 'hostguests' }" @click="goTo('hostguests', '/host/guests')"><Users class="w-5 h-5" /><span>Guests</span></button>
+        <button class="admin-nav-btn" :class="{ active: view === 'hostpoll' }" @click="goTo('hostpoll', '/host/poll')"><Vote class="w-5 h-5" /><span>Polls</span></button>
+        <button class="admin-nav-btn" :class="{ active: view === 'hostsetup' }" @click="goTo('hostsetup', '/host/setup')"><Settings class="w-5 h-5" /><span>Party settings</span></button>
+      </nav>
+      <div class="admin-sidebar-foot">
+        <p class="admin-signed-in">Signed in as <b>{{ hostUsernameLocal || 'host' }}</b></p>
+        <button class="btn btn-sm w-full mt-2" @click="hostSignOut">Sign out</button>
+        <button class="btn btn-ghost btn-sm w-full mt-2" @click="goHome">Back to guest home</button>
+      </div>
+    </aside>
 
-    <main class="w-full mx-auto px-3 py-3" :class="isHostMain ? 'host-main' : 'max-w-2xl'" style="position:relative;z-index:1;padding-bottom:96px">
+    <main v-if="!isHostView || !hostSignedInLocal" class="w-full mx-auto px-3 py-3 max-w-2xl" style="position:relative;z-index:1;padding-bottom:96px">
       <!-- HOST SIGN-IN REQUIRED: no host content renders when signed out -->
       <section v-show="isHostView && !hostSignedInLocal">
-        <div class="card m3-card p-4 host-signin">
+        <div class="admin-signin">
           <h2 class="text-2xl font-black">Host sign-in required</h2>
           <p class="text-sm opacity-70 mt-1">Sign in with your host username and password to manage this party. Guests do not need to sign in — they join from the home page with the invite code.</p>
           <label class="block mt-4">Username <input class="input" v-model="hostUser" @keyup.enter="submitHostLogin" /></label>
@@ -197,163 +197,209 @@
         </div>
       </section>
 
-      <!-- HOST DASHBOARD: overview only, rendered only when signed in -->
+      </main>
+
+    <!-- ADMIN LAYOUT: sidebar + main, desktop-only, signed-in host only -->
+    <div v-if="isHostView && hostSignedInLocal" class="admin-layout">
+      <main class="admin-main">
+      <!-- HOST DASHBOARD: admin overview, rendered only when signed in -->
       <section v-if="view === 'hostdashboard' && hostSignedInLocal">
-        <div class="card m3-card p-4">
-          <h2 class="text-2xl font-black">Host dashboard</h2>
-          <p class="text-sm opacity-70 mt-1">Overview of your party. Recipients are never shown here.</p>
-          <div v-if="!setupDoneLocal" class="mt-4">
-            <p class="text-sm opacity-70">No party set up yet. Create one first — party details and the guest list are saved together.</p>
-            <button class="btn btn-primary mt-3" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button>
-          </div>
-          <template v-else>
-            <!-- 1. Party card -->
-            <div class="mt-4 rounded-xl p-4" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black text-xl">{{ localParty }}</h3>
-              <p class="text-sm opacity-70 mt-1">Date: {{ partyDateLocal || 'Not set' }} • Gift budget: {{ formatBudget(localBudget) }} • Guests: {{ hostList.length }}</p>
-              <div class="host-dash-grid">
-                <div>
-                  <h3 class="font-black"><Ticket class="w-4 h-4 inline" /> Invite code</h3>
-                  <p class="text-sm opacity-70 mt-1">Guests enter this code to join. No login needed.</p>
-                  <p class="text-xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
-                  <div class="flex gap-2 mt-2"><button class="btn btn-sm shrink-0" style="width:auto" @click="copyInvite">Copy code</button><button class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="regenInvite">New code</button></div>
-                </div>
-                <div v-if="qrUrl">
-                  <h3 class="font-black"><QrCode class="w-4 h-4 inline" /> Single QR</h3>
-                  <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
-                  <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:180px;width:100%" />
-                  <div class="text-center"><button class="btn btn-sm shrink-0" style="width:auto" onclick="window.print()"><Printer class="w-4 h-4 inline" /> Print QR sheet</button></div>
-                </div>
-              </div>
-            </div>
-            <!-- 2. Locked / awaiting progress -->
-            <div class="grid grid-cols-3 gap-2 mt-4">
-              <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><div class="text-2xl font-black">{{ hostList.length }}</div><div class="text-xs opacity-70">Guests</div></div>
-              <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><div class="text-2xl font-black">{{ hostList.filter(g => g.claimed).length }}</div><div class="text-xs opacity-70">Locked</div></div>
-              <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><div class="text-2xl font-black">{{ hostList.filter(g => !g.claimed).length }}</div><div class="text-xs opacity-70">Awaiting</div></div>
-            </div>
-            <div class="poll-bar mt-2"><div class="poll-bar-fill" :style="{ width: (hostList.length ? Math.round(hostList.filter(g => g.claimed).length / hostList.length * 100) : 0) + '%' }"></div></div>
-            <p class="text-sm opacity-70 mt-1">{{ hostList.filter(g => g.claimed).length }} of {{ hostList.length }} locked</p>
-            <!-- 3. Claimed list with reset -->
-            <div class="mt-4">
-              <div class="flex items-center justify-between gap-3"><h3 class="font-black">Claimed status</h3><button class="btn btn-sm shrink-0" style="width:auto" @click="refreshClaimed">Refresh</button></div>
-              <p class="text-sm opacity-70 mt-1">Recipients are never shown here — only whether each name is locked.</p>
-              <div v-if="!hostList.length" class="text-sm opacity-70 mt-2">No guests yet — add them on the Guests page.</div>
-              <div v-for="g in hostList" :key="g.id" class="flex items-center gap-3 mt-3"><span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span></span><span v-if="g.claimed" class="text-error text-sm font-bold shrink-0">Locked</span><span v-else class="text-sm opacity-60 shrink-0">Not yet locked</span><button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button></div>
-            </div>
-            <!-- Quick actions -->
-            <div class="mt-4">
-              <h3 class="font-black">Quick actions</h3>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Party settings</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="goTo('hostguests', '/host/guests')">Manage guests</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="goTo('hostpoll', '/host/poll')">Manage polls</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="copyInvite">Copy invite code</button>
-              </div>
-            </div>
-            <!-- 4. Admin controls -->
-            <div class="mt-4">
-              <h3 class="font-black">Admin controls</h3>
-              <p class="text-sm opacity-70 mt-1">Host only.</p>
-              <div class="flex flex-wrap gap-2 mt-2">
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostRedraw">Redraw</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostClearWishlists">Clear all wishlists</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostUnclaimAll">Unclaim all</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="openChangePasswordModal">Change password</button>
-              </div>
-            </div>
-            <!-- 5. Danger zone -->
-            <div class="mt-4">
-              <h3 class="font-black text-error">Danger zone</h3>
-              <p class="text-sm opacity-70 mt-1">Deletes the whole draw and all claims. This cannot be undone.</p>
-              <button class="btn btn-sm btn-error mt-2" style="width:auto" @click="resetAll">Reset everything</button>
-            </div>
-          </template>
+        <header class="admin-header">
+          <div><h1>Dashboard</h1><p class="admin-subtitle">Overview of your party. Recipients are never shown here.</p></div>
+          <button v-if="setupDoneLocal" class="btn btn-sm shrink-0" style="width:auto" @click="copyInvite">Copy invite code</button>
+        </header>
+        <div v-if="!setupDoneLocal" class="admin-panel">
+          <p class="text-sm opacity-70">No party set up yet. Create one first — party details and the guest list are saved together.</p>
+          <button class="btn btn-primary mt-3" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button>
         </div>
+        <template v-else>
+          <div class="admin-stats">
+            <div class="admin-stat"><div class="admin-stat-value">{{ hostList.length }}</div><div class="admin-stat-label">Guests</div></div>
+            <div class="admin-stat"><div class="admin-stat-value">{{ hostList.filter(g => g.claimed).length }}</div><div class="admin-stat-label">Locked</div></div>
+            <div class="admin-stat"><div class="admin-stat-value">{{ hostList.filter(g => !g.claimed).length }}</div><div class="admin-stat-label">Awaiting</div></div>
+            <div class="admin-stat"><div class="admin-stat-value">{{ localPolls.length }}</div><div class="admin-stat-label">Polls</div></div>
+          </div>
+          <div class="poll-bar"><div class="poll-bar-fill" :style="{ width: (hostList.length ? Math.round(hostList.filter(g => g.claimed).length / hostList.length * 100) : 0) + '%' }"></div></div>
+          <p class="text-sm opacity-70 mt-1">{{ hostList.filter(g => g.claimed).length }} of {{ hostList.length }} locked</p>
+          <div class="admin-grid">
+            <div class="admin-grid-main">
+              <div class="admin-panel">
+                <div class="admin-panel-header"><h2>{{ localParty }}</h2></div>
+                <p class="text-sm opacity-70">Date: {{ partyDateLocal || 'Not set' }} • Gift budget: {{ formatBudget(localBudget) }} • Guests: {{ hostList.length }}</p>
+                <div class="admin-form-grid mt-4">
+                  <div>
+                    <h3 class="font-black"><Ticket class="w-4 h-4 inline" /> Invite code</h3>
+                    <p class="text-sm opacity-70 mt-1">Guests enter this code to join. No login needed.</p>
+                    <p class="text-xl font-black tracking-widest mt-2">{{ inviteCode || '—' }}</p>
+                    <div class="flex gap-2 mt-2"><button class="btn btn-sm shrink-0" style="width:auto" @click="copyInvite">Copy code</button><button class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="regenInvite">New code</button></div>
+                  </div>
+                  <div v-if="qrUrl">
+                    <h3 class="font-black"><QrCode class="w-4 h-4 inline" /> Single QR</h3>
+                    <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
+                    <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:180px;width:100%" />
+                    <div class="text-center"><button class="btn btn-sm shrink-0" style="width:auto" onclick="window.print()"><Printer class="w-4 h-4 inline" /> Print QR sheet</button></div>
+                  </div>
+                </div>
+              </div>
+              <div class="admin-panel">
+                <div class="admin-panel-header"><h2>Claimed status</h2><button class="btn btn-sm shrink-0" style="width:auto" @click="refreshClaimed">Refresh</button></div>
+                <p class="text-sm opacity-70">Recipients are never shown here — only whether each name is locked.</p>
+                <p v-if="!hostList.length" class="text-sm opacity-70 mt-3">No guests yet — add them on the Guests page.</p>
+                <table v-else class="admin-table">
+                  <thead><tr><th>Name</th><th>Nickname</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    <tr v-for="g in hostList" :key="g.id">
+                      <td><b>{{ g.display }}</b></td>
+                      <td>{{ g.nickname || '—' }}</td>
+                      <td><span v-if="g.claimed" class="text-error font-bold">Locked</span><span v-else class="opacity-60">Not yet locked</span></td>
+                      <td><button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button><span v-else class="opacity-60">—</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="admin-grid-side">
+              <div class="admin-panel">
+                <h2>Quick actions</h2>
+                <div class="flex flex-col gap-2 mt-3">
+                  <button class="btn btn-sm w-full" @click="goTo('hostsetup', '/host/setup')">Party settings</button>
+                  <button class="btn btn-sm w-full" @click="goTo('hostguests', '/host/guests')">Manage guests</button>
+                  <button class="btn btn-sm w-full" @click="goTo('hostpoll', '/host/poll')">Manage polls</button>
+                  <button class="btn btn-sm w-full" @click="copyInvite">Copy invite code</button>
+                </div>
+              </div>
+              <div class="admin-panel">
+                <h2>Admin controls</h2>
+                <p class="text-sm opacity-70 mt-1">Host only.</p>
+                <div class="flex flex-col gap-2 mt-3">
+                  <button class="btn btn-sm w-full" @click="hostRedraw">Redraw</button>
+                  <button class="btn btn-sm w-full" @click="hostClearWishlists">Clear all wishlists</button>
+                  <button class="btn btn-sm w-full" @click="hostUnclaimAll">Unclaim all</button>
+                  <button class="btn btn-sm w-full" @click="openChangePasswordModal">Change password</button>
+                </div>
+              </div>
+              <div class="admin-panel admin-danger">
+                <h2 class="text-error">Danger zone</h2>
+                <p class="text-sm opacity-70 mt-1">Deletes the whole draw and all claims. This cannot be undone.</p>
+                <button class="btn btn-sm btn-error mt-3" style="width:auto" @click="resetAll">Reset everything</button>
+              </div>
+            </div>
+          </div>
+        </template>
       </section>
 
-      <!-- HOST SETUP: Create party (details + guests, one flow) vs Party settings (details only) -->
+<!-- HOST SETUP: Create party (details + guests, one flow) vs Party settings (details only) -->
       <section v-if="view === 'hostsetup' && hostSignedInLocal">
-        <div class="card m3-card p-4">
-          <div class="flex items-center justify-between gap-3">
-            <h2 class="text-2xl font-black">{{ setupDoneLocal ? 'Party settings' : 'Create party' }}</h2>
-            <button class="btn btn-success btn-sm" style="width:auto" :disabled="savingSetup" @click="doSetup"><span v-if="savingSetup">Saving…</span><span v-else><Check class="w-5 h-5 inline" /> Save</span></button>
-          </div>
-          <p v-if="setupDoneLocal" class="text-sm opacity-70 mt-1">Party details only. Guests are managed on the Guests page — nothing here changes or clears them.</p>
-          <label class="block mt-3">Party name <input class="input" v-model="partyName" /></label>
-          <p class="block mt-2">Gift budget</p>
-          <div class="flex flex-wrap gap-2 mt-2 items-center">
-            <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '250' }" @click="partyBudget = '250'">₱250</button>
-            <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '500' }" @click="partyBudget = '500'">₱500</button>
-            <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '1000' }" @click="partyBudget = '1000'">₱1000</button>
-            <div class="relative flex-1" style="min-width:120px"><span class="absolute left-3 top-1/2 opacity-70" style="transform:translateY(-50%)">₱</span><input class="input" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount" /></div>
-          </div>
-          <label class="block">Party date <input class="input" type="date" v-model="partyDateLocal" /></label>
-          <div v-if="!setupDoneLocal" class="mt-4">
-            <h3 class="font-black">Guests ({{ guestRows.length }})</h3>
-            <p class="text-sm opacity-70 mt-1">Add everyone now — this list is saved with the party, and the draw is made from it. You can change it later on the Guests page, but only before anyone locks in.</p>
-            <p v-if="!guestRows.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
-            <div class="host-guests-grid">
-              <div v-for="(r, i) in guestRows" :key="i" class="card p-3" style="border-radius:1rem">
-                <div class="flex items-start gap-2"><div class="flex-1"><b>{{ r.display }}</b><span v-if="r.nickname"> “{{ r.nickname }}”</span><span v-if="r.aliasesText" class="text-sm opacity-60"> — also: {{ r.aliasesText }}</span><span v-if="r.pin" class="text-sm opacity-60"> • PIN set</span></div>
-                <div class="flex gap-1 shrink-0">
-                  <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" @click="removeGuestRow(i)"><Trash2 class="w-4 h-4" /></button>
-                  <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" @click="openGuestModal(i, 'setup')"><Pencil class="w-4 h-4" /></button>
-                </div></div>
+        <header class="admin-header">
+          <div><h1>{{ setupDoneLocal ? 'Party settings' : 'Create party' }}</h1><p class="admin-subtitle" v-if="setupDoneLocal">Party details only. Guests are managed on the Guests page — nothing here changes or clears them.</p><p class="admin-subtitle" v-else>Party details and the guest list, saved together.</p></div>
+          <button class="btn btn-success btn-sm shrink-0" style="width:auto" :disabled="savingSetup" @click="doSetup"><span v-if="savingSetup">Saving…</span><span v-else><Check class="w-5 h-5 inline" /> Save</span></button>
+        </header>
+        <div class="admin-panel">
+          <div class="admin-form-grid">
+            <label class="block">Party name <input class="input" v-model="partyName" /></label>
+            <label class="block">Party date <input class="input" type="date" v-model="partyDateLocal" /></label>
+            <div class="admin-field-full">
+              <p class="block">Gift budget</p>
+              <div class="flex flex-wrap gap-2 mt-2 items-center">
+                <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '250' }" @click="partyBudget = '250'">₱250</button>
+                <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '500' }" @click="partyBudget = '500'">₱500</button>
+                <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '1000' }" @click="partyBudget = '1000'">₱1000</button>
+                <div class="relative flex-1" style="min-width:120px"><span class="absolute left-3 top-1/2 opacity-70" style="transform:translateY(-50%)">₱</span><input class="input" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount" /></div>
               </div>
             </div>
-            <div class="flex justify-end mt-4"><button class="btn btn-sm shrink-0" style="width:auto" @click="openGuestModal(-1, 'setup')">+ Add guest</button></div>
+          </div>
+          <div v-if="!setupDoneLocal" class="mt-6">
+            <div class="admin-panel-header"><h2>Guests ({{ guestRows.length }})</h2><button class="btn btn-sm shrink-0" style="width:auto" @click="openGuestModal(-1, 'setup')">+ Add guest</button></div>
+            <p class="text-sm opacity-70">Add everyone now — this list is saved with the party, and the draw is made from it. You can change it later on the Guests page, but only before anyone locks in.</p>
+            <p v-if="!guestRows.length" class="text-sm opacity-70 mt-3">No guests yet. Tap Add guest to add your first one.</p>
+            <table v-else class="admin-table">
+              <thead><tr><th>Name</th><th>Nickname</th><th>Aliases</th><th>PIN set</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr v-for="(r, i) in guestRows" :key="i">
+                  <td><b>{{ r.display }}</b></td>
+                  <td>{{ r.nickname || '—' }}</td>
+                  <td>{{ r.aliasesText || '—' }}</td>
+                  <td>{{ r.pin ? 'Yes' : 'No' }}</td>
+                  <td>
+                    <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" @click="openGuestModal(i, 'setup')"><Pencil class="w-4 h-4" /></button>
+                    <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" @click="removeGuestRow(i)"><Trash2 class="w-4 h-4" /></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </section>
 
-      <!-- HOST POLLS -->
+<!-- HOST POLLS -->
       <section v-if="view === 'hostpoll' && hostSignedInLocal">
-        <div class="card m3-card p-4">
-          <h2 class="text-2xl font-black">Polls</h2>
-          <p class="text-sm opacity-70 mt-1">Host poll management — all polls, newest first. Guests can vote on open polls; closed polls show their final winner.</p>
-          <div v-if="!setupDoneLocal" class="mt-4"><p class="text-sm opacity-70">No party set up yet — create one first, then you can create polls here.</p><button class="btn btn-sm mt-2" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button></div>
-          <div v-if="!localPolls.length" class="mt-4 opacity-70">No polls yet — tap Create poll to add your first one.</div>
-          <div v-else class="host-polls-grid">
-            <div v-for="p in localPolls.slice().reverse()" :key="p.id" class="rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
-              <div class="flex items-start gap-3"><div class="flex-1 min-w-0"><b>{{ p.question }}</b><p class="text-sm opacity-70 mt-1">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p><p v-if="!p.open && p.options.length" class="text-sm mt-1">Winner: <b>{{ p.options.reduce((a, b) => b.votes > a.votes ? b : a).text }}</b></p></div><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Poll settings" @click="togglePollMenu(p.id)"><Settings2 class="w-5 h-5" /></button></div>
-              <div v-if="pollMenuId === p.id" class="flex flex-wrap gap-2 mt-3">
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="openEditPollModal(p)"><Pencil class="w-4 h-4" /> Edit</button>
-                <button class="btn btn-sm shrink-0" style="width:auto" @click="setPollOpen(p.id, !p.open)">{{ p.open ? 'Close' : 'Reopen' }}</button>
-                <button class="btn btn-sm btn-error shrink-0" style="width:auto" @click="resetPoll(p)">Delete</button>
-              </div>
-            </div>
-          </div>
-          <p v-if="!hostSignedInLocal" class="text-sm opacity-70 mt-4">Sign in as host to create polls.</p>
-          <div class="flex justify-end mt-4"><button class="btn btn-sm shrink-0" style="width:auto" :disabled="!hostSignedInLocal || !setupDoneLocal" @click="openPollModal"><Plus class="w-4 h-4" /> Create poll</button></div>
+        <header class="admin-header">
+          <div><h1>Polls</h1><p class="admin-subtitle">Host poll management — all polls, newest first. Guests can vote on open polls; closed polls show their final winner.</p></div>
+          <button class="btn btn-sm shrink-0" style="width:auto" :disabled="!setupDoneLocal" @click="openPollModal"><Plus class="w-4 h-4" /> Create poll</button>
+        </header>
+        <div v-if="!setupDoneLocal" class="admin-panel"><p class="text-sm opacity-70">No party set up yet — create one first, then you can create polls here.</p><button class="btn btn-sm mt-3" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button></div>
+        <div v-else-if="!localPolls.length" class="admin-panel"><p class="text-sm opacity-70">No polls yet — tap Create poll to add your first one.</p></div>
+        <div v-else class="admin-panel">
+          <table class="admin-table">
+            <thead><tr><th>Question</th><th>Status</th><th>Votes</th><th>Winner</th><th>Actions</th></tr></thead>
+            <tbody>
+              <template v-for="p in localPolls.slice().reverse()" :key="p.id">
+                <tr>
+                  <td><b>{{ p.question }}</b></td>
+                  <td>{{ p.open ? 'Open' : 'Closed' }}</td>
+                  <td>{{ p.total }}</td>
+                  <td>{{ (!p.open && p.options.length) ? p.options.reduce((a, b) => b.votes > a.votes ? b : a).text : '—' }}</td>
+                  <td><button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Poll settings" @click="togglePollMenu(p.id)"><Settings2 class="w-5 h-5" /></button></td>
+                </tr>
+                <tr v-if="pollMenuId === p.id">
+                  <td colspan="5">
+                    <div class="flex flex-wrap gap-2">
+                      <button class="btn btn-sm shrink-0" style="width:auto" @click="openEditPollModal(p)"><Pencil class="w-4 h-4" /> Edit</button>
+                      <button class="btn btn-sm shrink-0" style="width:auto" @click="setPollOpen(p.id, !p.open)">{{ p.open ? 'Close' : 'Reopen' }}</button>
+                      <button class="btn btn-sm btn-error shrink-0" style="width:auto" @click="resetPoll(p)">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
         </div>
       </section>
 
-      <!-- HOST GUESTS: real saved-party guests, not the setup draft -->
+<!-- HOST GUESTS: real saved-party guests, not the setup draft -->
       <section v-if="view === 'hostguests' && hostSignedInLocal">
-        <div class="card m3-card p-4">
-          <h2 class="text-2xl font-black">Guests ({{ hostList.length }})</h2>
-          <p class="text-sm opacity-70 mt-1">The saved party's guests. Adding, editing or removing a guest re-draws the Secret Santa automatically — recipients are never shown.</p>
-          <div v-if="!setupDoneLocal" class="mt-4"><p class="text-sm opacity-70">No party set up yet — create one first.</p><button class="btn btn-sm mt-2" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button></div>
-          <template v-else>
-            <p v-if="hostList.some(g => g.claimed)" class="alert alert-warning mt-3" style="border-radius:1rem">Guest list is locked: at least one name is locked in. Reset claims first (dashboard, or Reset on a locked name below) before adding, editing or removing guests.</p>
-            <p v-if="!hostList.length" class="text-sm opacity-70 mt-1">No guests yet. Tap Add guest to add your first one.</p>
-            <div class="host-guests-grid">
-              <div v-for="g in hostList" :key="g.id" class="card p-3" style="border-radius:1rem">
-                <div class="flex items-start gap-2"><div class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span v-if="g.aliases && g.aliases.length" class="text-sm opacity-60"> — also: {{ g.aliases.join(', ') }}</span><span v-if="g.pin_set" class="text-sm opacity-60"> • PIN set</span><span v-if="g.claimed" class="text-error text-sm font-bold"> • Locked</span><span v-else class="text-sm opacity-60"> • Not yet</span></div>
-                <div class="flex gap-1 shrink-0">
-                  <button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
-                  <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" :disabled="hostList.some(x => x.claimed)" @click="removeSavedGuest(g)"><Trash2 class="w-4 h-4" /></button>
-                  <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" :disabled="hostList.some(x => x.claimed)" @click="openGuestModal(hostList.indexOf(g), 'saved')"><Pencil class="w-4 h-4" /></button>
-                </div></div>
-              </div>
-            </div>
-            <div class="flex justify-end mt-4"><button class="btn btn-sm shrink-0" style="width:auto" :disabled="hostList.some(g => g.claimed)" @click="openGuestModal(-1, 'saved')">+ Add guest</button></div>
-          </template>
-        </div>
+        <header class="admin-header">
+          <div><h1>Guests ({{ hostList.length }})</h1><p class="admin-subtitle">The saved party's guests. Adding, editing or removing a guest re-draws the Secret Santa automatically — recipients are never shown.</p></div>
+          <button class="btn btn-sm shrink-0" style="width:auto" :disabled="hostList.some(g => g.claimed)" @click="openGuestModal(-1, 'saved')">+ Add guest</button>
+        </header>
+        <div v-if="!setupDoneLocal" class="admin-panel"><p class="text-sm opacity-70">No party set up yet — create one first.</p><button class="btn btn-sm mt-3" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Create party</button></div>
+        <template v-else>
+          <p v-if="hostList.some(g => g.claimed)" class="admin-banner">Guest list is locked: at least one name is locked in. Reset claims first (dashboard, or Reset on a locked name below) before adding, editing or removing guests.</p>
+          <p v-if="!hostList.length" class="admin-panel text-sm opacity-70">No guests yet. Tap Add guest to add your first one.</p>
+          <div v-else class="admin-panel">
+            <table class="admin-table">
+              <thead><tr><th>Name</th><th>Nickname</th><th>Aliases</th><th>PIN set</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody>
+                <tr v-for="g in hostList" :key="g.id">
+                  <td><b>{{ g.display }}</b></td>
+                  <td>{{ g.nickname || '—' }}</td>
+                  <td>{{ (g.aliases && g.aliases.length) ? g.aliases.join(', ') : '—' }}</td>
+                  <td>{{ g.pin_set ? 'Yes' : 'No' }}</td>
+                  <td><span v-if="g.claimed" class="text-error font-bold">Locked</span><span v-else class="opacity-60">Not yet</span></td>
+                  <td>
+                    <button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
+                    <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" :disabled="hostList.some(x => x.claimed)" @click="openGuestModal(hostList.indexOf(g), 'saved')"><Pencil class="w-4 h-4" /></button>
+                    <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" :disabled="hostList.some(x => x.claimed)" @click="removeSavedGuest(g)"><Trash2 class="w-4 h-4" /></button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </template>
       </section>
 
-    </main>
+      </main>
+    </div>
 
     <!-- Guest dock -->
     <nav v-if="guestMe && isGuestView" class="dock" aria-label="Guest navigation">
@@ -599,7 +645,6 @@ export default {
   },
   computed: {
     isHostView() { return ['host', 'hostdashboard', 'hostguests', 'hostpoll', 'hostsetup'].includes(this.view); },
-    isHostMain() { return ['hostdashboard', 'hostguests', 'hostpoll', 'hostsetup'].includes(this.view); },
     isGuestView() { return ['who', 'reveal', 'gifts', 'wishlists', 'vote', 'guesthome'].includes(this.view); },
     filteredGuests() { return this.localGuests.filter((g) => matches(g, norm(this.search))); },
     filteredWishBoard() { return this.localWishBoard.filter((o) => matches(o, norm(this.wishSearch))); },
