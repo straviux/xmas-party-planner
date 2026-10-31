@@ -54,7 +54,7 @@ class PageController extends Controller
                         'reserved_by_me' => false,
                     ];
                 }
-                $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'items' => $items];
+                $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'aliases' => $g['aliases'], 'items' => $items];
             }
             $polls = S::pollsPublic($d, '');
             $gid = session('guest_id');

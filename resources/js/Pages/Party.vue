@@ -73,13 +73,13 @@
           <h2 class="text-2xl font-black">Who are you?</h2>
           <p class="text-sm opacity-70 mt-1">Search your name, then confirm it's you.</p>
           <div class="flex gap-2 mt-3">
-            <input class="input" v-model="search" placeholder="Type your name…" @keyup.enter="guestSearched = true" />
+            <input class="input" v-model="search" placeholder="Type your name, nickname, or alias…" @keyup.enter="guestSearched = true" />
             <button class="btn btn-primary shrink-0" style="width:auto" @click="guestSearched = true"><Search class="w-5 h-5" /> Search</button>
           </div>
           <div v-if="guestSearched" class="mt-4">
             <div v-if="!filteredGuests.length" class="text-sm opacity-70">No match — try a nickname or just part of your name.</div>
             <button v-for="g in filteredGuests" :key="g.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:inherit;cursor:pointer" @click="selectGuest(g)">
-              <b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span v-if="g.claimed" class="text-error font-bold"> — Locked</span>
+              <b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span v-if="g.aliases && g.aliases.length" class="text-sm opacity-60"> (also: {{ g.aliases.join(', ') }})</span><span v-if="g.claimed" class="text-error font-bold"> — Locked</span>
             </button>
           </div>
         </div>
@@ -162,10 +162,10 @@
             <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Tap a member to see what they want — reserve one so nobody buys the same gift twice.</div>
           </div>
           <h2 class="text-2xl font-black">Everyone's wishlists</h2>
-          <input class="input mt-3" v-model="wishSearch" placeholder="Search a name…" />
+          <input class="input mt-3" v-model="wishSearch" placeholder="Search a name, nickname, or alias…" />
           <div v-if="!filteredWishBoard.length" class="text-sm opacity-70 mt-3">{{ localWishBoard.length ? 'No match.' : 'No members yet.' }}</div>
           <button v-for="o in filteredWishBoard" :key="o.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:inherit;cursor:pointer" @click="openWishOwnerModal(o)">
-            <b>{{ o.display }}</b><span v-if="o.nickname"> “{{ o.nickname }}”</span><span v-if="guestMe && o.id === guestMe.id"> — you</span>
+            <b>{{ o.display }}</b><span v-if="o.nickname"> “{{ o.nickname }}”</span><span v-if="o.aliases && o.aliases.length" class="text-sm opacity-60"> (also: {{ o.aliases.join(', ') }})</span><span v-if="guestMe && o.id === guestMe.id"> — you</span>
             <span class="text-sm opacity-70"> • {{ o.items.length ? o.items.length + ' wish(es)' : 'no wishlist yet' }}</span>
             <ChevronRight class="w-4 h-4 inline float-right" />
           </button>
@@ -377,10 +377,12 @@
           <p v-if="hostList.some(g => g.claimed)" class="admin-banner">Guest list is locked: at least one name is locked in. Reset claims first (dashboard, or Reset on a locked name below) before adding, editing or removing guests.</p>
           <p v-if="!hostList.length" class="admin-panel text-sm opacity-70">No guests yet. Tap Add guest to add your first one.</p>
           <div v-else class="admin-panel">
+            <input class="input mb-3" v-model="hostGuestSearch" placeholder="Search a name, nickname, or alias…" />
+            <p v-if="hostGuestSearch && !filteredHostList.length" class="text-sm opacity-70 mb-3">No match.</p>
             <table class="admin-table">
               <thead><tr><th>Name</th><th>Nickname</th><th>Aliases</th><th>PIN set</th><th>Status</th><th>Actions</th></tr></thead>
               <tbody>
-                <tr v-for="g in hostList" :key="g.id">
+                <tr v-for="g in filteredHostList" :key="g.id">
                   <td><b>{{ g.display }}</b></td>
                   <td>{{ g.nickname || '—' }}</td>
                   <td>{{ (g.aliases && g.aliases.length) ? g.aliases.join(', ') : '—' }}</td>
@@ -433,7 +435,7 @@
         <p v-if="selected && selected.aliases.length" class="text-sm opacity-60 text-center">Also: {{ selected.aliases.join(', ') }}</p>
         <p v-if="selected && selected.claimed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote.</p>
         <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it.</p>
-        <div v-if="selected && selected.needs_pin" class="mt-3"><InputOtp v-model="guestPin" type="password" /></div>
+        <div v-if="selected && (selected.needs_pin || !selected.claimed)" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit code <span class="opacity-60 font-normal">— required to see your recipient</span></p><InputOtp v-model="guestPin" type="password" /></div>
         <div class="flex gap-2 mt-auto pt-6">
           <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
           <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="confirmEnter">Yes, that's me</button>
@@ -475,7 +477,7 @@
         <label class="block mt-3">Name <input class="input" v-model="guestForm.display" /></label>
         <label class="block mt-2">Nickname <input class="input" v-model="guestForm.nickname" /></label>
         <label class="block mt-2">Aliases (comma-separated) <input class="input" v-model="guestForm.aliasesText" /></label>
-        <label class="block mt-2">Guest PIN (optional, 4 digits) <InputOtp v-model="guestForm.pin" type="password" /></label>
+        <label class="block mt-2">Guest PIN (required, 4 digits — leave blank on edit to keep the existing code) <InputOtp v-model="guestForm.pin" type="password" /></label>
         <div class="flex gap-2 mt-4"><button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button><button class="btn btn-success flex-1" @click="saveGuestModal">Save</button></div>
       </div>
     </div>
@@ -631,7 +633,7 @@ export default {
       guestForm: { id: '', display: '', nickname: '', aliasesText: '', pin: '' },
       guestModalContext: 'saved',
       savingSetup: false, toastMsg: '', toastOk: true, toastTimer: null,
-      hostMsg: '', hostOk: false, hostList: [], hostLoaded: false, inviteCode: '',
+      hostMsg: '', hostOk: false, hostList: [], hostGuestSearch: '', hostLoaded: false, inviteCode: '',
       showHostEntryModal: false, hostUser: '', hostPass: '', hostLoginError: false,
       hostSignedInLocal: this.hostSignedIn, hostUsernameLocal: this.hostUsername,
       showChangePasswordModal: false, changePassCurrent: '', changePassNew: '', changePassConfirm: '', changePassMsg: '', changingPassword: false,
@@ -647,6 +649,7 @@ export default {
     isHostView() { return ['host', 'hostdashboard', 'hostguests', 'hostpoll', 'hostsetup'].includes(this.view); },
     isGuestView() { return ['who', 'reveal', 'gifts', 'wishlists', 'vote', 'guesthome'].includes(this.view); },
     filteredGuests() { return this.localGuests.filter((g) => matches(g, norm(this.search))); },
+    filteredHostList() { return this.hostList.filter((g) => matches(g, norm(this.hostGuestSearch))); },
     filteredWishBoard() { return this.localWishBoard.filter((o) => matches(o, norm(this.wishSearch))); },
     myBoardItems() {
       if (!this.guestMe) return [];
@@ -777,6 +780,8 @@ export default {
           this.guestAlreadyClaimed = true; this.showToast('This name is already locked — no recipient is shown again. Ask the host to reset it.', false); this.goToGuestHome();
         } else if (e.message === 'pin_incorrect') {
           this.showToast('That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.', false); this.showConfirmModal = true;
+        } else if (e.message === 'pin_required') {
+          this.showToast('This name has no 4-digit code yet — ask the host to set one for you.', false); this.showConfirmModal = true;
         } else { this.showToast('Could not enter: ' + e.message, false); this.showConfirmModal = true; }
       }
     },
@@ -788,7 +793,7 @@ export default {
         this.guestRecipient = { name: res.recipient, nickname: res.recipient_nickname, budget: res.budget };
         this.selected = null; await this.loadGuests();
       } catch (e) {
-        const msg = e.message === 'already_claimed' ? 'This name is already locked — no recipient is shown again. Ask the host if you lost it.' : e.message === 'pin_incorrect' ? 'That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.' : 'Could not reveal: ' + e.message;
+        const msg = e.message === 'already_claimed' ? 'This name is already locked — no recipient is shown again. Ask the host if you lost it.' : e.message === 'pin_incorrect' ? 'That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.' : e.message === 'pin_required' ? 'This name has no 4-digit code yet — ask the host to set one for you.' : 'Could not reveal: ' + e.message;
         if (e.message === 'already_claimed') this.guestAlreadyClaimed = true;
         this.showToast(msg, false);
       }
@@ -956,6 +961,7 @@ export default {
       this.savingSetup = true;
       try {
         const guests = this.guestRows.map((r) => ({ display: r.display, nickname: r.nickname, aliases: r.aliasesText ? r.aliasesText.split(',').map((x) => x.trim()).filter(Boolean) : [], pin: r.pin || '' }));
+        if (!this.setupDoneLocal && guests.some((g) => !/^\d{4}$/.test(g.pin || ''))) { this.showToast('Every guest needs a 4-digit code — check the guest list.', false); return; }
         const existing = this.setupDoneLocal;
         let res;
         if (existing) {
@@ -974,6 +980,7 @@ export default {
       } catch (e) {
         if (e.message === 'host_not_signed_in') { this.showToast('Sign in as host first.', false); this.startHost(); }
         else if (e.message === 'already_set_up') this.showToast('A party is already set up. To start over, reset everything on the dashboard.', false);
+        else if (e.message === 'pin_must_be_4_digits') this.showToast('Every guest needs a 4-digit code — check the guest list.', false);
         else this.showToast('Could not save: ' + e.message, false);
       } finally { this.savingSetup = false; }
     },
@@ -1006,7 +1013,10 @@ export default {
     closeGuestModal() { this.showGuestModal = false; },
     async saveGuestModal() {
       if (!this.guestForm.display.trim()) { this.showToast('Guest name is required.', false); return; }
-      if (this.guestForm.pin && !/^\d{4}$/.test(this.guestForm.pin)) { this.showToast('Guest PIN must be exactly 4 digits (or leave it blank).', false); return; }
+      const savedExisting = this.guestModalContext === 'saved' && this.guestEditIndex >= 0 ? this.hostList.find((x) => x.id === this.guestForm.id) : null;
+      const pinRequired = this.guestModalContext !== 'saved' || this.guestEditIndex < 0 || (savedExisting && !savedExisting.pin_set);
+      if (pinRequired && !/^\d{4}$/.test(this.guestForm.pin || '')) { this.showToast('Guest PIN is required — enter exactly 4 digits.', false); return; }
+      if (!pinRequired && this.guestForm.pin && !/^\d{4}$/.test(this.guestForm.pin)) { this.showToast('Guest PIN must be exactly 4 digits (or leave it blank to keep the existing code).', false); return; }
       if (this.guestModalContext === 'saved') {
         // Real guest management: backend re-draws after every change.
         // Blocked server-side (409) if any name is already locked.
@@ -1017,7 +1027,7 @@ export default {
             : await this.api('host_guest_add', body);
           this.hostList = res.guests; this.showGuestModal = false;
           this.showToast(this.guestEditIndex >= 0 ? 'Guest updated — draw re-done.' : 'Guest added — draw re-done.');
-        } catch (e) { this.showToast(e.message === 'Cannot change guests after names have been locked — reset claims first' ? 'Guest list is locked — reset claims first.' : 'Could not save guest: ' + e.message, false); }
+        } catch (e) { this.showToast(e.message === 'Cannot change guests after names have been locked — reset claims first' ? 'Guest list is locked — reset claims first.' : e.message === 'pin_must_be_4_digits' ? 'Guest PIN is required — enter exactly 4 digits.' : 'Could not save guest: ' + e.message, false); }
         return;
       }
       // Create-party draft only (setup page, no party yet).

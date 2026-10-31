@@ -118,7 +118,9 @@ class ApiController extends Controller
                         }
                     }
                     $pin = trim((string) ($gi['pin'] ?? ''));
-                    if ($pin !== '' && !preg_match('/^\d{4}$/', $pin)) {
+                    // A 4-digit code is REQUIRED for every guest: it is
+                    // the only thing that lets them see their recipient.
+                    if (!preg_match('/^\d{4}$/', $pin)) {
                         throw new PartyException('pin_must_be_4_digits', 400);
                     }
                     $guests[] = [
@@ -126,7 +128,7 @@ class ApiController extends Controller
                         'display' => $display,
                         'nickname' => trim((string) ($gi['nickname'] ?? '')),
                         'aliases' => array_values(array_unique($aliases)),
-                        'pin_hash' => ($pin !== '') ? password_hash($pin, PASSWORD_DEFAULT) : null,
+                        'pin_hash' => password_hash($pin, PASSWORD_DEFAULT),
                         'recipient_id' => null, 'claimed' => false, 'claimed_at' => null,
                     ];
                 }
@@ -177,11 +179,15 @@ class ApiController extends Controller
                         if (!empty($g['claimed'])) {
                             throw new PartyException('already_claimed', 409);
                         }
-                        if (!empty($g['pin_hash'])) {
-                            $pin = (string) ($input['pin'] ?? '');
-                            if (!password_verify($pin, $g['pin_hash'])) {
-                                throw new PartyException('pin_incorrect', 403);
-                            }
+                        // Recipient is only shown with the guest's 4-digit
+                        // code. A guest with no code set (legacy parties)
+                        // cannot reveal until the host sets one for them.
+                        if (empty($g['pin_hash'])) {
+                            throw new PartyException('pin_required', 403);
+                        }
+                        $pin = (string) ($input['pin'] ?? '');
+                        if (!password_verify($pin, $g['pin_hash'])) {
+                            throw new PartyException('pin_incorrect', 403);
                         }
                         $g['claimed'] = true;
                         $g['claimed_at'] = date('c');
@@ -328,6 +334,9 @@ class ApiController extends Controller
                     unset($d['wishlists'][$id]);
                 } elseif ($action === 'host_guest_add') {
                     $parsed = $parse($input);
+                    if ($parsed['pin'] === '') {
+                        throw new PartyException('pin_must_be_4_digits', 400);
+                    }
                     $key = S::norm($parsed['display']);
                     foreach ($d['guests'] as $g) {
                         if (S::norm($g['display']) === $key) {
@@ -336,7 +345,7 @@ class ApiController extends Controller
                     }
                     $d['guests'][] = ['id' => 'g'.bin2hex(random_bytes(6)), 'display' => $parsed['display'],
                         'nickname' => $parsed['nickname'], 'aliases' => $parsed['aliases'],
-                        'pin_hash' => ($parsed['pin'] !== '') ? password_hash($parsed['pin'], PASSWORD_DEFAULT) : null,
+                        'pin_hash' => password_hash($parsed['pin'], PASSWORD_DEFAULT),
                         'recipient_id' => null, 'claimed' => false, 'claimed_at' => null];
                 } else {
                     $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');
@@ -351,6 +360,10 @@ class ApiController extends Controller
                             $g['aliases'] = $parsed['aliases'];
                             if ($parsed['pin'] !== '') {
                                 $g['pin_hash'] = password_hash($parsed['pin'], PASSWORD_DEFAULT);
+                            } elseif (empty($g['pin_hash'])) {
+                                // Editing a guest who has no code yet must
+                                // set one — blank only keeps an existing code.
+                                throw new PartyException('pin_must_be_4_digits', 400);
                             }
                             // Blank PIN on edit keeps the existing PIN (a guest
                             // PIN can only be set/changed, never silently wiped
@@ -441,7 +454,7 @@ class ApiController extends Controller
                             'reserved' => !empty($it['reserved_by']),
                             'reserved_by_me' => ($me !== '' && ($it['reserved_by'] ?? null) === $me)];
                     }
-                    $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'items' => $items];
+                    $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'aliases' => $g['aliases'], 'items' => $items];
                 }
                 return ['board' => $board];
 
