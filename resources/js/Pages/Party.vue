@@ -434,8 +434,10 @@
         <p class="text-3xl font-black mt-8 text-center">{{ selected ? selected.display : '' }}<span v-if="selected && selected.nickname"> “{{ selected.nickname }}”</span></p>
         <p v-if="selected && selected.aliases.length" class="text-sm opacity-60 text-center">Also: {{ selected.aliases.join(', ') }}</p>
         <p v-if="selected && selected.claimed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote.</p>
-        <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it.</p>
-        <div v-if="selected && selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit code <span class="opacity-60 font-normal">— required to see your recipient</span></p><InputOtp v-model="guestPin" type="password" /></div>
+        <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it. First time here, you'll create a 4-digit PIN to get back into your profile later.</p>
+        <div v-if="selected && !selected.claimed && !selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Create your 4-digit PIN <span class="opacity-60 font-normal">— you'll use this to get back into your profile from now on</span></p><InputOtp v-model="guestPin" type="password" /><p class="text-sm font-bold mb-1 mt-3">Confirm your PIN</p><InputOtp v-model="guestPinConfirm" type="password" /></div>
+        <div v-if="selected && selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit PIN <span class="opacity-60 font-normal">— required to see your recipient / get into your profile</span></p><InputOtp v-model="guestPin" type="password" /></div>
+        <div v-if="selected && selected.claimed && !selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Create your 4-digit PIN <span class="opacity-60 font-normal">— you'll use this to get back into your profile from now on</span></p><InputOtp v-model="guestPin" type="password" /><p class="text-sm font-bold mb-1 mt-3">Confirm your PIN</p><InputOtp v-model="guestPinConfirm" type="password" /></div>
         <div class="flex gap-2 mt-auto pt-6">
           <button class="btn btn-ghost flex-1" @click="closeConfirmModal">No, go back</button>
           <button v-if="selected && !selected.claimed" class="btn btn-success flex-1" @click="confirmEnter">Yes, that's me</button>
@@ -477,7 +479,7 @@
         <label class="block mt-3">Name <input class="input" v-model="guestForm.display" /></label>
         <label class="block mt-2">Nickname <input class="input" v-model="guestForm.nickname" /></label>
         <label class="block mt-2">Aliases (comma-separated) <input class="input" v-model="guestForm.aliasesText" /></label>
-        <label class="block mt-2">Guest PIN (4 digits, required for new guests — leave blank on edit to keep the existing code) <InputOtp v-model="guestForm.pin" type="password" /></label>
+        <label class="block mt-2">Guest PIN (optional, 4 digits — if left blank, the guest creates their own on first entry) <InputOtp v-model="guestForm.pin" type="password" /></label>
         <div class="flex gap-2 mt-4"><button class="btn btn-ghost flex-1" @click="closeGuestModal">Cancel</button><button class="btn btn-success flex-1" @click="saveGuestModal">Save</button></div>
       </div>
     </div>
@@ -626,7 +628,7 @@ export default {
       showConfirmDialog: false,
  confirmDialogTitle: '', confirmDialogMessage: '',
       confirmDialogOkText: 'OK', confirmDialogCallback: null,
-      guestPin: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false,
+      guestPin: '', guestPinConfirm: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false,
       wishModalOwner: null, showWishOwnerModal: false, pendingWishOwnerId: null,
       partyName: this.party, partyBudget: this.budget, partyDateLocal: this.partyDate,
       guestRows: [], showGuestModal: false, guestEditIndex: -1,
@@ -756,30 +758,47 @@ export default {
     },
     async guestLogout() {
       try { await this.api('guest_logout', {}); } catch (e) { /* local logout still proceeds */ }
-      this.guestMe = null; this.guestRecipient = null; this.guestAlreadyClaimed = false; this.guestPin = ''; this.wishMe = null; this.wishPin = ''; this.search = ''; this.guestSearched = false; this.selected = null; this.goHome();
+      this.guestMe = null; this.guestRecipient = null; this.guestAlreadyClaimed = false; this.guestPin = ''; this.guestPinConfirm = ''; this.wishMe = null; this.wishPin = ''; this.search = ''; this.guestSearched = false; this.selected = null; this.goHome();
     },
     selectGuest(g) {
       this.selected = g; this.guestMe = g;
       this.guestAlreadyClaimed = !!g.claimed;
       this.showConfirmModal = true;
     },
-    closeConfirmModal() { this.showConfirmModal = false; this.selected = null; },
-    confirmClaimedGuest() { this.showConfirmModal = false; this.goToGuestHome(); },
+    closeConfirmModal() { this.showConfirmModal = false; this.selected = null; this.guestPinConfirm = ''; },
+    async confirmClaimedGuest() {
+      if (!this.selected) return;
+      const id = this.selected.id;
+      if (this.selected.needs_pin) {
+        try { await this.api('guest_verify_pin', { id, pin: this.guestPin }); }
+        catch (e) { this.showToast(e.message === 'pin_incorrect' ? 'That PIN is incorrect — try again.' : 'Could not sign in: ' + e.message, false); return; }
+      } else {
+        if (!/^\d{4}$/.test(this.guestPin || '') || this.guestPin !== this.guestPinConfirm) { this.showToast('Create a 4-digit PIN and confirm it — both must match.', false); return; }
+        try { await this.api('guest_set_pin', { id, pin: this.guestPin }); }
+        catch (e) { this.showToast('Could not set your PIN: ' + e.message, false); return; }
+      }
+      this.guestPinConfirm = ''; this.showConfirmModal = false; this.goToGuestHome();
+    },
     async confirmEnter() {
       if (!this.selected) return;
       if (this.selected.claimed) { this.confirmClaimedGuest(); return; }
       const id = this.selected.id;
+      if (!this.selected.needs_pin) {
+        if (!/^\d{4}$/.test(this.guestPin || '') || this.guestPin !== this.guestPinConfirm) { this.showToast('Create a 4-digit PIN and confirm it — both must match.', false); return; }
+      }
       this.showConfirmModal = false;
       try {
-        const res = await this.api('enter', { id, pin: this.guestPin });
+        const res = await this.api('enter', this.selected.needs_pin ? { id, pin: this.guestPin } : { id, new_pin: this.guestPin });
         this.guestRecipient = { name: res.recipient, nickname: res.recipient_nickname, budget: res.budget };
-        this.selected = null; await this.loadGuests();
+        this.guestPinConfirm = ''; this.selected = null; await this.loadGuests();
         this.goTo('reveal', '/reveal');
       } catch (e) {
         if (e.message === 'already_claimed') {
           this.guestAlreadyClaimed = true; this.showToast('This name is already locked — no recipient is shown again. Ask the host to reset it.', false); this.goToGuestHome();
         } else if (e.message === 'pin_incorrect') {
           this.showToast('That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.', false); this.showConfirmModal = true;
+        } else if (e.message === 'pin_required_create') {
+          this.showToast('Create a 4-digit PIN first — both entries must match.', false); this.showConfirmModal = true;
         } else if (e.message === 'pin_required') {
           this.showToast('This name has no 4-digit code yet — ask the host to set one for you.', false); this.showConfirmModal = true;
         } else { this.showToast('Could not enter: ' + e.message, false); this.showConfirmModal = true; }
@@ -961,7 +980,7 @@ export default {
       this.savingSetup = true;
       try {
         const guests = this.guestRows.map((r) => ({ display: r.display, nickname: r.nickname, aliases: r.aliasesText ? r.aliasesText.split(',').map((x) => x.trim()).filter(Boolean) : [], pin: r.pin || '' }));
-        if (!this.setupDoneLocal && guests.some((g) => !/^\d{4}$/.test(g.pin || ''))) { this.showToast('Every guest needs a 4-digit code — check the guest list.', false); return; }
+
         const existing = this.setupDoneLocal;
         let res;
         if (existing) {
@@ -980,7 +999,7 @@ export default {
       } catch (e) {
         if (e.message === 'host_not_signed_in') { this.showToast('Sign in as host first.', false); this.startHost(); }
         else if (e.message === 'already_set_up') this.showToast('A party is already set up. To start over, reset everything on the dashboard.', false);
-        else if (e.message === 'pin_must_be_4_digits') this.showToast('Every guest needs a 4-digit code — check the guest list.', false);
+        else if (e.message === 'pin_must_be_4_digits') this.showToast('Guest PINs must be exactly 4 digits (or left blank).', false);
         else this.showToast('Could not save: ' + e.message, false);
       } finally { this.savingSetup = false; }
     },
@@ -1013,12 +1032,10 @@ export default {
     closeGuestModal() { this.showGuestModal = false; },
     async saveGuestModal() {
       if (!this.guestForm.display.trim()) { this.showToast('Guest name is required.', false); return; }
-      // PIN is required only for NEW guests. Editing a saved guest
-      // must never force a code: blank keeps the existing code, or
-      // none for guests created before codes were mandatory.
-      const pinRequired = this.guestEditIndex < 0;
-      if (pinRequired && !/^\d{4}$/.test(this.guestForm.pin || '')) { this.showToast('Guest PIN is required — enter exactly 4 digits.', false); return; }
-      if (!pinRequired && this.guestForm.pin && !/^\d{4}$/.test(this.guestForm.pin)) { this.showToast('Guest PIN must be exactly 4 digits (or leave it blank to keep the existing code).', false); return; }
+      // Host-set PIN is optional: blank means the guest creates
+      // their own 4-digit PIN on first entry. If a PIN is typed, it
+      // must be exactly 4 digits.
+      if (this.guestForm.pin && !/^\d{4}$/.test(this.guestForm.pin)) { this.showToast('Guest PIN must be exactly 4 digits (or leave it blank).', false); return; }
       if (this.guestModalContext === 'saved') {
         // Real guest management: backend re-draws after every change.
         // Blocked server-side (409) if any name is already locked.
@@ -1029,7 +1046,7 @@ export default {
             : await this.api('host_guest_add', body);
           this.hostList = res.guests; this.showGuestModal = false;
           this.showToast(this.guestEditIndex >= 0 ? 'Guest updated — draw re-done.' : 'Guest added — draw re-done.');
-        } catch (e) { this.showToast(e.message === 'Cannot change guests after names have been locked — reset claims first' ? 'Guest list is locked — reset claims first.' : e.message === 'pin_must_be_4_digits' ? 'Guest PIN is required — enter exactly 4 digits.' : 'Could not save guest: ' + e.message, false); }
+        } catch (e) { this.showToast(e.message === 'Cannot change guests after names have been locked — reset claims first' ? 'Guest list is locked — reset claims first.' : e.message === 'pin_must_be_4_digits' ? 'Guest PIN must be exactly 4 digits (or leave it blank).' : 'Could not save guest: ' + e.message, false); }
         return;
       }
       // Create-party draft only (setup page, no party yet).

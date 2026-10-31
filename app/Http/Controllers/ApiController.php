@@ -118,9 +118,9 @@ class ApiController extends Controller
                         }
                     }
                     $pin = trim((string) ($gi['pin'] ?? ''));
-                    // A 4-digit code is REQUIRED for every guest: it is
-                    // the only thing that lets them see their recipient.
-                    if (!preg_match('/^\d{4}$/', $pin)) {
+                    // Host-set PIN is OPTIONAL: if left blank, the
+                    // guest creates their own 4-digit PIN on first entry.
+                    if ($pin !== '' && !preg_match('/^\d{4}$/', $pin)) {
                         throw new PartyException('pin_must_be_4_digits', 400);
                     }
                     $guests[] = [
@@ -128,7 +128,7 @@ class ApiController extends Controller
                         'display' => $display,
                         'nickname' => trim((string) ($gi['nickname'] ?? '')),
                         'aliases' => array_values(array_unique($aliases)),
-                        'pin_hash' => password_hash($pin, PASSWORD_DEFAULT),
+                        'pin_hash' => ($pin !== '') ? password_hash($pin, PASSWORD_DEFAULT) : null,
                         'recipient_id' => null, 'claimed' => false, 'claimed_at' => null,
                     ];
                 }
@@ -179,16 +179,22 @@ class ApiController extends Controller
                         if (!empty($g['claimed'])) {
                             throw new PartyException('already_claimed', 409);
                         }
-                        // A code is required ONLY when one is set for
-                        // this guest. Guests with no code set (parties
-                        // created before codes were mandatory) are NOT
-                        // blocked from revealing — otherwise a guest who
-                        // never got a code could never see their recipient.
+                        // First entry: if no code is set for this
+                        // guest, they CREATE one now (new_pin, 4 digits)
+                        // and it becomes their profile code from then on.
+                        // If a code is already set (host-set or previously
+                        // created by the guest), they must enter it.
                         if (!empty($g['pin_hash'])) {
                             $pin = (string) ($input['pin'] ?? '');
                             if (!password_verify($pin, $g['pin_hash'])) {
                                 throw new PartyException('pin_incorrect', 403);
                             }
+                        } else {
+                            $newPin = trim((string) ($input['new_pin'] ?? ''));
+                            if (!preg_match('/^\d{4}$/', $newPin)) {
+                                throw new PartyException('pin_required_create', 403);
+                            }
+                            $g['pin_hash'] = password_hash($newPin, PASSWORD_DEFAULT);
                         }
                         $g['claimed'] = true;
                         $g['claimed_at'] = date('c');
@@ -212,8 +218,47 @@ class ApiController extends Controller
                 // so a refresh keeps guest home / wishlist access. The
                 // recipient itself is never stored — a refresh after
                 // entry shows the locked-guest home, never the recipient.
-                session(['guest_id' => $result['guest_id'], 'guest_pin' => (string) ($input['pin'] ?? '')]);
+                $sessionPin = (string) ($input['pin'] ?? '');
+                if ($sessionPin === '' && isset($input['new_pin'])) { $sessionPin = (string) $input['new_pin']; }
+                session(['guest_id' => $result['guest_id'], 'guest_pin' => $sessionPin]);
                 unset($result['guest_id']);
+                return $result;
+            }
+
+            case 'guest_verify_pin': {
+                // Returning guest: a claimed name with a code set must
+                // enter that code to get into their profile again.
+                $d = $need();
+                $id = (string) ($input['id'] ?? '');
+                $g = S::findGuest($d, $id);
+                if (!$g) { throw new PartyException('Guest not found', 404); }
+                if (empty($g['claimed'])) { throw new PartyException('not_claimed', 400); }
+                if (empty($g['pin_hash'])) { throw new PartyException('pin_required_create', 403); }
+                $pin = (string) ($input['pin'] ?? '');
+                if (!password_verify($pin, $g['pin_hash'])) { throw new PartyException('pin_incorrect', 403); }
+                session(['guest_id' => $g['id'], 'guest_pin' => $pin]);
+                return ['ok' => true, 'display' => $g['display'], 'nickname' => $g['nickname']];
+            }
+
+            case 'guest_set_pin': {
+                // Returning claimed guest with no code yet: create one
+                // now so they can access their profile from then on.
+                $d = $need();
+                $id = (string) ($input['id'] ?? '');
+                $newPin = trim((string) ($input['pin'] ?? ''));
+                if (!preg_match('/^\d{4}$/', $newPin)) { throw new PartyException('pin_must_be_4_digits', 400); }
+                $result = S::mutate(function (&$dd) use ($id, $newPin) {
+                    foreach ($dd['guests'] as &$gg) {
+                        if ($gg['id'] === $id) {
+                            if (empty($gg['claimed'])) { throw new PartyException('not_claimed', 400); }
+                            if (!empty($gg['pin_hash'])) { throw new PartyException('pin_already_set', 409); }
+                            $gg['pin_hash'] = password_hash($newPin, PASSWORD_DEFAULT);
+                            return ['ok' => true];
+                        }
+                    }
+                    throw new PartyException('Guest not found', 404);
+                });
+                session(['guest_id' => $id, 'guest_pin' => $newPin]);
                 return $result;
             }
 
@@ -335,9 +380,6 @@ class ApiController extends Controller
                     unset($d['wishlists'][$id]);
                 } elseif ($action === 'host_guest_add') {
                     $parsed = $parse($input);
-                    if ($parsed['pin'] === '') {
-                        throw new PartyException('pin_must_be_4_digits', 400);
-                    }
                     $key = S::norm($parsed['display']);
                     foreach ($d['guests'] as $g) {
                         if (S::norm($g['display']) === $key) {
@@ -346,7 +388,7 @@ class ApiController extends Controller
                     }
                     $d['guests'][] = ['id' => 'g'.bin2hex(random_bytes(6)), 'display' => $parsed['display'],
                         'nickname' => $parsed['nickname'], 'aliases' => $parsed['aliases'],
-                        'pin_hash' => password_hash($parsed['pin'], PASSWORD_DEFAULT),
+                        'pin_hash' => ($parsed['pin'] !== '') ? password_hash($parsed['pin'], PASSWORD_DEFAULT) : null,
                         'recipient_id' => null, 'claimed' => false, 'claimed_at' => null];
                 } else {
                     $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');

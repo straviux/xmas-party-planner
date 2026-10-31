@@ -54,6 +54,14 @@ may need `VITE_HOST` adjustments.
   server-side and returns the recipient; a wrong guest PIN does NOT lock; a
   second entry with a locked name gets `already_claimed` and goes to guest
   home with no recipient; only a host reset clears a lock).
+- Guest PIN (created by the guest, not the host): on first entry, a guest
+  with no code set creates a 4-digit PIN (entered twice, must match) and
+  that PIN becomes their profile code from then on — returning guests
+  must enter it to get back into their profile (claimed names are
+  verified via `guest_verify_pin`, or create one via `guest_set_pin` if
+  they claimed before PINs existed). A host-set PIN, if one was given at
+  setup/add, is entered instead of created. Host-set PINs are optional:
+  if left blank, the guest creates their own on first entry.
 - Wishlist: text/link/image (10 MB frontend limit, browser canvas AVIF
   conversion uploaded only if smaller, server-side GD AVIF conversion at
   quality 80 when available), anonymous reserve (only the reserver can
