@@ -724,9 +724,9 @@ export default {
         if (v === 'hostpoll') this.loadPoll();
       }
     },
-    async loadGuests() { const d = await this.api('list', {}, 'get'); this.localGuests = d.guests; this.localParty = d.party; this.localBudget = d.budget; this.partyName = d.party; this.partyBudget = d.budget; },
-    async loadWishlists() { const d = await this.api('wishlist_list', { me: this.guestMe ? this.guestMe.id : '' }, 'get'); this.localWishBoard = d.board; },
-    async loadPoll() { const d = await this.api('poll_get', { me: this.guestMe ? this.guestMe.id : '' }, 'get'); this.localPolls = d.polls; },
+    async loadGuests() { try { const d = await this.api('list', {}, 'get'); this.localGuests = d.guests; this.localParty = d.party; this.localBudget = d.budget; this.partyName = d.party; this.partyBudget = d.budget; } catch (e) { if (e.message === 'not_set_up') { this.localGuests = []; } else { throw e; } } },
+    async loadWishlists() { try { const d = await this.api('wishlist_list', { me: this.guestMe ? this.guestMe.id : '' }, 'get'); this.localWishBoard = d.board; } catch (e) { if (e.message === 'not_set_up') { this.localWishBoard = []; } else { throw e; } } },
+    async loadPoll() { try { const d = await this.api('poll_get', { me: this.guestMe ? this.guestMe.id : '' }, 'get'); this.localPolls = d.polls; } catch (e) { if (e.message === 'not_set_up') { this.localPolls = []; } else { throw e; } } },
     startGuest(bypassDialog = false) {
       if (!this.setupDoneLocal) { this.goHome(); return; }
       if (this.guestMe && (this.guestRecipient || this.guestAlreadyClaimed)) { this.goToGuestHome(); return; }

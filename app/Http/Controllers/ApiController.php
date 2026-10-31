@@ -73,7 +73,12 @@ class ApiController extends Controller
                 return ['exists' => true, 'party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '', 'total' => count($d['guests']), 'claimed' => $claimed];
 
             case 'list':
-                $d = $need();
+                // No party yet is a normal empty state, not a 404:
+                // guest pages and host pages render their "no party" prompt.
+                $d = S::load();
+                if (!$d) {
+                    return ['party' => '', 'budget' => '', 'date' => '', 'guests' => []];
+                }
                 $out = [];
                 foreach (S::sortedGuests($d) as $g) {
                     $out[] = S::publicGuest($g);
@@ -420,7 +425,10 @@ class ApiController extends Controller
                 return ['ok' => true];
 
             case 'wishlist_list':
-                $d = $need();
+                $d = S::load();
+                if (!$d) {
+                    return ['board' => []];
+                }
                 $me = (string) ($request->query('me', $input['me'] ?? ''));
                 $board = [];
                 foreach (S::sortedGuests($d) as $g) {
@@ -516,7 +524,10 @@ class ApiController extends Controller
                 });
 
             case 'poll_get':
-                $d = $need();
+                $d = S::load();
+                if (!$d) {
+                    return ['polls' => [], 'poll' => null];
+                }
                 $list = S::pollsPublic($d, (string) $request->query('me', ''));
                 return ['polls' => $list, 'poll' => $list[0] ?? null];
 
