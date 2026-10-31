@@ -212,7 +212,7 @@ class ApiController extends Controller
                 foreach (S::sortedGuests($d) as $g) {
                     $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],
                         'aliases' => $g['aliases'], 'claimed' => !empty($g['claimed']),
-                        'claimed_at' => $g['claimed_at'] ?? null];
+                        'claimed_at' => $g['claimed_at'] ?? null, 'pin_set' => !empty($g['pin_hash'])];
                 }
                 return ['party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date'] ?? '',
                     'invite_code' => $d['invite_code'] ?? '',
@@ -279,6 +279,96 @@ class ApiController extends Controller
                 S::deleteParty();
                 session()->forget(['host_user_id', 'host_username', 'guest_id', 'guest_pin']);
                 return ['ok' => true];
+
+            case 'host_guest_add':
+            case 'host_guest_update':
+            case 'host_guest_remove': {
+                $d = $need();
+                S::requireHost($input, $d, $action);
+                foreach ($d['guests'] as $g) {
+                    if (!empty($g['claimed'])) {
+                        throw new PartyException('Cannot change guests after names have been locked — reset claims first', 409);
+                    }
+                }
+                $parse = function (array $gi): array {
+                    $display = trim((string) ($gi['display'] ?? ''));
+                    if ($display === '') {
+                        throw new PartyException('Guest name is required', 400);
+                    }
+                    $aliases = [];
+                    foreach ((array) ($gi['aliases'] ?? []) as $a) {
+                        $a = trim((string) $a);
+                        if ($a !== '') {
+                            $aliases[] = $a;
+                        }
+                    }
+                    $pin = trim((string) ($gi['pin'] ?? ''));
+                    if ($pin !== '' && !preg_match('/^\d{4}$/', $pin)) {
+                        throw new PartyException('pin_must_be_4_digits', 400);
+                    }
+                    return ['display' => $display, 'nickname' => trim((string) ($gi['nickname'] ?? '')),
+                        'aliases' => array_values(array_unique($aliases)), 'pin' => $pin];
+                };
+                if ($action === 'host_guest_remove') {
+                    $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');
+                    $d['guests'] = array_values(array_filter($d['guests'], fn ($g) => $g['id'] !== $id));
+                    unset($d['wishlists'][$id]);
+                } elseif ($action === 'host_guest_add') {
+                    $parsed = $parse($input);
+                    $key = S::norm($parsed['display']);
+                    foreach ($d['guests'] as $g) {
+                        if (S::norm($g['display']) === $key) {
+                            throw new PartyException('Duplicate guest name: '.$parsed['display'], 400);
+                        }
+                    }
+                    $d['guests'][] = ['id' => 'g'.bin2hex(random_bytes(6)), 'display' => $parsed['display'],
+                        'nickname' => $parsed['nickname'], 'aliases' => $parsed['aliases'],
+                        'pin_hash' => ($parsed['pin'] !== '') ? password_hash($parsed['pin'], PASSWORD_DEFAULT) : null,
+                        'recipient_id' => null, 'claimed' => false, 'claimed_at' => null];
+                } else {
+                    $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');
+                    $parsed = $parse($input);
+                    $key = S::norm($parsed['display']);
+                    $found = false;
+                    foreach ($d['guests'] as &$g) {
+                        if ($g['id'] === $id) {
+                            $found = true;
+                            $g['display'] = $parsed['display'];
+                            $g['nickname'] = $parsed['nickname'];
+                            $g['aliases'] = $parsed['aliases'];
+                            if ($parsed['pin'] !== '') {
+                                $g['pin_hash'] = password_hash($parsed['pin'], PASSWORD_DEFAULT);
+                            }
+                            // Blank PIN on edit keeps the existing PIN (a guest
+                            // PIN can only be set/changed, never silently wiped
+                            // by an edit that leaves the field blank).
+                        } elseif (S::norm($g['display']) === $key) {
+                            throw new PartyException('Duplicate guest name: '.$parsed['display'], 400);
+                        }
+                    }
+                    unset($g);
+                    if (!$found) {
+                        throw new PartyException('Guest not found', 404);
+                    }
+                }
+                // Redraw after every guest change (recipients never exposed).
+                $ids = array_column($d['guests'], 'id');
+                $recipients = S::derangement($ids) ?? array_fill(0, count($ids), null);
+                foreach ($d['guests'] as $i => &$g) {
+                    $g['recipient_id'] = $recipients[$i];
+                }
+                unset($g);
+                if (!S::save($d)) {
+                    throw new PartyException('Could not save', 500);
+                }
+                $out = [];
+                foreach (S::sortedGuests($d) as $g2) {
+                    $out[] = ['id' => $g2['id'], 'display' => $g2['display'], 'nickname' => $g2['nickname'],
+                        'aliases' => $g2['aliases'], 'claimed' => !empty($g2['claimed']),
+                        'claimed_at' => $g2['claimed_at'] ?? null, 'pin_set' => !empty($g2['pin_hash'])];
+                }
+                return ['ok' => true, 'guests' => $out];
+            }
 
             case 'host_unclaim_all':
                 $d = $need();

@@ -11,12 +11,35 @@ class PageController extends Controller
 {
     public function show(string $view = 'home'): Response
     {
+        $isHostView = in_array($view, ['hostdashboard', 'hostsetup', 'hostguests', 'hostpoll'], true);
+        // Host auth is session-only, independent of party data: a signed-in
+        // host with no party yet is still signed in.
+        $hostSignedIn = (bool) (session('host_user_id') && User::find(session('host_user_id')));
+        // SERVER-SIDE HOST GATE: unauthenticated host-page visits get NO
+        // party data at all — no guests, wishlists, polls, party name,
+        // budget or date in props. Guest views keep their public props
+        // (guest wishlists/lists are public by design).
+        if ($isHostView && !$hostSignedIn) {
+            return Inertia::render('Party', [
+                'initialView' => $view,
+                'setupDone' => false,
+                'party' => 'Christmas Party',
+                'budget' => '',
+                'partyDate' => '',
+                'guests' => [],
+                'wishBoard' => [],
+                'polls' => [],
+                'sessionGuest' => null,
+                'sessionGuestPin' => '',
+                'hostSignedIn' => false,
+                'hostUsername' => '',
+            ]);
+        }
         $d = S::load();
         $guests = [];
         $board = [];
         $polls = [];
         $sessionGuest = null;
-        $hostSignedIn = false;
         if ($d) {
             foreach (S::sortedGuests($d) as $g) {
                 $guests[] = S::publicGuest($g);
@@ -34,7 +57,6 @@ class PageController extends Controller
                 $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'items' => $items];
             }
             $polls = S::pollsPublic($d, '');
-            $hostSignedIn = (bool) (session('host_user_id') && User::find(session('host_user_id')));
             $gid = session('guest_id');
             if ($gid) {
                 $g = S::findGuest($d, $gid);

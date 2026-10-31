@@ -62,6 +62,9 @@ input, textarea, select { font-family: inherit; }
 .host-polls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
 .host-polls-grid > div { margin: 0 !important; }
 .host-setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+.host-brand { font-weight: 900; font-size: 1.05rem; letter-spacing: -0.02em; white-space: nowrap; }
+.host-signin { max-width: 480px; margin: 24px auto; }
+.host-signin .input { margin-top: 4px; }
 
 /* InputOtp */
 .otp-row { display: flex; gap: 8px; justify-content: flex-start; }

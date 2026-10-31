@@ -60,11 +60,26 @@ may need `VITE_HOST` adjustments.
   unreserve, cannot reserve own items), public lists by owner name.
 - Polls: multi-poll, create/edit/close/reopen/delete, one vote per guest per
   poll, changeable until closed, counts/percentages only.
-- Host dashboard, desktop layout (1100 px wide, top pill nav — NOT the old
-  mobile bottom dock): stats, blind claimed status (never recipient
-  mappings), invite code with copy/regenerate, single QR, reset one name,
-  reset everything. Host pages are reached by direct URL; the home page is
-  guest-only (no host link, no "I'm a new host").
+- Host area, desktop admin layout (1100 px wide, top pill nav + prominent
+  Host header with party name, signed-in username and Sign out — NOT the old
+  mobile bottom dock): host pages are AUTH-GATED — unauthenticated visits to
+  /host/* get no party data from the server and see only a "Host sign-in
+  required" screen (username/password form); host nav buttons are hidden
+  until signed in, and sign-out goes to the guest home page. Dashboard order:
+  party card (name/date/budget/invite/QR), locked/awaiting progress, claimed
+  list with reset, quick actions, Admin controls, Danger zone — blind claimed
+  status only, never recipient mappings. Host pages are reached by direct URL
+  or the discreet "Host sign-in" link on the home page (no "I'm a new host",
+  no party creation from home).
+- Party settings (route /host/setup): "Create party" when no party exists
+  (party details + guest list in one flow, saved together) vs "Party
+  settings" when a party exists (party details only — guests are NOT changed
+  or cleared here).
+- Guests page: REAL saved-party guest management (display, nickname,
+  aliases, PIN set, Locked/Not yet, Reset one) via host_guest_add/update/
+  remove — every change re-draws the Secret Santa automatically, and changes
+  are blocked (409) once any name is locked until claims are reset. The old
+  setup-draft guest list and its localStorage persistence are gone.
 - Host dashboard Admin controls (host only, formerly superadmin-only):
   redraw (blocked while any name is claimed), clear all wishlists, unclaim
   all, change password, plus the existing reset one name / reset everything,
@@ -96,7 +111,9 @@ dashboard Admin controls → Change password (current / new / confirm).
 Change `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` before deploying so a
 fresh seed does not recreate the default account. The password is stored
 only as a hash (the User model's `hashed` cast). Setup (creating a party)
-requires the host to be signed in first.
+requires the host to be signed in first. Unauthenticated host-page visits
+return empty host props from the server, and the client renders only the
+sign-in screen — no dashboard/setup/poll/guests content, no host data.
 
 ## Data storage — JSON files, not a database
 
