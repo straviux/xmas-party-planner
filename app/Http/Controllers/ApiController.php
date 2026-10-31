@@ -206,8 +206,16 @@ class ApiController extends Controller
             }
 
             case 'host_status':
-                $d = $need();
+                // No party yet is a normal state, not an error: return 200
+                // with exists=false instead of a 404, so the dashboard
+                // shows the "Create party" prompt without a console error.
+                // requireHost runs first, so signed-out callers still get 403.
+                $d = S::load();
                 S::requireHost($input, $d, $action);
+                if (!$d) {
+                    return ['exists' => false, 'party' => '', 'budget' => '', 'date' => '',
+                        'invite_code' => '', 'username' => session('host_username', ''), 'guests' => []];
+                }
                 $out = [];
                 foreach (S::sortedGuests($d) as $g) {
                     $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],

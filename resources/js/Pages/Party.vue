@@ -880,6 +880,7 @@ export default {
     async loadHost() {
       try {
         const res = await this.api('host_status', {});
+        if (res.exists === false) { this.hostLoaded = false; this.hostList = []; return; }
         this.hostList = res.guests; this.hostLoaded = true; this.inviteCode = res.invite_code || this.inviteCode;
         this.hostSignedInLocal = true; this.hostUsernameLocal = res.username || this.hostUsernameLocal;
       } catch (err) {
