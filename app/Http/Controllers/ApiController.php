@@ -262,6 +262,36 @@ class ApiController extends Controller
                 return $result;
             }
 
+            case 'host_reset_pin': {
+                // Host resets ONE guest's PIN: clears pin_hash only.
+                // Allowed even when the guest is claimed — that is the
+                // whole point (a locked guest who forgot their PIN).
+                // Claimed status, recipient, wishlists and polls are
+                // untouched. On return, a claimed guest with no PIN
+                // creates a new one (guest_set_pin); an unclaimed guest
+                // creates one on first entry.
+                $d = $need();
+                S::requireHost($input, $d, $action);
+                $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');
+                $result = S::mutate(function (&$dd) use ($id) {
+                    foreach ($dd['guests'] as &$gg) {
+                        if ($gg['id'] === $id) {
+                            $gg['pin_hash'] = null;
+                            return ['ok' => true];
+                        }
+                    }
+                    throw new PartyException('Guest not found', 404);
+                });
+                $d = S::load();
+                $out = [];
+                foreach (S::sortedGuests($d) as $g) {
+                    $out[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'],
+                        'aliases' => $g['aliases'], 'claimed' => !empty($g['claimed']),
+                        'claimed_at' => $g['claimed_at'] ?? null, 'pin_set' => !empty($g['pin_hash'])];
+                }
+                return ['ok' => true, 'guests' => $out];
+            }
+
             case 'host_status':
                 // No party yet is a normal state, not an error: return 200
                 // with exists=false instead of a 404, so the dashboard

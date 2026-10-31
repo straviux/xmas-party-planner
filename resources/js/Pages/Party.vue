@@ -390,6 +390,7 @@
                   <td><span v-if="g.claimed" class="text-error font-bold">Locked</span><span v-else class="opacity-60">Not yet</span></td>
                   <td>
                     <button v-if="g.claimed" class="btn btn-sm btn-ghost shrink-0" style="width:auto" @click="resetOne(g.id)">Reset</button>
+                    <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Reset PIN" title="Reset PIN" :disabled="!g.pin_set" @click="resetGuestPin(g)"><KeyRound class="w-4 h-4" /></button>
                     <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Edit guest" :disabled="hostList.some(x => x.claimed)" @click="openGuestModal(hostList.indexOf(g), 'saved')"><Pencil class="w-4 h-4" /></button>
                     <button class="btn btn-ghost shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Remove guest" :disabled="hostList.some(x => x.claimed)" @click="removeSavedGuest(g)"><Trash2 class="w-4 h-4" /></button>
                   </td>
@@ -769,13 +770,33 @@ export default {
     async confirmClaimedGuest() {
       if (!this.selected) return;
       const id = this.selected.id;
-      if (this.selected.needs_pin) {
+      // Refresh first: the list in this page may be stale (e.g. the
+      // host just unclaimed this name). Branch on the FRESH status,
+      // not the status the modal was opened with — that staleness
+      // is what produced "Could not set your PIN: not_claimed".
+      try { await this.loadGuests(); } catch (e) { /* fall through with the old status */ }
+      const fresh = this.localGuests.find((g) => g.id === id);
+      if (fresh) { this.selected = fresh; this.guestMe = fresh; }
+      if (fresh && !fresh.claimed) {
+        // No longer claimed: this is a first entry now, not a return.
+        // Fall through to the enter flow with the PIN just typed.
+        this.showToast('This name is no longer locked — proceeding as a first entry.', true);
+        await this.confirmEnter();
+        return;
+      }
+      if ((fresh ? fresh.needs_pin : this.selected.needs_pin)) {
         try { await this.api('guest_verify_pin', { id, pin: this.guestPin }); }
-        catch (e) { this.showToast(e.message === 'pin_incorrect' ? 'That PIN is incorrect — try again.' : 'Could not sign in: ' + e.message, false); return; }
+        catch (e) {
+          if (e.message === 'not_claimed') { this.selected.claimed = false; await this.confirmEnter(); return; }
+          this.showToast(e.message === 'pin_incorrect' ? 'That PIN is incorrect — try again.' : 'Could not sign in: ' + e.message, false); return;
+        }
       } else {
         if (!/^\d{4}$/.test(this.guestPin || '') || this.guestPin !== this.guestPinConfirm) { this.showToast('Create a 4-digit PIN and confirm it — both must match.', false); return; }
         try { await this.api('guest_set_pin', { id, pin: this.guestPin }); }
-        catch (e) { this.showToast('Could not set your PIN: ' + e.message, false); return; }
+        catch (e) {
+          if (e.message === 'not_claimed') { this.selected.claimed = false; await this.confirmEnter(); return; }
+          this.showToast('Could not set your PIN: ' + e.message, false); return;
+        }
       }
       this.guestPinConfirm = ''; this.showConfirmModal = false; this.goToGuestHome();
     },
@@ -794,7 +815,12 @@ export default {
         this.goTo('reveal', '/reveal');
       } catch (e) {
         if (e.message === 'already_claimed') {
-          this.guestAlreadyClaimed = true; this.showToast('This name is already locked — no recipient is shown again. Ask the host to reset it.', false); this.goToGuestHome();
+          // Already locked after all (stale list): do NOT bypass the
+          // PIN by going straight to guest home. Re-prompt with the
+          // fresh claimed status so the PIN check runs.
+          this.guestAlreadyClaimed = true;
+          try { await this.loadGuests(); const f = this.localGuests.find((g) => g.id === id); if (f) { this.selected = f; this.guestMe = f; } } catch (err) { /* keep old status */ }
+          this.showToast('This name is already locked — enter your PIN to get into your profile.', false); this.showConfirmModal = true;
         } else if (e.message === 'pin_incorrect') {
           this.showToast('That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.', false); this.showConfirmModal = true;
         } else if (e.message === 'pin_required_create') {
@@ -1054,6 +1080,17 @@ export default {
       else this.guestRows.push({ ...this.guestForm });
       // Create-party draft only, in-memory — no localStorage persistence.
       this.showGuestModal = false; this.showToast(this.guestEditIndex >= 0 ? 'Guest updated.' : 'Guest added.');
+    },
+    resetGuestPin(g) {
+      this.openConfirmDialog({
+        title: 'Reset PIN for ' + g.display + '?',
+        message: 'Their current PIN will be cleared. Next time they search for their name, they will create a new 4-digit PIN to get into their profile. Their locked status, recipient, wishlist and votes are NOT changed.',
+        okText: 'Reset PIN',
+        onOk: async () => {
+          try { const res = await this.api('host_reset_pin', { id: g.id }); this.hostList = res.guests; this.showToast('PIN reset — ' + g.display + ' will create a new PIN on next entry.'); }
+          catch (e) { this.showToast('Could not reset PIN: ' + e.message, false); }
+        },
+      });
     },
     removeSavedGuest(g) {
       this.openConfirmDialog({
