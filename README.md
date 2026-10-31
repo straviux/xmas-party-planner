@@ -18,8 +18,8 @@ npm run startlocal
 ```
 
 Leave that window open. `startlocal` starts Vite on
-`http://127.0.0.1:5173` and Laravel on `http://127.0.0.1:8000` at the same
-time (via `concurrently`). Open **`http://localhost:8000`** in the browser —
+`http://127.0.0.1:5139` and Laravel on `http://127.0.0.1:8005` at the same
+time (via `concurrently`). Open **`http://localhost:8005`** in the browser —
 not the Vite URL directly; the Laravel page loads the Vite assets. Stop with
 Ctrl+C (`concurrently` kills both servers with `-k`).
 
@@ -32,7 +32,7 @@ npm run startlocal
 
 If `php` or `npm` is not recognised in cmd, install PHP/Node first and reopen
 cmd. For phone testing on the same Wi-Fi, run
-`php artisan serve --host=0.0.0.0 --port=8000` instead of the default host and
+`php artisan serve --host=0.0.0.0 --port=8005` instead of the default host and
 use the computer's LAN IP from `ipconfig` — Vite HMR over LAN is untested and
 may need `VITE_HOST` adjustments.
 
