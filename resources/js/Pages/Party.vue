@@ -575,6 +575,7 @@ export default {
       view: this.initialView,
       fabOpen: false, santaWaving: false,
       search: '', guestSearched: false, selected: null, showConfirmModal: false,
+      showConfirmDialog: false,
  confirmDialogTitle: '', confirmDialogMessage: '',
       confirmDialogOkText: 'OK', confirmDialogCallback: null,
       guestPin: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false,
@@ -813,8 +814,6 @@ export default {
     /* ---------- host ---------- */
     startHost() { this.showHostEntryModal = true; },
     closeHostEntryModal() { this.showHostEntryModal = false; },
-    enterHostWithPin() { this.showHostEntryModal = false; this.showHostPinModal = true; },
-    closeHostPinModal() { this.showHostPinModal = false; },
     async submitHostLogin() {
       try {
         const res = await this.api('host_login', { username: this.hostUser, password: this.hostPass });
