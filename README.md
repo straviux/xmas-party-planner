@@ -14,6 +14,7 @@ composer install
 npm install
 cp .env.example .env
 php artisan key:generate
+php artisan migrate --seed
 npm run startlocal
 ```
 
@@ -39,13 +40,14 @@ may need `VITE_HOST` adjustments.
 ## What is ported
 
 - Party setup (name, gift budget in ₱ with ₱250/₱500/₱1000 presets, date).
-- Host PIN only (Google login was removed from the old app and is not here).
-  Default host PIN is **1234**: setup with a blank host PIN stores a 1234
-  hash, and while the default is active every host action except PIN reset
-  returns `default_pin_change_required` and the app shows a non-dismissable
-  "Set a new host PIN" modal. A new host PIN is exactly 4 digits, never 1234.
+- Host login is **username/password — NOT a PIN, NOT email.** The host
+  signs in on the host pages with the single admin/host user created by
+  `php artisan db:seed` (see "Host login" below). There is no separate
+  superadmin login: `/superadmin` redirects to `/host/dashboard`.
 - `InputOtp` component (type=password, exactly 4 digits, auto-advance on
-  digit typed, backspace/paste support) for ALL PIN inputs.
+  digit typed, backspace/paste support) for **guest** PIN inputs only
+  (per-guest wishlist/entry PINs). The host login uses plain text
+  username + password inputs, not InputOtp.
 - Guest flow: QR invite code (`?guest=1&code=CODE`, the QR still carries the
   code), Who search (normalised/fuzzy over display name + nickname +
   aliases), "Is this you?" confirm, entry lock (confirming locks the name
@@ -63,42 +65,68 @@ may need `VITE_HOST` adjustments.
   mappings), invite code with copy/regenerate, single QR, reset one name,
   reset everything. Host pages are reached by direct URL; the home page is
   guest-only (no host link, no "I'm a new host").
-- Superadmin at `/superadmin` (no visible link in the app): first-visit
-  username/password stored only as a hash on the server, party update, invite
-  regenerate, host PIN set (4 digits, never 1234), reset one claim, unclaim
-  all, redraw blocked while any name is claimed, poll close/reopen/delete,
-  clear wishlists, reset everything. **Recipient mappings are never exposed,
-  even to superadmin.**
+- Host dashboard Admin controls (host only, formerly superadmin-only):
+  redraw (blocked while any name is claimed), clear all wishlists, unclaim
+  all, change password, plus the existing reset one name / reset everything,
+  party update, invite regenerate, and poll create/edit/close/delete.
+  **Recipient mappings are never exposed anywhere in the UI.**
 - Guest pages stay mobile-friendly; host pages are desktop-optimised.
 - Scan QR is design-only (placeholder viewfinder, camera never starts) and
   the temporary "Continue to guest page" bypass are carried over from the old
   app as-is; remove both when real scanning returns.
 
+## Host login
+
+Host login is username/password only — not a PIN, not email.
+
+```sh
+php artisan migrate --seed
+```
+
+This creates ONE host/admin user via `DatabaseSeeder` (`firstOrCreate`, so
+re-seeding does NOT reset a password you changed):
+
+- **Username:** from `ADMIN_USERNAME` in `.env`, default `admin`
+- **Password:** from `ADMIN_PASSWORD` in `.env`, default `admin1234`
+- **Name:** `Admin` — **Email:** `admin@localhost` (email is never used
+  for login, it only fills the `users` table)
+
+**Change the password immediately after first sign-in** via the host
+dashboard Admin controls → Change password (current / new / confirm).
+Change `ADMIN_USERNAME` / `ADMIN_PASSWORD` in `.env` before deploying so a
+fresh seed does not recreate the default account. The password is stored
+only as a hash (the User model's `hashed` cast). Setup (creating a party)
+requires the host to be signed in first.
+
 ## Data storage — JSON files, not a database
 
-Party data lives in **`storage/app/party.json`** and the superadmin account in
-**`storage/app/superadmin.json`**, with file locking (`flock`) around
+Party data lives in **`storage/app/party.json`** only (there is no
+superadmin file any more), with file locking (`flock`) around
 read-modify-write for race-sensitive actions (entry lock, reserve, vote) and
 `chmod 0600` on the files. This is deliberate: it matches the old app's
 JSON-file store model exactly, so draw/claim logic behaves the same. The
 Laravel scaffold's default sqlite file is **not** used for party data.
-`storage/app/` is outside `public/`, so the JSON files are never
-web-accessible. The party data does NOT migrate from the old app
-automatically: the old `data.php` JSON (after its PHP guard line) and the new
-`storage/app/party.json` share the same JSON shape (party, budget, date,
-invite_code, host_pin_hash, guests with `recipient_id`/`claimed`, wishlists,
-polls), but copying it across is a manual step — do not claim it migrates by
-itself, and do not copy a live `data.php` without explicit instruction.
+`storage/app/` is outside `public/`, so the JSON file is never
+web-accessible. The host login account lives in the Laravel `users` table
+(see "Host login" below), not in a JSON file. The party data does NOT
+migrate from the old app automatically: the old `data.php` JSON (after its
+PHP guard line) and the new `storage/app/party.json` share the same JSON
+shape (party, budget, date, invite_code, guests with
+`recipient_id`/`claimed`, wishlists, polls), but copying it across is a
+manual step — do not claim it migrates by itself, and do not copy a live
+`data.php` without explicit instruction.
 
 ## How Inertia changes behaviour vs the old app
 
 - **Real paths, not hash routes.** Old URLs were `site/#/host/dashboard`,
-  `site/#/superadmin`, etc. New URLs are `/host/dashboard`, `/superadmin`,
-  etc. Old hash URLs redirect to the equivalent real path on load.
+  `site/#/superadmin`, etc. New URLs are `/host/dashboard`, `/host/setup`,
+  `/host/guests`, `/host/poll`, etc. `/superadmin` redirects to
+  `/host/dashboard`. Old hash URLs redirect to the equivalent real path
+  on load.
 - **Guest/host identity persists across refresh in the Laravel session**
   (file driver), not in-memory only. The old app lost `guestMe` /
   `guestRecipient` / host sign-in on refresh. Here `guest_id` + `guest_pin`
-  and `host_pin` live in the Laravel session. The recipient itself is
+  and `host_user_id` / `host_username` live in the Laravel session. The recipient itself is
   deliberately NOT stored in session — after a refresh, a locked guest
   restores to guest home (claimed path) without the recipient, matching the
   old claimed-guest behaviour. Guest logout and host sign-out clear the
@@ -113,15 +141,13 @@ itself, and do not copy a live `data.php` without explicit instruction.
   Externally the same (first writer locks, second gets `already_claimed` /
   `already_reserved` / vote overwrite), but concurrent entries are less
   likely to interleave.
-- **Superadmin helpers are implemented, not missing.** The old plain-PHP
-  `api.php` called superadmin helper functions that were never defined in
-  that file, so its superadmin actions would fatal when called. The Laravel
-  port implements them correctly; this is a fix relative to the old app,
-  not a behaviour regression.
-- **Poll host-check bypass is preserved as-is.**
-  `TEMP_POLL_HOST_CHECK_DISABLED = true` in `PartyStore`, so poll
-  create/edit/close/reopen/delete do not require the host PIN in either
-  version, until explicitly agreed otherwise.
+- **Superadmin is removed.** There is no `/superadmin` page, no
+  `superadmin_*` API actions, and no `superadmin.json` file. Its controls
+  moved to the host dashboard (see above) and require the host login.
+- **Poll actions now require the host.**
+  `TEMP_POLL_HOST_CHECK_DISABLED = false` in `PartyStore`, so poll
+  create/edit/close/reopen/delete require the host login. Guest
+  `poll_vote` does NOT require the host.
 
 ## Not ported faithfully
 
@@ -136,20 +162,22 @@ itself, and do not copy a live `data.php` without explicit instruction.
 ## Deploying to an Apache host (later, not done here)
 
 - Document root must be the Laravel `public/` folder (not the project root).
-  Everything else, including `storage/app/party.json` and
-  `storage/app/superadmin.json`, must stay outside the web root.
+  Everything else, including `storage/app/party.json`, must stay outside
+  the web root.
 - On the server: `composer install --no-dev --optimize-autoloader`, copy
   `.env.example` to `.env` and set a real `APP_KEY`
   (`php artisan key:generate`), `APP_URL` to the deployed origin,
   `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_DRIVER=file` (do not
-  leave it as `database` unless the database tables exist), and ensure
+  leave it as `database` unless the database tables exist),
+  `ADMIN_USERNAME` / `ADMIN_PASSWORD` (used by the seeder), and run
+  `php artisan migrate --seed` to create the host user, and ensure
   `storage/` (especially `storage/app/` and `storage/framework/`) and
   `bootstrap/cache/` are writable by the web server user.
 - Run `npm run build` (or `npm install` + `npm run build` on a build
   machine) so `public/build/` assets exist; `php artisan serve` and Vite dev
   are for local development only, not for Apache production.
 - PHP requirements on the host: PHP 8.3 (or the Laravel version's minimum),
-  `php-mbstring`, `php-xml`, `php-curl`, `php-sqlite3` (only if the scaffold
-  database is used — it is not used for party data), `php-zip`, `php-gd`
+  `php-mbstring`, `php-xml`, `php-curl`, `php-sqlite3` (the `users` table
+  for host login lives in sqlite), `php-zip`, `php-gd`
   (for server-side AVIF conversion of wishlist screenshots; without GD,
   original uploads are stored as-is, same as the old app).

@@ -13,7 +13,7 @@
         <button class="host-nav-btn" :class="{ active: view === 'hostsetup' }" @click="goTo('hostsetup', '/host/setup')"><Settings class="w-5 h-5" /><span>Setup</span></button>
         <span class="flex-1"></span>
         <button class="btn btn-success btn-sm" style="width:auto" @click="openGuestModal(-1)"><UserRoundPlus class="w-4 h-4" /> Add guest</button>
-        <span v-if="hostSignedInLocal" class="text-sm opacity-80">Host signed in</span>
+        <span v-if="hostSignedInLocal" class="text-sm opacity-80">Host signed in<span v-if="hostUsernameLocal"> as {{ hostUsernameLocal }}</span></span>
         <button v-if="hostSignedInLocal" class="btn btn-sm btn-ghost" style="width:auto" @click="hostSignOut">Sign out</button>
       </div>
     </nav>
@@ -163,8 +163,7 @@
             <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><div class="text-2xl font-black">{{ hostLoaded ? hostList.filter(g => !g.claimed).length : '—' }}</div><div class="text-xs opacity-70">Awaiting</div></div>
           </div>
           <div v-if="!hostSignedInLocal && !hostLoaded" class="mt-4">
-            <p class="text-sm opacity-70">Enter your host PIN to load your party stats.</p>
-            <p class="text-sm opacity-70 mt-1">First time? The default PIN is 1234 — you'll set a new one after signing in.</p>
+            <p class="text-sm opacity-70">Sign in with your host username and password to load your party stats.</p>
             <button class="btn btn-sm mt-2" style="width:auto" @click="startHost">Sign in</button>
             <button v-if="!setupDoneLocal" class="btn btn-sm mt-2" style="width:auto" @click="goTo('hostsetup', '/host/setup')">Go to Setup</button>
           </div>
@@ -187,6 +186,16 @@
               <p class="text-sm opacity-70 mt-1">Print this — everyone scans the same one. The invite code is built in.</p>
               <img :src="qrUrl" alt="Secret Santa QR code" class="mx-auto my-3" style="max-width:180px;width:100%" />
               <div class="text-center"><button class="btn btn-sm shrink-0" style="width:auto" onclick="window.print()"><Printer class="w-4 h-4 inline" /> Print QR sheet</button></div>
+            </div>
+            <div v-if="hostLoaded">
+              <h3 class="font-black">Admin controls</h3>
+              <p class="text-sm opacity-70 mt-1">Admin controls — host only.</p>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostRedraw">Redraw</button>
+                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostClearWishlists">Clear all wishlists</button>
+                <button class="btn btn-sm shrink-0" style="width:auto" @click="hostUnclaimAll">Unclaim all</button>
+                <button class="btn btn-sm shrink-0" style="width:auto" @click="openChangePasswordModal">Change password</button>
+              </div>
             </div>
             <div v-if="hostLoaded">
               <h3 class="font-black text-error">Danger zone</h3>
@@ -212,12 +221,11 @@
             <button class="btn btn-sm" style="width:auto" :class="{ 'btn-primary': partyBudget === '1000' }" @click="partyBudget = '1000'">₱1000</button>
             <div class="relative flex-1" style="min-width:120px"><span class="absolute left-3 top-1/2 opacity-70" style="transform:translateY(-50%)">₱</span><input class="input" style="padding-left:28px" v-model="partyBudget" inputmode="numeric" placeholder="Custom amount" /></div>
           </div>
-          <div class="host-setup-grid">
-            <label class="block">Party date <input class="input" type="date" v-model="partyDateLocal" /></label>
-            <label class="block">Host PIN (4 digits, or leave blank for the default 1234) <InputOtp v-model="hostPin" type="password" /></label>
+          <label class="block">Party date <input class="input" type="date" v-model="partyDateLocal" /></label>
+          <div v-if="!hostSignedInLocal" class="mt-3">
+            <p class="text-sm opacity-70">Sign in as host first, then save. The seeded host account is created by <code>php artisan db:seed</code> (see README).</p>
+            <button class="btn btn-sm mt-2" style="width:auto" @click="startHost">Sign in</button>
           </div>
-          <p class="text-sm opacity-70 mt-1">Leave it blank and the default PIN 1234 is used — you'll be asked to set a new 4-digit PIN after signing in.</p>
-          <div v-if="setupDoneLocal" class="mt-2"><button class="btn btn-sm btn-ghost" style="width:auto" @click="openResetPinModal">Reset PIN</button></div>
         </div>
       </section>
 
@@ -260,59 +268,6 @@
         </div>
       </section>
 
-      <!-- SUPERADMIN (no visible link in the app) -->
-      <section v-show="view === 'superadmin'">
-        <div class="card m3-card p-4">
-          <h2 class="text-2xl font-black">Superadmin</h2>
-          <div v-if="!superadminSignedIn">
-            <div v-if="!superadminSet">
-              <p class="text-sm opacity-70 mt-1">First visit: set a username and password. They are stored only as a hash on the server.</p>
-              <label class="block mt-3">Username <input class="input" v-model="superadminUser" /></label>
-              <label class="block mt-2">Password <input class="input" type="password" v-model="superadminPass" /></label>
-              <button class="btn btn-success w-full mt-3" @click="superadminSetup">Set up superadmin</button>
-            </div>
-            <div v-else>
-              <label class="block mt-3">Username <input class="input" v-model="superadminUser" /></label>
-              <label class="block mt-2">Password <input class="input" type="password" v-model="superadminPass" /></label>
-              <button class="btn btn-success w-full mt-3" @click="superadminLogin">Sign in</button>
-            </div>
-          </div>
-          <div v-else>
-            <div class="flex justify-between items-center"><p class="text-sm opacity-70">Signed in as {{ superadminUser }}</p><button class="btn btn-sm btn-ghost" style="width:auto" @click="superadminLogout">Sign out</button></div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black">Party config</h3>
-              <label class="block mt-3">Party name <input class="input" v-model="superadminParty" /></label>
-              <label class="block mt-2">Gift budget <input class="input" v-model="superadminBudget" placeholder="e.g. 500" /></label>
-              <label class="block mt-2">Party date <input type="date" class="input" v-model="superadminDate" /></label>
-              <button class="btn btn-success w-full mt-3" @click="saveSuperadminParty">Save party details</button>
-            </div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black">Invite code</h3>
-              <div class="flex items-center gap-2 mt-3"><p class="text-lg font-black flex-1" style="letter-spacing:0.2em">{{ superadminInvite }}</p><button class="btn btn-sm shrink-0" style="width:auto" @click="regenSuperadminInvite">New code</button></div>
-              <label class="block mt-3">New host PIN (4 digits) <InputOtp v-model="superadminNewPin" type="password" /></label>
-              <button class="btn btn-sm shrink-0 mt-2" style="width:auto" @click="setSuperadminHostPin">Set host PIN</button>
-            </div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black">Guests ({{ superadminGuests.length }})</h3>
-              <div v-for="g in superadminGuests" :key="g.id" class="flex items-center gap-2 py-2" style="border-bottom:1px solid rgba(255,255,255,0.1)"><span class="flex-1"><b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span class="text-sm opacity-70">{{ g.claimed ? ' • Locked' : ' • Not yet' }}</span></span><button v-if="g.claimed" class="btn btn-sm shrink-0" style="width:auto" @click="superadminResetOne(g)">Reset claim</button></div>
-              <div class="flex flex-wrap gap-2 mt-3"><button class="btn btn-sm shrink-0" style="width:auto" @click="superadminUnclaimAll">Unclaim all</button><button class="btn btn-sm shrink-0" style="width:auto" @click="superadminRedraw">Redraw</button><button class="btn btn-sm shrink-0" style="width:auto" @click="superadminClearWishlists">Clear all wishlists</button></div>
-            </div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black">Polls</h3>
-              <div v-for="pl in superadminPolls" :key="pl.id" class="flex items-center gap-2 py-2" style="border-bottom:1px solid rgba(255,255,255,0.1)"><span class="flex-1"><b>{{ pl.question }}</b><span class="text-sm opacity-70">{{ pl.open ? ' • Open' : ' • Closed' }} • {{ pl.total }} vote(s)</span></span><button class="btn btn-sm shrink-0" style="width:auto" @click="superadminPollOpen(pl, !pl.open)">{{ pl.open ? 'Close' : 'Reopen' }}</button><button class="btn btn-sm btn-error shrink-0" style="width:auto" @click="superadminPollDelete(pl)">Delete</button></div>
-            </div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black">Change password</h3>
-              <label class="block mt-2">New password <input class="input" type="password" v-model="superadminNewPass" /></label>
-              <button class="btn btn-sm mt-2" style="width:auto" @click="changeSuperadminPassword">Change password</button>
-            </div>
-            <div class="mt-4 pt-4" style="border-top:1px solid rgba(255,255,255,0.1)">
-              <h3 class="font-black text-error">Danger zone</h3>
-              <button class="btn btn-sm btn-error mt-2" style="width:auto" @click="superadminResetAll">Reset everything</button>
-            </div>
-          </div>
-        </div>
-      </section>
     </main>
 
     <!-- Guest dock -->
@@ -366,44 +321,29 @@
       </div>
     </div>
 
-    <!-- Host entry -->
+    <!-- Host sign-in: username/password, NOT a PIN, NOT email -->
     <div v-if="showHostEntryModal" class="modal-backdrop" @click.self="closeHostEntryModal">
       <div class="modal-card">
         <div class="flex items-center justify-between"><h3 class="text-xl font-black">Host sign-in</h3><button class="btn btn-ghost btn-sm" style="width:auto" @click="closeHostEntryModal">×</button></div>
         <p class="text-sm opacity-70 mt-1">Sign in to manage your party.</p>
-        <button class="btn btn-primary w-full mt-4" :disabled="!setupDoneLocal" @click="enterHostWithPin"><KeyRound class="w-5 h-5" /> Enter PIN</button>
+        <label class="block mt-3">Username <input class="input" v-model="hostUser" @keyup.enter="submitHostLogin" /></label>
+        <label class="block mt-2">Password <input class="input" type="password" v-model="hostPass" @keyup.enter="submitHostLogin" /></label>
+        <p v-if="hostLoginError" class="text-sm text-error mt-2">Incorrect username or password — try again.</p>
+        <button class="btn btn-primary w-full mt-4" @click="submitHostLogin"><KeyRound class="w-5 h-5" /> Sign in</button>
         <button class="btn btn-ghost w-full mt-2" @click="closeHostEntryModal">Cancel</button>
       </div>
     </div>
 
-    <!-- Host PIN popup -->
-    <div v-if="showHostPinModal" class="modal-backdrop" @click.self="closeHostPinModal">
+    <!-- Change host password -->
+    <div v-if="showChangePasswordModal" class="modal-backdrop" @click.self="closeChangePasswordModal">
       <div class="modal-card">
-        <div :class="{ 'otp-error': hostPinEntryError }"><InputOtp v-model="hostPinEntry" type="password" @enter="submitHostPin" /></div>
-        <p v-if="hostPinEntryError" class="text-sm text-error mt-2">Incorrect PIN — try again.</p>
-        <p class="text-sm opacity-70 mt-2">First time? The default PIN is 1234.</p>
-        <button class="btn btn-primary w-full mt-3" @click="submitHostPin">Continue</button>
-      </div>
-    </div>
-
-    <!-- Forced new host PIN -->
-    <div v-if="showForcePinModal" class="modal-backdrop">
-      <div class="modal-card">
-        <h3 class="text-xl font-black">Set a new host PIN</h3>
-        <p class="text-sm opacity-70 mt-1">You're signed in with the default PIN 1234. Set a new 4-digit PIN to continue — 1234 will stop working.</p>
-        <div class="mt-3"><InputOtp v-model="forcePinNew" type="password" /></div>
-        <div class="mt-2"><InputOtp v-model="forcePinConfirm" type="password" /></div>
-        <p v-if="forcePinMsg" class="text-sm text-error mt-2">{{ forcePinMsg }}</p>
-        <button class="btn btn-success w-full mt-3" :disabled="resettingForcePin" @click="doForcePin">{{ resettingForcePin ? 'Setting…' : 'Set new PIN' }}</button>
-      </div>
-    </div>
-
-    <!-- Reset PIN -->
-    <div v-if="showResetPinModal" class="modal-backdrop" @click.self="closeResetPinModal">
-      <div class="modal-card">
-        <div class="flex items-center justify-between"><h3 class="text-xl font-black">Reset host PIN</h3><button class="btn btn-ghost btn-sm" style="width:auto" @click="closeResetPinModal">×</button></div>
-        <div class="mt-3"><div v-if="!hostSignedInLocal"><InputOtp v-model="resetPinCurrent" type="password" /></div><div class="mt-2"><InputOtp v-model="resetPinNew" type="password" /></div><div class="mt-2"><InputOtp v-model="resetPinConfirm" type="password" /></div><button class="btn btn-success w-full mt-3" :disabled="resettingPin" @click="doResetPin">{{ resettingPin ? 'Resetting…' : 'Reset PIN' }}</button></div>
-        <button class="btn btn-ghost w-full mt-2" @click="closeResetPinModal">Cancel</button>
+        <div class="flex items-center justify-between"><h3 class="text-xl font-black">Change password</h3><button class="btn btn-ghost btn-sm" style="width:auto" @click="closeChangePasswordModal">×</button></div>
+        <label class="block mt-3">Current password <input class="input" type="password" v-model="changePassCurrent" /></label>
+        <label class="block mt-2">New password <input class="input" type="password" v-model="changePassNew" /></label>
+        <label class="block mt-2">Confirm new password <input class="input" type="password" v-model="changePassConfirm" /></label>
+        <p v-if="changePassMsg" class="text-sm text-error mt-2">{{ changePassMsg }}</p>
+        <button class="btn btn-success w-full mt-3" :disabled="changingPassword" @click="doChangePassword">{{ changingPassword ? 'Changing…' : 'Change password' }}</button>
+        <button class="btn btn-ghost w-full mt-2" @click="closeChangePasswordModal">Cancel</button>
       </div>
     </div>
 
@@ -550,7 +490,7 @@ export default {
     sessionGuest: { type: Object, default: null },
     sessionGuestPin: { type: String, default: '' },
     hostSignedIn: { type: Boolean, default: false },
-    defaultPinActive: { type: Boolean, default: false },
+    hostUsername: { type: String, default: '' },
   },
   data() {
     return {
@@ -564,28 +504,24 @@ export default {
       guestPin: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false,
       wishModalOwner: null, showWishOwnerModal: false, pendingWishOwnerId: null,
       partyName: this.party, partyBudget: this.budget, partyDateLocal: this.partyDate,
-      hostPin: '', showResetPinModal: false, resetPinCurrent: '', resetPinNew: '', resetPinConfirm: '',
-      resettingPin: false, guestRows: [], showGuestModal: false, guestEditIndex: -1,
+      guestRows: [], showGuestModal: false, guestEditIndex: -1,
       guestForm: { display: '', nickname: '', aliasesText: '', pin: '' },
       savingSetup: false, toastMsg: '', toastOk: true, toastTimer: null,
       hostMsg: '', hostOk: false, hostList: [], hostLoaded: false, inviteCode: '',
-      showHostEntryModal: false, showHostPinModal: false, hostPinEntry: '', hostPinEntryError: false,
-      hostSignedInLocal: this.hostSignedIn, defaultPinActiveLocal: this.defaultPinActive,
-      showForcePinModal: false, forcePinNew: '', forcePinConfirm: '', forcePinMsg: '', resettingForcePin: false,
+      showHostEntryModal: false, hostUser: '', hostPass: '', hostLoginError: false,
+      hostSignedInLocal: this.hostSignedIn, hostUsernameLocal: this.hostUsername,
+      showChangePasswordModal: false, changePassCurrent: '', changePassNew: '', changePassConfirm: '', changePassMsg: '', changingPassword: false,
       wishMe: null, wishSearch: '', wishText: '', wishLink: '', wishNotes: '', wishPin: '',
       wishImage: '', wishImageName: '', showWishModal: false,
       pollQuestion: 'What should our Christmas theme be?', pollOptionsText: 'Ugly Sweater\nWinter Wonderland\nPajama Party\nRed & Gold',
       showPollModal: false, pollMenuId: null, showEditPollModal: false, editPollId: '', editPollQuestion: '', editPollOptionsText: '',
       showGuestEntryModal: false, guestEntryCode: '', showQrModal: false,
-      superadminSet: false, superadminSignedIn: false, superadminSession: '', superadminUser: '', superadminPass: '',
-      superadminParty: '', superadminBudget: '', superadminDate: '', superadminInvite: '', superadminGuests: [],
-      superadminPolls: [], superadminNewPin: '', superadminNewPass: '',
       snow: Array.from({ length: 28 }, (_, i) => ({ left: (4 + (i * 37) % 92) + '%', top: (6 + (i * 29) % 84) + '%', size: (11 + (i * 7) % 12) + 'px', opacity: 0.2 + ((i * 13) % 30) / 100 })),
     };
   },
   computed: {
     isHostView() { return ['host', 'hostdashboard', 'hostguests', 'hostpoll', 'hostsetup'].includes(this.view); },
-    isHostMain() { return ['hostdashboard', 'hostguests', 'hostpoll', 'hostsetup', 'superadmin'].includes(this.view); },
+    isHostMain() { return ['hostdashboard', 'hostguests', 'hostpoll', 'hostsetup'].includes(this.view); },
     isGuestView() { return ['who', 'reveal', 'gifts', 'wishlists', 'vote', 'guesthome'].includes(this.view); },
     filteredGuests() { return this.localGuests.filter((g) => matches(g, norm(this.search))); },
     filteredWishBoard() { return this.localWishBoard.filter((o) => matches(o, norm(this.wishSearch))); },
@@ -611,7 +547,6 @@ export default {
       this.guestPin = this.sessionGuestPin || '';
       this.guestAlreadyClaimed = !!this.sessionGuest.claimed;
     }
-    if (this.defaultPinActiveLocal && this.isHostView) this.showForcePinModal = true;
     const qs = new URLSearchParams(window.location.search);
     if (qs.get('guest') === '1') {
       const code = qs.get('code');
@@ -624,11 +559,9 @@ export default {
   beforeUnmount() { window.removeEventListener('popstate', this.onPopState); },
   methods: {
     onPopState() {
-      const map = { '/': 'home', '/who': 'who', '/reveal': 'reveal', '/gifts': 'gifts', '/wishlists': 'wishlists', '/vote': 'vote', '/guest-home': 'guesthome', '/host/dashboard': 'hostdashboard', '/host/setup': 'hostsetup', '/host/guests': 'hostguests', '/host/poll': 'hostpoll', '/superadmin': 'superadmin' };
+      const map = { '/': 'home', '/who': 'who', '/reveal': 'reveal', '/gifts': 'gifts', '/wishlists': 'wishlists', '/vote': 'vote', '/guest-home': 'guesthome', '/host/dashboard': 'hostdashboard', '/host/setup': 'hostsetup', '/host/guests': 'hostguests', '/host/poll': 'hostpoll' };
       this.view = map[window.location.pathname] || 'home';
       if (this.view === 'hostpoll') this.loadPoll();
-      if (this.view === 'superadmin') this.initSuperadmin();
-      if (this.defaultPinActiveLocal && this.isHostView) this.showForcePinModal = true;
     },
     async api(action, body = {}, method = 'post') {
       try {
@@ -652,12 +585,9 @@ export default {
       this.view = v;
       if (path && path !== window.location.pathname) window.history.pushState({}, '', path);
       this.showWishModal = false; this.showQrModal = false; this.showConfirmModal = false; this.showClaimedModal = false; this.showConfirmDialog = false;
-      this.showGuestEntryModal = false; this.showHostEntryModal = false; this.showHostPinModal = false;
-      this.showGuestModal = false; this.showWishOwnerModal = false; this.showResetPinModal = false; this.showPollModal = false; this.pollMenuId = null; this.showEditPollModal = false; this.fabOpen = false;
-      if (this.defaultPinActiveLocal && this.isHostView) this.showForcePinModal = true;
-      else if (!this.isHostView) this.showForcePinModal = false;
+      this.showGuestEntryModal = false; this.showHostEntryModal = false; this.showChangePasswordModal = false;
+      this.showGuestModal = false; this.showWishOwnerModal = false; this.showPollModal = false; this.pollMenuId = null; this.showEditPollModal = false; this.fabOpen = false;
       if (v === 'hostpoll') this.loadPoll();
-      if (v === 'superadmin') this.initSuperadmin();
     },
     async loadGuests() { const d = await this.api('list', {}, 'get'); this.localGuests = d.guests; this.localParty = d.party; this.localBudget = d.budget; this.partyName = d.party; this.partyBudget = d.budget; },
     async loadWishlists() { const d = await this.api('wishlist_list', { me: this.guestMe ? this.guestMe.id : '' }, 'get'); this.localWishBoard = d.board; },
@@ -795,34 +725,30 @@ export default {
     closeHostEntryModal() { this.showHostEntryModal = false; },
     enterHostWithPin() { this.showHostEntryModal = false; this.showHostPinModal = true; },
     closeHostPinModal() { this.showHostPinModal = false; },
-    async submitHostPin() {
+    async submitHostLogin() {
       try {
-        const res = await this.api('host_status', { host_pin: this.hostPinEntry });
-        this.hostList = res.guests; this.hostLoaded = true; this.inviteCode = res.invite_code || this.inviteCode;
-        this.hostSignedInLocal = true; this.defaultPinActiveLocal = !!res.default_pin_active;
-        this.hostPinEntryError = false; this.showHostPinModal = false;
-        if (res.default_pin_active) { this.showForcePinModal = true; this.showToast('Signed in with the default PIN 1234 — set a new 4-digit PIN now.'); }
-        else this.showToast('Signed in as host.');
-      } catch (e) {
-        if (e.message === 'default_pin_change_required') { this.showForcePinModal = true; this.showHostPinModal = false; this.hostSignedInLocal = true; this.defaultPinActiveLocal = true; }
-        else if (e.message === 'pin_incorrect') this.hostPinEntryError = true;
-        else this.showToast('Host sign-in failed: ' + e.message, false);
+        const res = await this.api('host_login', { username: this.hostUser, password: this.hostPass });
+        this.hostSignedInLocal = true; this.hostUsernameLocal = res.username || this.hostUser;
+        this.hostLoginError = false; this.hostPass = ''; this.showHostEntryModal = false;
+        await this.loadHost();
+        this.showToast('Signed in as host.');
+      } catch (err) {
+        this.hostLoginError = true;
+        this.showToast('Host sign-in failed: ' + err.message, false);
       }
     },
     async hostSignOut() {
-      try { await this.api('host_logout', {}); } catch (e) { /* local sign-out still proceeds */ }
-      this.hostSignedInLocal = false; this.hostLoaded = false; this.hostList = []; this.hostPinEntry = ''; this.hostPin = ''; this.showForcePinModal = false; this.goTo('hostdashboard', '/host/dashboard'); },
+      try { await this.api('host_logout', {}); } catch (err) { /* local sign-out still proceeds */ }
+      this.hostSignedInLocal = false; this.hostUsernameLocal = ''; this.hostLoaded = false; this.hostList = []; this.hostUser = ''; this.hostPass = ''; this.goTo('hostdashboard', '/host/dashboard'); },
     async openDashboard() { await this.loadHost(); this.goTo('hostdashboard', '/host/dashboard'); },
     async loadHost() {
       try {
-        const res = await this.api('host_status', { host_pin: this.hostPinEntry });
+        const res = await this.api('host_status', {});
         this.hostList = res.guests; this.hostLoaded = true; this.inviteCode = res.invite_code || this.inviteCode;
-        this.hostSignedInLocal = true; this.defaultPinActiveLocal = !!res.default_pin_active;
-        if (res.default_pin_active) this.showForcePinModal = true;
-      } catch (e) {
-        if (e.message === 'default_pin_change_required') { this.showForcePinModal = true; this.hostSignedInLocal = true; this.defaultPinActiveLocal = true; }
-        else if (e.message === 'not_set_up') { this.hostLoaded = false; }
-        else if (e.message !== 'host_not_signed_in') this.showToast('Could not load host data: ' + e.message, false);
+        this.hostSignedInLocal = true; this.hostUsernameLocal = res.username || this.hostUsernameLocal;
+      } catch (err) {
+        if (err.message === 'not_set_up') { this.hostLoaded = false; }
+        else if (err.message !== 'host_not_signed_in') this.showToast('Could not load host data: ' + err.message, false);
       }
     },
     openClaimedModal() {
@@ -841,7 +767,7 @@ export default {
         message: 'Resetting unlocks that name and removes its recipient. The name can be entered again after this.',
         okText: 'Reset name',
         onOk: async () => {
-          const res = await this.api('reset_one', { host_pin: this.hostPinEntry, guest_id: id });
+          const res = await this.api('reset_one', { guest_id: id });
           this.hostList = res.guests; this.hostMsg = this.hostList.filter((g) => g.claimed).length + ' of ' + this.hostList.length + ' locked';
           this.showToast('Name reset.');
         },
@@ -854,10 +780,34 @@ export default {
         message: 'This clears the whole party — guests, claims, wishlists and polls. This cannot be undone.',
         okText: 'Reset everything',
         onOk: async () => {
-          await this.api('reset_all', { host_pin: this.hostPinEntry });
-          this.hostLoaded = false; this.hostList = []; this.hostSignedInLocal = false; this.inviteCode = '';
+          await this.api('reset_all', {});
+          this.hostLoaded = false; this.hostList = []; this.hostSignedInLocal = false; this.hostUsernameLocal = ''; this.inviteCode = '';
           this.setupDoneLocal = false; this.showToast('Everything reset.');
         },
+      });
+    },
+    async hostUnclaimAll() {
+      this.openConfirmDialog({
+        title: 'Unclaim all names?',
+        message: 'This unlocks every name. Locked guests will need to enter again (and will get a new recipient only if the draw is redone — otherwise their original recipient is still assigned).',
+        okText: 'Unclaim all',
+        onOk: async () => { const res = await this.api('host_unclaim_all', {}); this.hostList = res.guests; this.showToast('All claims cleared.'); },
+      });
+    },
+    async hostRedraw() {
+      this.openConfirmDialog({
+        title: 'Redraw the Secret Santa?',
+        message: 'This re-draws who buys for whom. It is blocked while any name is claimed — reset all claims first.',
+        okText: 'Redraw',
+        onOk: async () => { await this.api('host_redraw', {}); this.showToast('Draw redone.'); },
+      });
+    },
+    async hostClearWishlists() {
+      this.openConfirmDialog({
+        title: 'Clear all wishlists?',
+        message: 'Every guest wishlist item will be deleted. This cannot be undone.',
+        okText: 'Clear all wishlists',
+        onOk: async () => { await this.api('host_clear_wishlists', {}); this.showToast('All wishlists cleared.'); },
       });
     },
     copyInvite() { navigator.clipboard.writeText(this.inviteCode).then(() => this.showToast('Invite code copied.')).catch(() => this.showToast('Invite code: ' + this.inviteCode)); },
@@ -866,7 +816,7 @@ export default {
         title: 'Generate a new invite code?',
         message: 'The old invite code and QR will stop working. Anyone still using the old link will need the new one.',
         okText: 'Generate new code',
-        onOk: async () => { const res = await this.api('invite_regen', { host_pin: this.hostPinEntry }); this.inviteCode = res.invite_code; this.showToast('New invite code generated.'); },
+        onOk: async () => { const res = await this.api('invite_regen', {}); this.inviteCode = res.invite_code; this.showToast('New invite code generated.'); },
       });
     },
     async doSetup() {
@@ -876,48 +826,33 @@ export default {
         const existing = this.setupDoneLocal;
         let res;
         if (existing) {
-          res = await this.api('party_update', { host_pin: this.hostPinEntry, party: this.partyName, budget: String(this.partyBudget), date: this.partyDateLocal });
+          res = await this.api('party_update', { party: this.partyName, budget: String(this.partyBudget), date: this.partyDateLocal });
           this.showToast('Party updated.');
         } else {
-          res = await this.api('setup', { party: this.partyName, budget: String(this.partyBudget), date: this.partyDateLocal, guests, host_pin: this.hostPin || '' });
-          this.setupDoneLocal = true; this.setupDoneLocal = true; this.hostPinEntry = this.hostPin || '1234'; this.hostSignedInLocal = true; this.showToast('Party saved.');
+          res = await this.api('setup', { party: this.partyName, budget: String(this.partyBudget), date: this.partyDateLocal, guests });
+          this.setupDoneLocal = true; this.hostSignedInLocal = true; this.showToast('Party saved.');
         }
         if (res) { this.localParty = res.party; this.localBudget = res.budget; this.partyDateLocal = res.date || this.partyDateLocal; }
         this.guestRows = [];
         this.openDashboard();
       } catch (e) {
-        if (e.message === 'default_pin_change_required') { this.showForcePinModal = true; }
-        else if (e.message === 'pin_must_be_4_digits') this.showToast('Host PIN must be exactly 4 digits.', false);
-        else if (e.message === 'pin_cannot_be_default') this.showToast('A new host PIN can never be 1234.', false);
+        if (e.message === 'host_not_signed_in') { this.showToast('Sign in as host first.', false); this.startHost(); }
         else if (e.message === 'already_set_up') this.showToast('A party is already set up. To start over, reset everything on the dashboard.', false);
         else this.showToast('Could not save: ' + e.message, false);
       } finally { this.savingSetup = false; }
     },
-    openResetPinModal() { this.resetPinCurrent = ''; this.resetPinNew = ''; this.resetPinConfirm = ''; this.showResetPinModal = true; },
-    closeResetPinModal() { this.showResetPinModal = false; },
-    async doResetPin() {
-      if (this.resetPinNew.length !== 4 || !/^\d{4}$/.test(this.resetPinNew)) { this.showToast('New PIN must be exactly 4 digits.', false); return; }
-      if (this.resetPinNew !== this.resetPinConfirm) { this.showToast('New PIN and confirm PIN do not match.', false); return; }
-      if (this.resetPinNew === '1234') { this.showToast('A new host PIN can never be 1234.', false); return; }
-      this.resettingPin = true;
+    openChangePasswordModal() { this.changePassCurrent = ''; this.changePassNew = ''; this.changePassConfirm = ''; this.changePassMsg = ''; this.showChangePasswordModal = true; },
+    closeChangePasswordModal() { this.showChangePasswordModal = false; },
+    async doChangePassword() {
+      this.changePassMsg = '';
+      if (this.changePassNew.length < 4) { this.changePassMsg = 'New password must be at least 4 characters.'; return; }
+      if (this.changePassNew !== this.changePassConfirm) { this.changePassMsg = 'New password and confirm password do not match.'; return; }
+      this.changingPassword = true;
       try {
-        const res = await this.api('host_pin_reset', { current_pin: this.hostSignedInLocal ? '' : this.resetPinCurrent, new_pin: this.resetPinNew });
-        this.hostPinEntry = res.pin; this.defaultPinActiveLocal = false; this.showResetPinModal = false; this.showToast('Host PIN reset.');
-      } catch (e) { this.showToast('Could not reset PIN: ' + e.message, false); }
-      finally { this.resettingPin = false; }
-    },
-    async doForcePin() {
-      this.forcePinMsg = '';
-      if (!/^\d{4}$/.test(this.forcePinNew)) { this.forcePinMsg = 'New PIN must be exactly 4 digits.'; return; }
-      if (this.forcePinNew !== this.forcePinConfirm) { this.forcePinMsg = 'New PIN and confirm PIN do not match.'; return; }
-      if (this.forcePinNew === '1234') { this.forcePinMsg = 'A new host PIN can never be 1234.'; return; }
-      this.resettingForcePin = true;
-      try {
-        const res = await this.api('host_pin_reset', { current_pin: '1234', new_pin: this.forcePinNew });
-        this.hostPinEntry = res.pin; this.hostSignedInLocal = true; this.defaultPinActiveLocal = false; this.showForcePinModal = false; this.showToast('New host PIN set.');
-        await this.loadHost();
-      } catch (e) { this.forcePinMsg = 'Could not set PIN: ' + e.message; }
-      finally { this.resettingForcePin = false; }
+        await this.api('host_change_password', { current_password: this.changePassCurrent, new_password: this.changePassNew });
+        this.showChangePasswordModal = false; this.showToast('Password changed.');
+      } catch (err) { this.changePassMsg = 'Could not change password: ' + err.message; }
+      finally { this.changingPassword = false; }
     },
     openGuestModal(i) {
       this.guestEditIndex = i;
@@ -943,18 +878,18 @@ export default {
       if (!this.pollQuestion.trim()) { this.showToast('Question is required.', false); return; }
       if (options.length < 2) { this.showToast('At least 2 options are required.', false); return; }
       try {
-        await this.api('poll_setup', { host_pin: this.hostPinEntry, question: this.pollQuestion, options });
+        await this.api('poll_setup', { question: this.pollQuestion, options });
         this.showPollModal = false; this.pollQuestion = ''; this.pollOptionsText = ''; await this.loadPoll(); this.showToast('Poll created.');
       } catch (e) { this.showToast('Could not create poll: ' + e.message, false); }
     },
     async setPollOpen(pollId, open) {
-      try { const d = await this.api('poll_set_open', { host_pin: this.hostPinEntry, poll_id: pollId, open }); this.localPolls = d.polls; this.pollMenuId = null; this.showToast(open ? 'Poll reopened.' : 'Poll closed.'); }
+      try { const d = await this.api('poll_set_open', { poll_id: pollId, open }); this.localPolls = d.polls; this.pollMenuId = null; this.showToast(open ? 'Poll reopened.' : 'Poll closed.'); }
       catch (e) { this.showToast('Could not update poll: ' + e.message, false); }
     },
     resetPoll(p) {
       this.openConfirmDialog({
         title: 'Delete this poll?', message: 'This poll and all its votes will be deleted. This cannot be undone.', okText: 'Delete poll',
-        onOk: async () => { await this.api('poll_reset', { host_pin: this.hostPinEntry, poll_id: p.id }); this.pollMenuId = null; await this.loadPoll(); this.showToast('Poll deleted.'); },
+        onOk: async () => { await this.api('poll_reset', { poll_id: p.id }); this.pollMenuId = null; await this.loadPoll(); this.showToast('Poll deleted.'); },
       });
     },
     openEditPollModal(p) {
@@ -965,7 +900,7 @@ export default {
       const options = this.editPollOptionsText.split('\n').map((s) => s.trim()).filter(Boolean);
       if (!this.editPollQuestion.trim()) { this.showToast('Question is required.', false); return; }
       if (options.length < 2) { this.showToast('At least 2 options are required.', false); return; }
-      try { const d = await this.api('poll_edit', { host_pin: this.hostPinEntry, poll_id: this.editPollId, question: this.editPollQuestion, options }); this.localPolls = d.polls; this.showEditPollModal = false; this.pollMenuId = null; this.showToast('Poll updated.'); }
+      try { const d = await this.api('poll_edit', { poll_id: this.editPollId, question: this.editPollQuestion, options }); this.localPolls = d.polls; this.showEditPollModal = false; this.pollMenuId = null; this.showToast('Poll updated.'); }
       catch (e) { this.showToast('Could not update poll: ' + e.message, false); }
     },
     /* ---------- generic confirm ---------- */
@@ -974,83 +909,6 @@ export default {
     async confirmDialogOk() {
       try { if (this.confirmDialogCallback) await this.confirmDialogCallback(); this.showConfirmDialog = false; }
       catch (e) { this.showToast('Could not complete: ' + e.message, false); }
-    },
-    /* ---------- superadmin ---------- */
-    async initSuperadmin() {
-      if (this.superadminSignedIn) return;
-      try {
-        const res = await this.api('superadmin_status', {}, 'get');
-        this.superadminSet = !!res.set;
-        if (this.superadminSession) { await this.loadSuperadmin(); }
-      } catch (e) { /* not set yet */ }
-    },
-    async loadSuperadmin() {
-      const res = await this.api('superadmin_get', { session: this.superadminSession });
-      this.superadminSignedIn = true;
-      this.superadminParty = res.party; this.superadminBudget = res.budget; this.superadminDate = res.date; this.superadminInvite = res.invite_code;
-      this.superadminGuests = res.guests; this.superadminPolls = res.polls;
-    },
-    async superadminSetup() {
-      try {
-        const res = await this.api('superadmin_setup', { username: this.superadminUser, password: this.superadminPass });
-        this.superadminSession = res.session; this.showToast('Superadmin account created.'); await this.loadSuperadmin();
-      } catch (e) { this.showToast('Could not set up superadmin: ' + e.message, false); }
-    },
-    async superadminLogin() {
-      try {
-        const res = await this.api('superadmin_login', { username: this.superadminUser, password: this.superadminPass });
-        this.superadminSession = res.session; await this.loadSuperadmin();
-      } catch (e) { this.showToast('Superadmin sign-in failed: ' + e.message, false); }
-    },
-    async superadminLogout() {
-      try { await this.api('superadmin_logout', { session: this.superadminSession }); } catch (e) { /* ignore */ }
-      this.superadminSignedIn = false; this.superadminSession = ''; this.superadminPass = '';
-    },
-    async saveSuperadminParty() {
-      try { await this.api('superadmin_party_update', { session: this.superadminSession, party: this.superadminParty, budget: String(this.superadminBudget), date: this.superadminDate }); this.showToast('Party details updated.'); }
-      catch (e) { this.showToast('Could not update party: ' + e.message, false); }
-    },
-    async regenSuperadminInvite() {
-      try { const res = await this.api('superadmin_invite_regen', { session: this.superadminSession }); this.superadminInvite = res.invite_code; this.showToast('New invite code generated.'); }
-      catch (e) { this.showToast('Could not generate code: ' + e.message, false); }
-    },
-    async setSuperadminHostPin() {
-      try { await this.api('superadmin_host_pin_reset', { session: this.superadminSession, new_pin: this.superadminNewPin }); this.showToast('Host PIN set.'); }
-      catch (e) { this.showToast('Could not set host PIN: ' + e.message, false); }
-    },
-    async superadminResetOne(g) {
-      try { await this.api('superadmin_reset_one', { session: this.superadminSession, guest_id: g.id }); await this.loadSuperadmin(); this.showToast('Claim reset.'); }
-      catch (e) { this.showToast('Could not reset claim: ' + e.message, false); }
-    },
-    async superadminUnclaimAll() {
-      try { await this.api('superadmin_reset_claims', { session: this.superadminSession }); await this.loadSuperadmin(); this.showToast('All claims cleared.'); }
-      catch (e) { this.showToast('Could not unclaim: ' + e.message, false); }
-    },
-    async superadminRedraw() {
-      try { await this.api('superadmin_redraw', { session: this.superadminSession }); await this.loadSuperadmin(); this.showToast('Draw redone.'); }
-      catch (e) { this.showToast(e.message === 'redraw_blocked_claimed' ? 'Cannot redraw while any name is claimed — reset all claims first.' : 'Could not redraw: ' + e.message, false); }
-    },
-    async superadminClearWishlists() {
-      try { await this.api('superadmin_clear_wishlists', { session: this.superadminSession }); this.showToast('All wishlists cleared.'); }
-      catch (e) { this.showToast('Could not clear wishlists: ' + e.message, false); }
-    },
-    async superadminPollOpen(p, open) {
-      try { await this.api('superadmin_poll_set_open', { session: this.superadminSession, poll_id: p.id, open }); await this.loadSuperadmin(); this.showToast(open ? 'Poll reopened.' : 'Poll closed.'); }
-      catch (e) { this.showToast('Could not update poll: ' + e.message, false); }
-    },
-    async superadminPollDelete(p) {
-      try { await this.api('superadmin_poll_delete', { session: this.superadminSession, poll_id: p.id }); this.superadminPolls = this.superadminPolls.filter((x) => x.id !== p.id); this.showToast('Poll deleted.'); }
-      catch (e) { this.showToast('Could not delete poll: ' + e.message, false); }
-    },
-    async changeSuperadminPassword() {
-      try { await this.api('superadmin_change_password', { session: this.superadminSession, new_password: this.superadminNewPass }); this.showToast('Password changed.'); }
-      catch (e) { this.showToast('Could not change password: ' + e.message, false); }
-    },
-    async superadminResetAll() {
-      this.openConfirmDialog({
-        title: 'Reset everything?', message: 'This clears the whole party. The superadmin account survives. This cannot be undone.', okText: 'Reset everything',
-        onOk: async () => { await this.api('superadmin_reset_all', { session: this.superadminSession }); this.setupDoneLocal = false; this.superadminParty = ''; this.superadminGuests = []; this.superadminPolls = []; this.superadminInvite = ''; this.showToast('Everything reset.'); },
-      });
     },
   },
 };

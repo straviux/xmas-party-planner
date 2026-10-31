@@ -25,4 +25,4 @@ Route::get('/host/dashboard', [PageController::class, 'show'])->defaults('view',
 Route::get('/host/setup', [PageController::class, 'show'])->defaults('view', 'hostsetup');
 Route::get('/host/guests', [PageController::class, 'show'])->defaults('view', 'hostguests');
 Route::get('/host/poll', [PageController::class, 'show'])->defaults('view', 'hostpoll');
-Route::get('/superadmin', [PageController::class, 'show'])->defaults('view', 'superadmin');
+Route::get('/superadmin', fn () => redirect('/host/dashboard'));

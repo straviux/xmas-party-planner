@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Services\PartyStore as S;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +17,6 @@ class PageController extends Controller
         $polls = [];
         $sessionGuest = null;
         $hostSignedIn = false;
-        $defaultPinActive = false;
         if ($d) {
             foreach (S::sortedGuests($d) as $g) {
                 $guests[] = S::publicGuest($g);
@@ -34,12 +34,7 @@ class PageController extends Controller
                 $board[] = ['id' => $g['id'], 'display' => $g['display'], 'nickname' => $g['nickname'], 'items' => $items];
             }
             $polls = S::pollsPublic($d, '');
-            $hostPin = session('host_pin');
-            if ($hostPin) {
-                $hostSignedIn = !empty($d['host_pin_hash']) && password_verify($hostPin, $d['host_pin_hash'])
-                    || ($hostPin === '1234' && empty($d['host_pin_hash']));
-                $defaultPinActive = $hostSignedIn && S::hostDefaultPinActive($d);
-            }
+            $hostSignedIn = (bool) (session('host_user_id') && User::find(session('host_user_id')));
             $gid = session('guest_id');
             if ($gid) {
                 $g = S::findGuest($d, $gid);
@@ -62,7 +57,7 @@ class PageController extends Controller
             'sessionGuest' => $sessionGuest,
             'sessionGuestPin' => session('guest_pin', ''),
             'hostSignedIn' => $hostSignedIn,
-            'defaultPinActive' => $defaultPinActive,
+            'hostUsername' => session('host_username', ''),
         ]);
     }
 }

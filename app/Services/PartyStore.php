@@ -8,21 +8,18 @@ namespace App\Services;
  * Files live under storage/app/ (never under public/), so they are not
  * web-accessible at all. Writes use flock() and chmod 0600, exactly as
  * the original did for data.php. No database tables are used for party
- * data; the scaffold sqlite database is unused by this app.
+ * data; the users table is used only for the host username/password
+ * login (see DatabaseSeeder).
  */
 class PartyStore
 {
-    public const TEMP_POLL_HOST_CHECK_DISABLED = true;
+    public const TEMP_POLL_HOST_CHECK_DISABLED = false;
 
     public static function partyPath(): string
     {
         return storage_path('app/party.json');
     }
 
-    public static function superadminPath(): string
-    {
-        return storage_path('app/superadmin.json');
-    }
 
     public static function load(): ?array
     {
@@ -87,60 +84,6 @@ class PartyStore
     public static function deleteParty(): void
     {
         @unlink(self::partyPath());
-    }
-
-    public static function loadSuperadmin(): ?array
-    {
-        $path = self::superadminPath();
-        if (!file_exists($path)) {
-            return null;
-        }
-        $s = json_decode((string) file_get_contents($path), true);
-        return is_array($s) ? $s : null;
-    }
-
-    public static function saveSuperadmin(array $s): bool
-    {
-        $fp = fopen(self::superadminPath(), 'c');
-        if (!$fp) {
-            return false;
-        }
-        if (!flock($fp, LOCK_EX)) {
-            fclose($fp);
-            return false;
-        }
-        ftruncate($fp, 0);
-        fwrite($fp, json_encode($s, JSON_UNESCAPED_UNICODE));
-        fflush($fp);
-        flock($fp, LOCK_UN);
-        fclose($fp);
-        @chmod(self::superadminPath(), 0600);
-        return true;
-    }
-
-    public static function superadminSessionValid(array $input): ?array
-    {
-        $s = self::loadSuperadmin();
-        if (!$s || empty($s['token_hash'])) {
-            return null;
-        }
-        $token = (string) ($input['superadmin_session'] ?? '');
-        if ($token === '' || hash('sha256', $token) !== $s['token_hash']) {
-            return null;
-        }
-        if (!empty($s['expires']) && time() > (int) $s['expires']) {
-            return null;
-        }
-        return $s;
-    }
-
-    public static function requireSuperadmin(array $input): array
-    {
-        $s = self::superadminSessionValid($input);
-        if (!$s) {
-            throw new PartyException('superadmin_not_signed_in', 403);
-        }
-        return $s;
     }
 
     public static function norm(string $s): string
@@ -230,32 +173,24 @@ class PartyStore
         }
     }
 
-    public static function hostDefaultPinActive(?array $d): bool
-    {
-        if ($d === null) {
-            return false;
-        }
-        return empty($d['host_pin_hash']) || password_verify('1234', $d['host_pin_hash']);
-    }
-
+    /**
+     * Host auth is session-based username/password (users table).
+     * $input/$d/$action are kept only so existing call sites need no
+     * signature change; they are not used for authentication.
+     */
     public static function requireHost(array $input, ?array $d, string $action = ''): void
     {
-        if ($d !== null) {
-            $pin = (string) ($input['host_pin'] ?? '');
-            if ($pin !== '' && !empty($d['host_pin_hash']) && password_verify($pin, $d['host_pin_hash'])) {
-                if (self::hostDefaultPinActive($d) && $action !== 'host_pin_reset') {
-                    throw new PartyException('default_pin_change_required', 403);
-                }
-                return;
-            }
-            if ($pin === '1234' && empty($d['host_pin_hash'])) {
-                if ($action !== 'host_pin_reset') {
-                    throw new PartyException('default_pin_change_required', 403);
-                }
-                return;
-            }
+        $id = session('host_user_id');
+        if ($id && \App\Models\User::find($id)) {
+            return;
         }
         throw new PartyException('host_not_signed_in', 403);
+    }
+
+    public static function hostUser(): ?\App\Models\User
+    {
+        $id = session('host_user_id');
+        return $id ? \App\Models\User::find($id) : null;
     }
 
     public static function pollsList(array $d): array

@@ -12,14 +12,23 @@ class DatabaseSeeder extends Seeder
 
     /**
      * Seed the application's database.
+     *
+     * Creates ONE host/admin user. firstOrCreate means re-seeding does
+     * NOT reset a password the host changed via Change password.
+     * Username/password come from ADMIN_USERNAME / ADMIN_PASSWORD in
+     * .env (defaults admin / admin1234) — change them immediately
+     * after first sign-in via the host dashboard Change password.
+     * Email is never used for login; it only fills the users table.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::firstOrCreate(
+            ['username' => env('ADMIN_USERNAME', 'admin')],
+            [
+                'name' => 'Admin',
+                'email' => 'admin@localhost',
+                'password' => env('ADMIN_PASSWORD', 'admin1234'),
+            ],
+        );
     }
 }
