@@ -486,10 +486,10 @@
         <h3 class="text-xl font-black">Add to my wishlist</h3>
         <label class="block mt-3">Wish <input class="input" v-model="wishText" /></label>
         <label class="block mt-2">Link <input class="input" v-model="wishLink" placeholder="https://…" /></label>
-        <label class="block mt-2">Screenshot <input type="file" accept="image/*" @change="onWishImageFile" /></label>
+        <div class="block mt-2"><span class="block mb-1">Screenshot</span><label class="file-btn"><Upload class="w-5 h-5 shrink-0" /><span class="file-name">{{ wishImageName || 'Choose a screenshot' }}</span><span v-if="!wishImageName" class="file-hint">No file chosen</span><input type="file" accept="image/*" class="file-input" @change="onWishImageFile" /></label></div>
         <img v-if="wishImage" :src="wishImage" alt="" style="max-width:100%;border-radius:0.75rem;margin-top:8px" />
         <label class="block mt-2">Notes <textarea class="input" v-model="wishNotes" placeholder="Where to buy it — shop, directions, size / colour (optional)"></textarea></label>
-        <div class="flex gap-2 mt-4"><button class="btn btn-ghost flex-1" @click="closeWishModal">Cancel</button><button class="btn btn-success flex-1" @click="addWishItem">Add</button></div>
+        <div class="flex gap-2 mt-4"><button class="btn btn-ghost flex-1" @click="closeWishModal"><X class="w-5 h-5" /> Cancel</button><button class="btn btn-success flex-1" @click="addWishItem"><Plus class="w-5 h-5" /> Add</button></div>
       </div>
     </div>
 
@@ -568,7 +568,7 @@ import ScorSanta from '../Components/ScorSanta.vue';
 import {
   ArrowRight, Check, ChevronRight, ExternalLink, Gift, Home, KeyRound,
   LayoutDashboard, LogOut, Pencil, Plus, Printer, QrCode, Search, Settings,
-  Settings2, ShoppingBag, StarPlus, Ticket, Trash2, Users,
+  Settings2, ShoppingBag, StarPlus, Ticket, Trash2, Upload, Users,
   Vote, X,
 } from '@lucide/vue';
 
@@ -598,7 +598,7 @@ export default {
   components: {
     InputOtp, ScorSanta, ArrowRight, Check, ChevronRight, ExternalLink, Gift, Home, KeyRound,
     LayoutDashboard, LogOut, Pencil, Plus, Printer, QrCode, Search, Settings,
-    Settings2, ShoppingBag, StarPlus, Ticket, Trash2, Users, Vote, X,
+    Settings2, ShoppingBag, StarPlus, Ticket, Trash2, Upload, Users, Vote, X,
   },
   props: {
     initialView: { type: String, default: 'home' },
@@ -834,7 +834,7 @@ export default {
       try {
         await this.api('wishlist_add', { guest_id: this.wishMe.id, pin: this.wishPin, kind, text: this.wishText, link: this.wishLink, image: this.wishImage, notes: this.wishNotes });
         this.showToast('Wish added.');
-        this.wishText = ''; this.wishLink = ''; this.wishNotes = ''; this.wishImage = ''; this.showWishModal = false;
+        this.wishText = ''; this.wishLink = ''; this.wishNotes = ''; this.wishImage = ''; this.wishImageName = ''; this.showWishModal = false;
         await this.loadWishlists();
       } catch (e) { this.showToast(e.message === 'pin_incorrect' ? 'PIN incorrect.' : 'Could not add: ' + e.message, false); }
     },
