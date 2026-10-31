@@ -26,8 +26,21 @@ input, textarea, select { font-family: inherit; }
 .alert { padding: 12px 16px; }
 .alert-warning { background: rgba(250,204,21,0.12); border: 1px solid rgba(250,204,21,0.3); color: #fde68a; }
 .section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: #71717a; }
-.santa-bubble { background: #ece5ce; color: #774f38; font-family: 'Baloo 2', sans-serif; font-weight: 800; text-transform: uppercase; text-align: center; border-radius: 1rem; padding: 12px 14px; box-shadow: 6px 6px 0 rgba(52,211,153,0.35); }
-.santa-bubble-sm { font-size: 0.9rem; }
+/* Scor chatbox — ported verbatim from the old PHP app (bubble, tail, dot, float). */
+.santa-bubble { background:#ece5ce; color:#774f38; border:none; border-radius:24px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; max-width:260px; margin-top:8px; margin-left:40px; animation:float 5s ease-in-out infinite; }
+.santa-bubble::before { content:''; position:absolute; left:2px; bottom:-30px; width:28px; height:8px; border-radius:8px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
+.santa-bubble::after { content:''; position:absolute; left:10px; bottom:-18px; width:34px; height:8px; border-radius:8px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
+.bubble-dot { position:absolute; left:-6px; bottom:-42px; width:9px; height:9px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
+.santa-bubble-sm { padding:10px !important; font-size:10px !important; max-width:170px !important; margin-bottom:50px !important; }
+.santa-bubble-sm::before { bottom:-25px; }
+.santa-bubble-sm::after { bottom:-15px; }
+.santa-bubble-wide { max-width:none !important; }
+@media (max-width:640px) {
+  .santa-bubble { padding:10px; letter-spacing:1px; box-shadow:6px 6px #83af9b; margin-right:6px; margin-bottom:50px; max-width:170px; }
+  .santa-bubble::after { bottom:-15px; width:30px; height:7px; }
+  .santa-bubble::before { bottom:-25px; left:2px; width:26px; height:7px; }
+  .bubble-dot { bottom:-35px; left:-4px; width:8px; height:8px; }
+}
 .grain { position: fixed; inset: 0; pointer-events: none; opacity: 0.15; z-index: 30; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.9'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E"); }
 .snow-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 .snow-bg span { position: absolute; color: #cfeaff; }
@@ -70,3 +83,616 @@ input, textarea, select { font-family: inherit; }
 .fab-menu { position: fixed; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 41; display: flex; flex-direction: column; gap: 8px; }
 .fab-item { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 0 20px; border-radius: 9999px; border: 1px solid rgba(255,255,255,0.1); background: #18181b; color: #fafafa; font-size: 1.05rem; font-weight: 700; cursor: pointer; }
 .fab-item:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Santa/Scor animations — ported verbatim from the old PHP app. */
+  @keyframes santa-float{ 0%,100%{ transform:perspective(800px) translateY(0) rotateY(-6deg) rotate(0deg) scale(1); } 10%{ transform:perspective(800px) translateY(-4px) rotateY(-6deg) rotate(-8deg) scale(1.02); } 20%{ transform:perspective(800px) translateY(-4px) rotateY(-6deg) rotate(8deg) scale(1.02); } 30%{ transform:perspective(800px) translateY(-4px) rotateY(-6deg) rotate(-4deg) scale(1.02); } 50%{ transform:perspective(800px) translateY(-22px) rotateY(10deg) rotate(2deg) scale(1.05); } 75%{ transform:perspective(800px) translateY(-8px) rotateY(4deg) rotate(-2deg) scale(1.02); } }
+  .santa-anim{ animation:santa-float 2.4s ease-in-out infinite; transform-origin:50% 100%; filter:drop-shadow(0 18px 18px rgba(0,0,0,.45)); }
+  @keyframes santa-shadow{ 0%,100%{ transform:scaleX(1); opacity:.45; } 50%{ transform:scaleX(.8); opacity:.25; } }
+  .santa-shadow{ width:120px; height:18px; margin:2px auto 0; background:rgba(0,0,0,.35); border-radius:50%; filter:blur(6px); animation:santa-shadow 2.4s ease-in-out infinite; }
+  @keyframes santa-wave{ 0%,100%{ transform:perspective(800px) translateY(-6px) rotate(0deg) scale(1.05); } 20%{ transform:perspective(800px) translateY(-6px) rotate(-12deg) scale(1.05); } 40%{ transform:perspective(800px) translateY(-6px) rotate(12deg) scale(1.05); } 60%{ transform:perspective(800px) translateY(-6px) rotate(-8deg) scale(1.05); } 80%{ transform:perspective(800px) translateY(-6px) rotate(8deg) scale(1.05); } }
+  .santa-wave{ animation:santa-wave 1.2s ease-in-out !important; }
+  @media (prefers-reduced-motion: reduce){ .santa-anim{ animation:none; } body{ animation:none; } .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot{ animation:none; } .button-three .hamburger, .button-three .line{ transition:none; } .card, .dark-card, .segmented{ animation:none; } }
+  .santa-bubble{ background:#ece5ce; color:#774f38; border:none; border-radius:24px; padding:14px; position:relative; min-width:0; overflow-wrap:break-word; font-family:"Baloo 2", cursive; font-weight:800; font-size:11px; line-height:1.3; text-transform:uppercase; letter-spacing:1px; text-align:center; box-shadow:8px 8px #83af9b; margin-right:8px; margin-bottom:58px; max-width:260px; margin-top:8px; margin-left:40px; animation:float 5s ease-in-out infinite; }
+  @keyframes float-tail{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+  @keyframes float-dot{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  @keyframes float{ 0%{ transform:translateY(0); } 50%{ transform:translateY(-20px); } 100%{ transform:translateY(0); } }
+  .santa-bubble::before{ content:''; position:absolute; left:2px; bottom:-30px; width:28px; height:8px; border-radius:8px; background:#83af9b; z-index:1; animation:float-tail 5.8s ease-in-out 0.8s infinite; }
+  .santa-bubble::after{ content:''; position:absolute; left:10px; bottom:-18px; width:34px; height:8px; border-radius:8px; background:#ece5ce; z-index:1; animation:float-tail 4.2s ease-in-out 0.4s infinite; }
+  .bubble-dot{ position:absolute; left:-6px; bottom:-42px; width:9px; height:9px; border-radius:50%; background:#83af9b; z-index:1; pointer-events:none; animation:float-dot 3.6s ease-in-out 1.2s infinite; }
+
+/* Scor — pure-CSS character, ported verbatim from the old PHP app. */
+.scor-wrap {
+  --black: #9a4c32;
+  --white: #fff;
+  --primary-color: #c62828;
+  --primary-color-dark: #8e0000;
+  --primary-color-tint: #ef5350;
+  --accent-color: #fbe89d;
+  --background: #dceef5;
+  --mouth-inner-color: #f5879b;
+  --nose-color: #f5879b;
+  --blush-color: #f5879b;
+  --shadow-color: hsl(266, 21%, 95%);
+}
+
+.scor {
+  --ear-size: 9em;
+  position: relative;
+  width: 12em;
+  padding-top: calc(var(--ear-size) + 2em);
+  padding-bottom: 3em;
+}
+
+.scor::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  bottom: 1.75em;
+  left: 50%;
+  height: 2em;
+  width: 50%;
+  transform: translateX(-50%);
+  border-radius: 100%;
+  background-color: var(--primary-color);
+  opacity: 0.2;
+}
+
+.scor-eye {
+  border-radius: 50% 55% / 50% 45%;
+  --eye-position-x: 2em;
+  position: absolute;
+  z-index: 2;
+  top: 4.75em;
+  height: 1.875em;
+  width: 1.75em;
+  background-color: var(--black);
+  transform-origin: center 70%;
+  overflow: hidden;
+  animation: blinky 7s infinite;
+}
+
+.scor-eye::before, .scor-eye::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 100%;
+}
+
+.scor-eye::before { top: 0.125em; height: 40%; width: 40%; background-color: var(--white); }
+
+.scor-eye::after { bottom: -0.125em; height: 40%; width: 70%; background-color: var(--primary-color); }
+
+.scor-eye-left { left: var(--eye-position-x); }
+
+.scor-eye-right { right: var(--eye-position-x); }
+
+.scor-nose {
+  position: relative;
+  z-index: 5;
+  top: 0;
+  height: 1em;
+  width: 1em;
+}
+
+.scor-nose::before, .scor-nose::after { content: ''; }
+
+.scor-nose::before {
+  position: absolute; inset: 0;
+  transform: rotate(45deg);
+  border-top-left-radius: 80%;
+  border-top-right-radius: 0.1875em;
+  border-bottom-left-radius: 0.1875em;
+  border-bottom-right-radius: 0.25em;
+  background-color: var(--nose-color);
+}
+
+.scor-nose::after {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% - 0.5em);
+  transform: translateX(-50%);
+  height: 2.25em;
+  width: 3.5em;
+  border-radius: 0.5em;
+  background-color: var(--accent-color);
+}
+
+.scor-mouth {
+  position: absolute;
+  bottom: -1.125em;
+  left: 50%;
+  height: 0.325em;
+  width: 2.5em;
+  transform: translateX(-50%) translateY(var(--mouth-translate, 0));
+  transition: var(--mouth-transition, 0.2s) ease-in-out;
+}
+
+.scor-mouth-line {
+  position: absolute;
+  z-index: 4;
+  left: calc(50% - 0.0625em);
+  top: 100%;
+  height: 1em;
+  width: 0.125em;
+  background-color: var(--black);
+}
+
+.scor-mouth-outer { position: absolute; inset: 0; z-index: 3; overflow: hidden; }
+
+.scor-mouth-outer::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  height: 200%;
+  width: calc(100% - 0.25em);
+  border-radius: 100%;
+  border: 0.125em solid var(--black);
+  background-color: var(--white);
+}
+
+.scor-mouth-inner {
+  position: absolute;
+  z-index: 1;
+  left: 2%;
+  height: 1.25em;
+  width: 96%;
+  transform-origin: center top;
+  transform: scaleY(var(--mouth-scale, 0));
+  border-top-left-radius: 1px 10%;
+  border-top-right-radius: 1px 10%;
+  border-bottom-left-radius: 50% 90%;
+  border-bottom-right-radius: 50% 90%;
+  background-color: var(--black);
+  overflow: hidden;
+  transition: var(--mouth-transition, 0.2s) ease-in-out;
+}
+
+.scor-mouth-inner::before, .scor-mouth-inner::after { content: ''; position: absolute; }
+
+.scor-mouth-inner::before {
+  top: 0; left: 50%; height: 0.6875em; width: 35%;
+  transform: translateX(-50%);
+  border-bottom-left-radius: 100%;
+  border-bottom-right-radius: 100%;
+  background-color: var(--white);
+}
+
+.scor-mouth-inner::after {
+  bottom: -0.125em; right: 0.125em; height: 0.625em; width: 1.5em;
+  transform: rotate(-10deg);
+  border-radius: 100%;
+  background-color: var(--mouth-inner-color);
+}
+
+.scor-blush {
+  --blush-position-x: 1em;
+  position: absolute;
+  z-index: 1;
+  top: 6.25em;
+  height: 1em;
+  width: 1.75em;
+  border-radius: 100%;
+  background-color: var(--blush-color);
+  transform: rotate(var(--blush-rotate));
+  opacity: 0.3;
+}
+
+.scor-blush-left { --blush-rotate: 5deg; left: var(--blush-position-x); }
+
+.scor-blush-right { --blush-rotate: -5deg; right: var(--blush-position-x); }
+
+.scor-face {
+  position: absolute; inset: 0;
+  border-radius: 50% 60% / 50% 40%;
+  z-index: 2;
+  background-color: var(--white);
+}
+
+.scor-face-lower {
+  position: absolute;
+  z-index: 2;
+  top: 6em;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.scor-face-fluff {
+  --fluff-position-x: 2.5em;
+  position: absolute;
+  top: 7em;
+  height: 4.25em;
+  width: 4.25em;
+}
+
+.scor-face-fluff::before, .scor-face-fluff::after {
+  content: '';
+  transform-origin: right top;
+  border-top-left-radius: 90%;
+  border-bottom-right-radius: 90%;
+  border-bottom-left-radius: 0.125em;
+  border-top-right-radius: 0.125em;
+  background-color: var(--white);
+}
+
+.scor-face-fluff::before { position: absolute; inset: 0; transform: rotate(60deg); }
+
+.scor-face-fluff::after {
+  position: absolute;
+  left: 0.5em;
+  top: -1.5em;
+  height: 3.5em;
+  width: 3.5em;
+  transform: rotate(80deg);
+}
+
+.scor-face-fluff-left { right: calc(100% - var(--fluff-position-x)); }
+
+.scor-face-fluff-right { transform: rotateY(180deg); left: calc(100% - var(--fluff-position-x)); }
+
+.scor-ear {
+  background-color: var(--white);
+  background: linear-gradient(var(--ear-gradient-rotate), var(--primary-color) 30%, var(--primary-color-tint) 30%, var(--primary-color-tint) 40%, var(--white) 40%);
+  overflow: hidden;
+}
+
+.scor-ear, .scor-ear-right-wrap {
+  position: absolute;
+  z-index: 1;
+  top: 3.5em;
+  height: var(--ear-size);
+  width: var(--ear-size);
+  transform-origin: var(--ear-transform-origin);
+  transform: rotate(var(--ear-rotate));
+  animation: rotateThing 2s ease-in-out infinite alternate;
+}
+
+.scor-ear-right-wrap {
+  --ear-gradient-rotate: -40deg;
+  --ear-rotate: -120deg;
+  --keyframe-rotate-to: -115deg;
+  --ear-transform-origin: left top;
+  --ear-position-shadow-right: 6em;
+  right: -4em;
+}
+
+.scor-ear-right-wrap > .scor-ear { top: 0; left: 0; height: 100%; width: 100%; transform: none; }
+
+.scor-ear::before, .scor-ear::after { content: ''; position: absolute; }
+
+.scor-ear::before {
+  top: 2.5em; left: 50%; height: 4em; width: 4em;
+  transform: translateX(-50%);
+  border-radius: inherit;
+  background-color: var(--accent-color);
+}
+
+.scor-ear::after {
+  top: 1.625em;
+  left: var(--ear-position-shadow-left, auto);
+  right: var(--ear-position-shadow-right, auto);
+  height: 2em; width: 4em;
+  transform: rotate(var(--ear-gradient-rotate));
+  border-radius: 100%;
+  background-color: var(--shadow-color);
+  mix-blend-mode: multiply;
+}
+
+.scor-ear-left {
+  --ear-gradient-rotate: 40deg;
+  --ear-rotate: 120deg;
+  --keyframe-rotate-to: 115deg;
+  --ear-transform-origin: right top;
+  --ear-position-shadow-left: 6em;
+  left: -4em;
+  border-top-left-radius: 90%;
+  border-bottom-right-radius: 90%;
+  border-bottom-left-radius: 0.5em;
+  border-top-right-radius: 0.5em;
+}
+
+.scor-ear-right { animation: none; }
+
+.scor-ear-right, .scor-ear-right-fluff {
+  border-top-right-radius: 90%;
+  border-bottom-left-radius: 90%;
+  border-bottom-right-radius: 0.5em;
+  border-top-left-radius: 0.5em;
+}
+
+.scor-ear-right-fluff {
+  position: absolute;
+  top: 2.5em; left: 1em; height: 3.5em; width: 2em;
+  transform-origin: inherit;
+  transform: rotate(25deg);
+  border-bottom-right-radius: 0.25em;
+  background-color: var(--white);
+}
+
+.scor-head {
+  position: relative;
+  z-index: 5;
+  height: 10.5em;
+  width: 12em;
+  transform-origin: center 8em;
+  transform: var(--head-transform, none);
+  transition: 0.7s cubic-bezier(0.3, 0, 0.3, 1);
+}
+
+.scor-neck {
+  position: absolute;
+  z-index: 5;
+  top: 1.25em;
+  height: 1em;
+  width: 100%;
+}
+
+.scor-neck::before, .scor-neck::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 2.25em;
+  border-top-left-radius: 30% 50%;
+  border-bottom-left-radius: 30% 50%;
+  border-top-right-radius: 60% 50%;
+  border-bottom-right-radius: 60% 50%;
+  background-color: var(--primary-color);
+}
+
+.scor-neck::before { left: 0.25em; transform: rotate(20deg); }
+
+.scor-neck::after { right: 0.25em; transform: rotateY(180deg) rotate(20deg); }
+
+.scor-arm {
+  border-radius: 50% 70% / 50% 25%;
+  position: absolute;
+  z-index: 3;
+  top: 2.25em;
+  height: 4.5em;
+  width: 2.5em;
+  transform-origin: 1.25em center;
+  background-color: var(--white);
+  overflow: hidden;
+}
+
+.scor-arm::before, .scor-arm::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  height: 0.75em;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--black);
+}
+
+.scor-arm::before { left: 0.75em; }
+
+.scor-arm::after { right: 0.75em; }
+
+.scor-arm-left { left: -0.125em; transform: rotate(-10deg); }
+
+.scor-arm-right { right: -0.125em; transform: rotate(10deg); }
+
+.scor-leg {
+  position: absolute;
+  z-index: 2;
+  bottom: -1em;
+  height: 2em;
+  width: 1.25em;
+  transform-origin: top center;
+  transform: rotate(var(--leg-rotate));
+  background-color: var(--shadow-color);
+}
+
+.scor-leg-foot {
+  border-radius: 50% 30% / 50% 60%;
+  position: absolute;
+  bottom: 0;
+  left: var(--foot-position-left, auto);
+  right: var(--foot-position-right, auto);
+  height: 6.5em;
+  width: 3em;
+  transform-origin: center bottom;
+  transform: rotate(var(--foot-rotate));
+  border-top-right-radius: var(--foot-radius-right, 50% 30%);
+  border-top-left-radius: var(--foot-radius-left, 50% 30%);
+  background-color: var(--white);
+  background: linear-gradient(var(--foot-gradient-rotate), var(--primary-color) 30%, var(--white) 30%);
+  overflow: hidden;
+  perspective: 1000px;
+  animation: rotateThing 1s ease-in-out infinite alternate;
+}
+
+.scor-leg-foot::before, .scor-leg-foot::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 1em;
+  width: 2px;
+  border-radius: 1px;
+  background-color: var(--black);
+  transform-origin: center top;
+}
+
+.scor-leg-foot::before { left: 1em; transform: var(--foot-transform-before); }
+
+.scor-leg-foot::after { right: 1em; transform: var(--foot-transform-after); }
+
+.scor-leg-foot-pad {
+  position: absolute;
+  top: 3em;
+  left: var(--foot-pad-position-left, auto);
+  right: var(--foot-pad-position-right, auto);
+  height: 1.75em;
+  width: 2.5em;
+  transform: rotate(var(--foot-pad-rotate)) perspective(1em) rotateX(-7deg);
+  border-radius: 0.5em;
+  background-color: var(--accent-color);
+}
+
+.scor-leg-left {
+  --foot-radius-right: 50% 20%;
+  --leg-rotate: 80deg;
+  --foot-position-left: 1em;
+  --foot-rotate: -110deg;
+  --keyframe-rotate-to: -120deg;
+  --foot-gradient-rotate: 175deg;
+  --foot-transform-before: rotate(-5deg) translateX(-0.25em);
+  --foot-transform-after: rotate(-5deg) translateX(-0.25em);
+  --foot-pad-rotate: -5deg;
+  --foot-pad-position-left: -0.25em;
+  right: calc(100% - 2.125em);
+}
+
+.scor-leg-right {
+  --foot-radius-left: 50% 20%;
+  --leg-rotate: -80deg;
+  --foot-position-right: 1em;
+  --foot-rotate: 110deg;
+  --keyframe-rotate-to: 120deg;
+  --foot-gradient-rotate: -175deg;
+  --foot-transform-before: rotate(5deg) translateX(0.25em);
+  --foot-transform-after: rotate(5deg) translateX(0.25em);
+  --foot-pad-rotate: 5deg;
+  --foot-pad-position-right: -0.25em;
+  left: calc(100% - 2.125em);
+}
+
+.scor-torso {
+  position: absolute; inset: 0;
+  border-radius: 50% 70% / 50% 30%;
+  background: var(--shadow-color);
+  overflow: hidden;
+}
+
+.scor-torso::before, .scor-torso::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.scor-torso::before { top: 0; height: 50%; width: 100%; background-color: var(--white); }
+
+.scor-torso::after { top: -0.75em; width: 45%; height: 90%; border-radius: 100%; background-color: var(--white); }
+
+.scor-tail {
+  position: absolute;
+  left: -0.75em;
+  bottom: 0.75em;
+  height: 3em;
+  width: 3em;
+  border-radius: 100%;
+  background-color: var(--shadow-color);
+}
+
+.scor-body {
+  position: relative;
+  left: 50%;
+  height: 6.5em;
+  width: 6em;
+  margin-top: -1.5em;
+  transform: translateX(-50%);
+}
+
+.scor-body::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: 0.5em;
+  left: 50%;
+  height: 2.25em;
+  width: 60%;
+  transform: var(--body-transform, translateX(-50%));
+  border-radius: 100%;
+  background-color: var(--shadow-color);
+  transition: transform 0.7s cubic-bezier(0.3, 0, 0.3, 1);
+}
+
+.scor:hover {
+  --mouth-translate: -0.125em;
+  --mouth-scale: 1;
+  --mouth-transition: 0.2s 1s;
+  --body-transform: translateX(-40%) scaleX(1.1);
+  --head-transform: rotate(20deg);
+}
+
+
+/* --- Christmas dressing --- */
+.scor-hat {
+  position: absolute;
+  z-index: 10;
+  top: -5em;
+  left: 2.25em;
+  width: 6.5em;
+  height: 5em;
+  transform: rotate(-10deg);
+  transform-origin: bottom center;
+}
+
+.scor-hat-cone {
+  position: absolute;
+  inset: 0;
+  background: var(--primary-color);
+  clip-path: polygon(0 100%, 62% 0, 100% 100%);
+}
+
+.scor-hat-brim {
+  position: absolute;
+  bottom: -0.55em;
+  left: -0.75em;
+  height: 1.1em;
+  width: 8em;
+  border-radius: 1em;
+  background: var(--white);
+  box-shadow: 0 0.1em 0.2em rgba(0,0,0,0.15);
+}
+
+.scor-hat-pom {
+  position: absolute;
+  top: -0.7em;
+  left: 62%;
+  height: 1.5em;
+  width: 1.5em;
+  transform: translateX(-50%);
+  border-radius: 100%;
+  background: var(--white);
+  box-shadow: 0 0.1em 0.2em rgba(0,0,0,0.15);
+}
+
+.scor-beard {
+  position: absolute;
+  z-index: 3;
+  bottom: -0.25em;
+  left: 50%;
+  height: 2.5em;
+  width: 6em;
+  transform: translateX(-50%);
+  border-radius: 50% 50% 45% 45% / 100% 100% 35% 35%;
+  background: var(--white);
+}
+
+.scor-neck::before, .scor-neck::after { background-color: #2e7d32; }
+
+.scor-torso { background: #c62828; }
+
+.scor-arm { background: linear-gradient(to top, var(--white) 0.75em, #c62828 0.75em); }
+
+.scor-tail { background: var(--white); }
+
+
+@keyframes rotateThing { 100% { transform: rotate(var(--keyframe-rotate-to)); } }
+
+@keyframes blinky {
+  0%, 93%, 100% { transform: scaleY(1); }
+  95%, 97% { transform: scaleY(0.08); }
+}
+.scor-wrap{ display:inline-block; flex-shrink:0; line-height:1; text-align:left; transform:translateX(28px); }
+  .guesthome-scor{ position:fixed; left:50%; transform:translateX(-50%); bottom:calc(84px + env(safe-area-inset-bottom)); z-index:39; width:min(92vw,480px); }
+  .santa-bubble-sm{ padding:10px !important; font-size:10px !important; max-width:170px !important; margin-bottom:50px !important; }
+  .santa-bubble-sm::before{ bottom:-25px; }
+  .santa-bubble-sm::after{ bottom:-15px; }
+  .santa-bubble-wide{ max-width:none !important; }
+
+@media (prefers-reduced-motion: reduce) { .santa-anim, .santa-wave, .santa-bubble, .santa-bubble::before, .santa-bubble::after, .bubble-dot, .scor-eye, .scor-ear, .scor-leg-foot { animation: none; } }

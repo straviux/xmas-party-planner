@@ -19,11 +19,13 @@
     </nav>
 
     <main class="w-full mx-auto px-3 py-3" :class="isHostMain ? 'host-main' : 'max-w-2xl'" style="position:relative;z-index:1;padding-bottom:96px">
-      <!-- HOME (guest-only, no host link) -->
+      <!-- HOME -->
       <section v-show="view === 'home'">
         <div class="flex items-start gap-2">
-          <div class="shrink-0 text-center" style="width:90px;height:90px;border-radius:9999px;background:#f8bbd0;display:flex;align-items:center;justify-content:center"><Gift class="w-12 h-12" style="color:#774f38" /></div>
-          <div class="santa-bubble flex-1">
+          <div class="shrink-0 text-center">
+            <ScorSanta :size="6" :class="{ 'santa-wave': santaWaving }" @click="waveSanta" />
+          </div>
+          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
             <span v-if="!setupDoneLocal">Ho ho ho! The party isn't set up yet — check back once your host has set it up.</span>
             <span v-else>Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting.</span>
           </div>
@@ -32,6 +34,7 @@
           <button class="seg-btn" :disabled="!setupDoneLocal" @click="startGuest"><Gift class="w-6 h-6" /> I'm a guest</button>
         </div>
         <button class="btn btn-outline w-full mt-3" @click="openQrModal"><QrCode class="w-5 h-5" /> Scan QR code</button>
+        <p class="text-center mt-3"><a href="/host/dashboard" class="text-sm opacity-60" style="text-decoration:underline">Host sign-in</a></p>
         <p v-if="!setupDoneLocal" class="text-sm opacity-80 text-center mt-3">No party set up yet — the host needs to set it up first.</p>
         <p v-if="setupDoneLocal" class="text-sm opacity-80 text-center mt-3">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name.</p>
       </section>
@@ -45,6 +48,10 @@
 
       <section v-show="view === 'who'">
         <div class="card m3-card p-4">
+          <div class="flex gap-2 items-start">
+            <ScorSanta :size="6" />
+            <div class="santa-bubble santa-bubble-sm santa-bubble-wide flex-1"><span class="bubble-dot" aria-hidden="true"></span>First, find yourself! Type your name or nickname, then tap Search — I'll check if you're on the list, then tap your exact entry. You never type a name, so spelling can't mismatch.</div>
+          </div>
           <h2 class="text-2xl font-black">Who are you?</h2>
           <p class="text-sm opacity-70 mt-1">Search your name, then confirm it's you.</p>
           <div class="flex gap-2 mt-3">
@@ -63,6 +70,10 @@
       <!-- REVEAL -->
       <section v-show="view === 'reveal'">
         <div class="card m3-card p-4">
+          <div class="flex gap-2 items-start">
+            <ScorSanta :size="4" />
+            <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>One tap and I'll show you who you're buying for — write it down, it only shows once!</div>
+          </div>
           <div v-if="!guestRecipient">
             <h2 class="text-2xl font-black"><Gift class="w-6 h-6 inline" /> Your Secret Santa reveal</h2>
             <p class="mt-2">This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
@@ -91,11 +102,19 @@
           </div>
           <p class="text-sm opacity-70 mt-3">Use the dock below for Gifts, Wishlists and Vote.</p>
         </div>
+        <div class="flex gap-2 items-end guesthome-scor">
+          <ScorSanta :size="4" />
+          <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Welcome in! Use the dock to peek at wishlists and cast your vote.</div>
+        </div>
       </section>
 
       <!-- GIFTS (my wishlist) -->
       <section v-show="view === 'gifts'">
         <div class="card m3-card p-4">
+          <div class="flex gap-2 items-start mt-2">
+            <ScorSanta :size="4" />
+            <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Add your own wishes so your giver knows what to get you.</div>
+          </div>
           <div class="flex items-center justify-between gap-3 mt-2">
             <h3 class="text-xl font-black">My wishlist</h3>
             <button class="btn btn-success shrink-0" style="width:36px;height:36px;min-height:36px;padding:0" aria-label="Add item to my wishlist" @click="openWishModal"><Plus class="w-5 h-5" /></button>
@@ -120,6 +139,10 @@
       <!-- EVERYONE'S WISHLISTS -->
       <section v-show="view === 'wishlists'">
         <div class="card m3-card p-4">
+          <div class="flex gap-2 items-start">
+            <ScorSanta :size="4" />
+            <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Tap a member to see what they want — reserve one so nobody buys the same gift twice.</div>
+          </div>
           <h2 class="text-2xl font-black">Everyone's wishlists</h2>
           <input class="input mt-3" v-model="wishSearch" placeholder="Search a name…" />
           <div v-if="!filteredWishBoard.length" class="text-sm opacity-70 mt-3">{{ localWishBoard.length ? 'No match.' : 'No members yet.' }}</div>
@@ -134,6 +157,10 @@
       <!-- VOTE -->
       <section v-show="view === 'vote'">
         <div class="card m3-card p-4">
+          <div class="flex gap-2 items-start">
+            <ScorSanta :size="4" />
+            <div class="santa-bubble santa-bubble-sm flex-1"><span class="bubble-dot" aria-hidden="true"></span>Vote on each poll! One vote each per poll, and you can change it until the host closes that poll.</div>
+          </div>
           <h2 class="text-2xl font-black">Polls</h2>
           <div v-if="!localPolls.length" class="text-sm opacity-70 mt-3">No polls yet.</div>
           <div v-for="p in localPolls" :key="p.id" class="mt-4 rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
@@ -443,6 +470,7 @@
 <script>
 import axios from 'axios';
 import InputOtp from '../Components/InputOtp.vue';
+import ScorSanta from '../Components/ScorSanta.vue';
 import {
   ArrowRight, Check, ChevronRight, ExternalLink, Gift, Home, KeyRound,
   LayoutDashboard, LogOut, Pencil, Plus, Printer, QrCode, Search, Settings,
@@ -474,7 +502,7 @@ function matches(g, q) {
 
 export default {
   components: {
-    InputOtp, ArrowRight, Check, ChevronRight, ExternalLink, Gift, Home, KeyRound,
+    InputOtp, ScorSanta, ArrowRight, Check, ChevronRight, ExternalLink, Gift, Home, KeyRound,
     LayoutDashboard, LogOut, Pencil, Plus, Printer, QrCode, Search, Settings,
     Settings2, ShoppingBag, StarPlus, Ticket, Trash2, UserRoundPlus, Users, Vote, X,
   },
@@ -497,7 +525,7 @@ export default {
       localGuests: this.guests, localWishBoard: this.wishBoard, localPolls: this.polls,
       localParty: this.party, localBudget: this.budget, setupDoneLocal: this.setupDone,
       view: this.initialView,
-      fabOpen: false,
+      fabOpen: false, santaWaving: false,
       search: '', guestSearched: false, selected: null, showConfirmModal: false,
       showClaimedModal: false, showConfirmDialog: false, confirmDialogTitle: '', confirmDialogMessage: '',
       confirmDialogOkText: 'OK', confirmDialogCallback: null,
@@ -608,6 +636,7 @@ export default {
     openQrModal() { this.showQrModal = true; },
     closeQrModal() { this.showQrModal = false; },
     openGuestTemp() { this.closeQrModal(); this.goTo('who', '/who'); },
+    waveSanta() { this.santaWaving = true; setTimeout(() => { this.santaWaving = false; }, 1200); },
     fabGo(dest) {
       this.fabOpen = false;
       if (dest === 'home') this.goHome();
