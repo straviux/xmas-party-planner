@@ -117,6 +117,7 @@ class PartyStore
             'aliases' => $g['aliases'],
             'claimed' => !empty($g['claimed']),
             'needs_pin' => !empty($g['pin_hash']),
+            'revealed' => array_key_exists('revealed', $g) ? !empty($g['revealed']) : !empty($g['claimed']),
         ];
     }
 

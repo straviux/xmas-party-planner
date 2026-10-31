@@ -96,9 +96,9 @@
             <h2 class="text-2xl font-black"><Gift class="w-6 h-6 inline" /> Your Secret Santa reveal</h2>
             <p class="mt-2">This will reveal your recipient <b>once</b>. After this, this name can't be used again — even by you.</p>
             <div class="alert alert-warning mt-3" style="border-radius:1rem">Note your recipient down before you move on. A fresh scan will only say it is already locked.</div>
-            <button class="btn btn-success w-full mt-3" @click="doReveal">Show my recipient</button>
+            <button class="tear-strip mt-3" :class="{ tearing }" :disabled="tearing" aria-label="Tear to reveal your recipient" @click="doReveal"><span class="tear-knob"><ArrowRight class="w-6 h-6" /></span><span class="tear-text">Tear</span></button>
           </div>
-          <div v-else class="text-center">
+          <div v-else class="text-center reveal-pop">
             <h2 class="text-2xl font-black"><Gift class="w-6 h-6 inline" /> You are buying for:</h2>
             <div class="text-2xl font-black my-4">{{ guestRecipient.name }}<span v-if="guestRecipient.nickname"> “{{ guestRecipient.nickname }}”</span></div>
             <p v-if="guestRecipient.budget" class="opacity-70">Gift budget: {{ formatBudget(guestRecipient.budget) }}</p>
@@ -434,7 +434,8 @@
         <h2 class="text-2xl font-black">Is this you?</h2>
         <p class="text-3xl font-black mt-8 text-center">{{ selected ? selected.display : '' }}<span v-if="selected && selected.nickname"> “{{ selected.nickname }}”</span></p>
         <p v-if="selected && selected.aliases.length" class="text-sm opacity-60 text-center">Also: {{ selected.aliases.join(', ') }}</p>
-        <p v-if="selected && selected.claimed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote.</p>
+        <p v-if="selected && selected.claimed && selected.revealed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked, so no recipient will be shown again here. You can still do your wishlist and vote.</p>
+        <p v-if="selected && selected.claimed && !selected.revealed" class="alert alert-warning mt-3" style="border-radius:1rem">This name is already locked to you — enter your PIN and you'll go to your reveal.</p>
         <p v-if="selected && !selected.claimed" class="text-sm opacity-70 mt-3">Confirming locks this name to you — only the host can unlock it. First time here, you'll create a 4-digit PIN to get back into your profile later.</p>
         <div v-if="selected && !selected.claimed && !selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Create your 4-digit PIN <span class="opacity-60 font-normal">— you'll use this to get back into your profile from now on</span></p><InputOtp v-model="guestPin" type="password" /><p class="text-sm font-bold mb-1 mt-3">Confirm your PIN</p><InputOtp v-model="guestPinConfirm" type="password" /></div>
         <div v-if="selected && selected.needs_pin" class="mt-3"><p class="text-sm font-bold mb-1">Your 4-digit PIN <span class="opacity-60 font-normal">— required to see your recipient / get into your profile</span></p><InputOtp v-model="guestPin" type="password" /></div>
@@ -629,7 +630,7 @@ export default {
       showConfirmDialog: false,
  confirmDialogTitle: '', confirmDialogMessage: '',
       confirmDialogOkText: 'OK', confirmDialogCallback: null,
-      guestPin: '', guestPinConfirm: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false,
+      guestPin: '', guestPinConfirm: '', guestMe: null, guestRecipient: null, guestAlreadyClaimed: false, tearing: false,
       wishModalOwner: null, showWishOwnerModal: false, pendingWishOwnerId: null,
       partyName: this.party, partyBudget: this.budget, partyDateLocal: this.partyDate,
       guestRows: [], showGuestModal: false, guestEditIndex: -1,
@@ -674,7 +675,7 @@ export default {
     if (this.sessionGuest) {
       this.guestMe = this.sessionGuest;
       this.guestPin = this.sessionGuestPin || '';
-      this.guestAlreadyClaimed = !!this.sessionGuest.claimed;
+      this.guestAlreadyClaimed = !!this.sessionGuest.revealed;
     }
     const qs = new URLSearchParams(window.location.search);
     if (qs.get('guest') === '1') {
@@ -763,7 +764,7 @@ export default {
     },
     selectGuest(g) {
       this.selected = g; this.guestMe = g;
-      this.guestAlreadyClaimed = !!g.claimed;
+      this.guestAlreadyClaimed = !!g.revealed;
       this.showConfirmModal = true;
     },
     closeConfirmModal() { this.showConfirmModal = false; this.selected = null; this.guestPinConfirm = ''; },
@@ -798,7 +799,11 @@ export default {
           this.showToast('Could not set your PIN: ' + e.message, false); return;
         }
       }
-      this.guestPinConfirm = ''; this.showConfirmModal = false; this.goToGuestHome();
+      this.guestPinConfirm = ''; this.showConfirmModal = false;
+      // Revealed already -> profile. Entered but not yet torn ->
+      // the reveal page, where the tear strip is the only way in.
+      if (fresh ? fresh.revealed : this.selected.revealed) this.goToGuestHome();
+      else this.goTo('reveal', '/reveal');
     },
     async confirmEnter() {
       if (!this.selected) return;
@@ -809,17 +814,23 @@ export default {
       }
       this.showConfirmModal = false;
       try {
-        const res = await this.api('enter', this.selected.needs_pin ? { id, pin: this.guestPin } : { id, new_pin: this.guestPin });
-        this.guestRecipient = { name: res.recipient, nickname: res.recipient_nickname, budget: res.budget };
-        this.guestPinConfirm = ''; this.selected = null; await this.loadGuests();
+        // PIN setup + lock only: enter returns NO recipient. The name
+        // stays hidden until the guest tears the strip on the reveal
+        // page, even if they refresh in between (the session keeps
+        // them as entered-but-not-revealed, and startGuest sends
+        // them back to the reveal page, not guest home).
+        await this.api('enter', this.selected.needs_pin ? { id, pin: this.guestPin } : { id, new_pin: this.guestPin });
+        const me = this.selected;
+        this.guestRecipient = null; this.guestPinConfirm = ''; this.selected = null; this.guestMe = me; await this.loadGuests();
         this.goTo('reveal', '/reveal');
       } catch (e) {
         if (e.message === 'already_claimed') {
           // Already locked after all (stale list): do NOT bypass the
           // PIN by going straight to guest home. Re-prompt with the
-          // fresh claimed status so the PIN check runs.
-          this.guestAlreadyClaimed = true;
-          try { await this.loadGuests(); const f = this.localGuests.find((g) => g.id === id); if (f) { this.selected = f; this.guestMe = f; } } catch (err) { /* keep old status */ }
+          // fresh claimed status so the PIN check runs. The flag now
+          // tracks revealed, so an entered-but-not-torn guest is NOT
+          // sent to guest home — they go to their reveal instead.
+          try { await this.loadGuests(); const f = this.localGuests.find((g) => g.id === id); if (f) { this.selected = f; this.guestMe = f; this.guestAlreadyClaimed = !!f.revealed; } else this.guestAlreadyClaimed = true; } catch (err) { this.guestAlreadyClaimed = true; }
           this.showToast('This name is already locked — enter your PIN to get into your profile.', false); this.showConfirmModal = true;
         } else if (e.message === 'pin_incorrect') {
           this.showToast('That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.', false); this.showConfirmModal = true;
@@ -832,12 +843,14 @@ export default {
     },
     async doReveal() {
       const id = this.selected ? this.selected.id : (this.guestMe ? this.guestMe.id : null);
-      if (!id) return;
+      if (!id || this.tearing) return;
+      this.tearing = true;
       try {
         const res = await this.api('reveal', { id, pin: this.guestPin });
         this.guestRecipient = { name: res.recipient, nickname: res.recipient_nickname, budget: res.budget };
         this.selected = null; await this.loadGuests();
       } catch (e) {
+        this.tearing = false;
         const msg = e.message === 'already_claimed' ? 'This name is already locked — no recipient is shown again. Ask the host if you lost it.' : e.message === 'pin_incorrect' ? 'That PIN is incorrect. This name has NOT been locked yet, try again or ask the host.' : e.message === 'pin_required' ? 'This name has no 4-digit code yet — ask the host to set one for you.' : 'Could not reveal: ' + e.message;
         if (e.message === 'already_claimed') this.guestAlreadyClaimed = true;
         this.showToast(msg, false);

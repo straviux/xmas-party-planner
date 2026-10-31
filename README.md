@@ -51,9 +51,12 @@ may need `VITE_HOST` adjustments.
 - Guest flow: QR invite code (`?guest=1&code=CODE`, the QR still carries the
   code), Who search (normalised/fuzzy over display name + nickname +
   aliases), "Is this you?" confirm, entry lock (confirming locks the name
-  server-side and returns the recipient; a wrong guest PIN does NOT lock; a
-  second entry with a locked name gets `already_claimed` and goes to guest
-  home with no recipient; only a host reset clears a lock).
+  server-side and sets/verifies the guest PIN, but does NOT reveal the
+  recipient — the guest is sent to the reveal page and only the tear strip
+  (`reveal`) shows the name, once; a wrong guest PIN does NOT lock; a
+  second entry with a locked name gets `already_claimed`; only a host
+  reset clears a lock, and it also clears `revealed` so the name can be
+  revealed again).
 - Guest PIN (created by the guest, not the host): on first entry, a guest
   with no code set creates a 4-digit PIN (entered twice, must match) and
   that PIN becomes their profile code from then on — returning guests

@@ -129,7 +129,7 @@ class ApiController extends Controller
                         'nickname' => trim((string) ($gi['nickname'] ?? '')),
                         'aliases' => array_values(array_unique($aliases)),
                         'pin_hash' => ($pin !== '') ? password_hash($pin, PASSWORD_DEFAULT) : null,
-                        'recipient_id' => null, 'claimed' => false, 'claimed_at' => null,
+                        'recipient_id' => null, 'claimed' => false, 'claimed_at' => null, 'revealed' => false,
                     ];
                 }
                 $ids = array_column($guests, 'id');
@@ -168,8 +168,12 @@ class ApiController extends Controller
                 }
                 return ['ok' => true, 'party' => $d['party'], 'budget' => $d['budget'], 'date' => $d['date']];
 
-            case 'enter':
-            case 'reveal': {
+            case 'enter': {
+                // PIN setup + entry lock ONLY — this does NOT reveal
+                // the recipient. Confirming locks the name, verifies or
+                // creates the guest PIN, and the guest is sent to the
+                // reveal page, where the tear strip is the only way to
+                // see the name (see 'reveal' below).
                 $id = (string) ($input['id'] ?? '');
                 $result = S::mutate(function (&$d) use ($id, $input) {
                     foreach ($d['guests'] as &$g) {
@@ -179,11 +183,6 @@ class ApiController extends Controller
                         if (!empty($g['claimed'])) {
                             throw new PartyException('already_claimed', 409);
                         }
-                        // First entry: if no code is set for this
-                        // guest, they CREATE one now (new_pin, 4 digits)
-                        // and it becomes their profile code from then on.
-                        // If a code is already set (host-set or previously
-                        // created by the guest), they must enter it.
                         if (!empty($g['pin_hash'])) {
                             $pin = (string) ($input['pin'] ?? '');
                             if (!password_verify($pin, $g['pin_hash'])) {
@@ -198,6 +197,62 @@ class ApiController extends Controller
                         }
                         $g['claimed'] = true;
                         $g['claimed_at'] = date('c');
+                        $g['revealed'] = false;
+                        return ['ok' => true, 'guest_id' => $g['id']];
+                    }
+                    throw new PartyException('Guest not found', 404);
+                });
+                $sessionPin = (string) ($input['pin'] ?? '');
+                if ($sessionPin === '' && isset($input['new_pin'])) { $sessionPin = (string) $input['new_pin']; }
+                session(['guest_id' => $result['guest_id'], 'guest_pin' => $sessionPin]);
+                unset($result['guest_id']);
+                return $result;
+            }
+
+            case 'reveal': {
+                // The ONLY way a recipient is ever shown: the tear
+                // strip. A guest who entered (claimed) but has not
+                // torn yet gets their recipient here and is marked
+                // revealed, so a second tear / fresh entry can never
+                // show it again. A guest who never entered goes
+                // through the same first-entry PIN check, then claims
+                // and reveals in one step.
+                $id = (string) ($input['id'] ?? '');
+                $result = S::mutate(function (&$d) use ($id, $input) {
+                    foreach ($d['guests'] as &$g) {
+                        if ($g['id'] !== $id) {
+                            continue;
+                        }
+                        $alreadyRevealed = array_key_exists('revealed', $g) ? !empty($g['revealed']) : !empty($g['claimed']);
+                        if ($alreadyRevealed) {
+                            throw new PartyException('already_claimed', 409);
+                        }
+                        if (!empty($g['claimed'])) {
+                            // Entered but not yet torn: PIN must match.
+                            if (empty($g['pin_hash'])) {
+                                throw new PartyException('pin_required_create', 403);
+                            }
+                            $pin = (string) ($input['pin'] ?? '');
+                            if (!password_verify($pin, $g['pin_hash'])) {
+                                throw new PartyException('pin_incorrect', 403);
+                            }
+                        } else {
+                            if (!empty($g['pin_hash'])) {
+                                $pin = (string) ($input['pin'] ?? '');
+                                if (!password_verify($pin, $g['pin_hash'])) {
+                                    throw new PartyException('pin_incorrect', 403);
+                                }
+                            } else {
+                                $newPin = trim((string) ($input['new_pin'] ?? ''));
+                                if (!preg_match('/^\d{4}$/', $newPin)) {
+                                    throw new PartyException('pin_required_create', 403);
+                                }
+                                $g['pin_hash'] = password_hash($newPin, PASSWORD_DEFAULT);
+                            }
+                            $g['claimed'] = true;
+                            $g['claimed_at'] = date('c');
+                        }
+                        $g['revealed'] = true;
                         $recipient = null;
                         foreach ($d['guests'] as $r) {
                             if ($r['id'] === $g['recipient_id']) {
@@ -216,8 +271,8 @@ class ApiController extends Controller
                 });
                 // Guest identity (not the recipient) persists in session
                 // so a refresh keeps guest home / wishlist access. The
-                // recipient itself is never stored — a refresh after
-                // entry shows the locked-guest home, never the recipient.
+                // recipient itself is never stored — a refresh after a
+                // tear shows the locked-guest home, never the recipient.
                 $sessionPin = (string) ($input['pin'] ?? '');
                 if ($sessionPin === '' && isset($input['new_pin'])) { $sessionPin = (string) $input['new_pin']; }
                 session(['guest_id' => $result['guest_id'], 'guest_pin' => $sessionPin]);
@@ -356,6 +411,7 @@ class ApiController extends Controller
                     if ($g['id'] === $id) {
                         $g['claimed'] = false;
                         $g['claimed_at'] = null;
+                        $g['revealed'] = false;
                     }
                 }
                 unset($g);
@@ -419,7 +475,7 @@ class ApiController extends Controller
                     $d['guests'][] = ['id' => 'g'.bin2hex(random_bytes(6)), 'display' => $parsed['display'],
                         'nickname' => $parsed['nickname'], 'aliases' => $parsed['aliases'],
                         'pin_hash' => ($parsed['pin'] !== '') ? password_hash($parsed['pin'], PASSWORD_DEFAULT) : null,
-                        'recipient_id' => null, 'claimed' => false, 'claimed_at' => null];
+                        'recipient_id' => null, 'claimed' => false, 'claimed_at' => null, 'revealed' => false];
                 } else {
                     $id = (string) ($input['id'] ?? $input['guest_id'] ?? '');
                     $parsed = $parse($input);
@@ -475,6 +531,7 @@ class ApiController extends Controller
                 foreach ($d['guests'] as &$g) {
                     $g['claimed'] = false;
                     $g['claimed_at'] = null;
+                    $g['revealed'] = false;
                 }
                 unset($g);
                 S::save($d);
