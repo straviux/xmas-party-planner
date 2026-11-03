@@ -874,7 +874,7 @@ export default {
     async goToVote() { await this.loadPoll(); this.goTo('vote', '/vote'); },
     openGiftsPage() { if (this.guestMe) this.goToGifts(); else this.startGuest(); },
     openVotePage() { if (this.guestMe) this.goToVote(); else this.startGuest(); },
-    openWishModal() { if (this.guestMe) { this.wishMe = this.guestMe; this.wishPin = this.guestPin; } this.showWishModal = true; },
+    openWishModal() { if (this.guestMe) { this.wishMe = this.guestMe; this.wishPin = this.guestPin; } this.wishText = ''; this.wishLink = ''; this.wishNotes = ''; this.wishImage = ''; this.wishImageName = ''; this.showWishModal = true; },
     closeWishModal() { this.showWishModal = false; },
     openWishOwnerModal(owner) { this.wishModalOwner = owner; this.showWishOwnerModal = true; },
     closeWishOwnerModal() { this.showWishOwnerModal = false; },
@@ -889,7 +889,10 @@ export default {
       const file = e.target.files && e.target.files[0];
       if (!file) return;
       if (file.size > 10 * 1024 * 1024) { this.showToast('Screenshot is too large — keep it under 10 MB', false); return; }
-      const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); });
+      let dataUrl;
+      try { dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.onerror = reject; r.readAsDataURL(file); }); }
+      catch (err) { this.showToast('Could not read that file — try a different image', false); return; }
+      finally { e.target.value = ''; }
       this.wishImage = dataUrl; this.wishImageName = file.name;
       try {
         const img = new Image();
