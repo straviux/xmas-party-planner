@@ -782,3 +782,15 @@ body { color: var(--text-primary); }
 .admin-nav-btn.active { background: #01b7c5; color: #062a2e; }
 
 
+
+/* Wishlist grid: wishes sit BELOW the header card, in 2 columns,
+   optimised for images — the image leads, square and cropped to
+   fill, with text and actions underneath. Text-only wishes get
+   the same tile with no image area. align-items:start keeps
+   short tiles from stretching to the tallest tile in a row. */
+.wish-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; align-items: start; }
+.wish-grid-card { background: linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55)); border: 1px solid rgba(255,255,255,0.14); border-radius: 1rem; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.3); min-width: 0; }
+.wish-grid-img { width: 100%; aspect-ratio: 1 / 1; object-fit: cover; display: block; }
+.wish-grid-body { padding: 12px; min-width: 0; }
+.wish-grid-text { font-size: 0.95rem; line-height: 1.4; white-space: pre-wrap; word-break: break-word; }
+.wish-grid-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }

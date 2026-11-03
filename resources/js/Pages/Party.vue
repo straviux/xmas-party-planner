@@ -139,17 +139,20 @@
           </div>
           <p class="text-sm opacity-70 mt-1">Only you can add or delete your own items.</p>
           <div v-if="!myBoardItems.length" class="text-sm opacity-70 mt-3">No wishes yet — tap + to add your first one.</div>
-          <div v-for="it in myBoardItems" :key="it.id" class="wish-card mt-3">
-            <div class="flex gap-2">
-              <div class="flex-1 min-w-0">
-                <p style="white-space:pre-wrap">{{ it.text }}</p>
-                <p v-if="it.notes" class="text-sm opacity-70 mt-1" style="white-space:pre-wrap">{{ it.notes }}</p>
-                <p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p>
+        </div>
+        <div v-if="myBoardItems.length" class="wish-grid">
+          <div v-for="it in myBoardItems" :key="it.id" class="wish-grid-card">
+            <img v-if="it.image" :src="it.image" alt="" class="wish-grid-img" />
+            <div class="wish-grid-body">
+              <p class="wish-grid-text">{{ it.text }}</p>
+              <p v-if="it.notes" class="text-sm opacity-70 mt-1 wish-grid-text">{{ it.notes }}</p>
+              <p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p>
+              <div class="wish-grid-actions">
+                <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a>
+                <span v-else></span>
+                <button style="background:none;border:none;color:inherit;cursor:pointer" aria-label="Delete wish" @click="deleteWishItem(it.id)"><Trash2 class="w-5 h-5" /></button>
               </div>
-              <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" class="shrink-0" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a>
-              <button class="shrink-0" style="background:none;border:none;color:inherit;cursor:pointer" aria-label="Delete wish" @click="deleteWishItem(it.id)"><Trash2 class="w-5 h-5" /></button>
             </div>
-            <img v-if="it.image" :src="it.image" alt="" style="max-width:100%;border-radius:0.75rem;margin-top:8px" />
           </div>
         </div>
       </section>
@@ -504,11 +507,20 @@
       <div class="modal-card">
         <div class="flex items-center justify-between"><h3 class="text-xl font-black">{{ wishModalOwner.display }}'s wishlist</h3><button class="btn btn-ghost btn-sm" style="width:auto" @click="closeWishOwnerModal">×</button></div>
         <div v-if="!wishModalOwner.items.length" class="text-sm opacity-70 mt-3">No wishes yet.</div>
-        <div v-for="it in wishModalOwner.items" :key="it.id" class="wish-card mt-3">
-          <div class="flex gap-2"><div class="flex-1"><p style="white-space:pre-wrap">{{ it.text }}</p><p v-if="it.notes" class="text-sm opacity-70 mt-1" style="white-space:pre-wrap">{{ it.notes }}</p><p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p></div>
-          <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a></div>
-          <img v-if="it.image" :src="it.image" alt="" style="max-width:100%;border-radius:0.75rem;margin-top:8px" />
-          <button v-if="guestMe && wishModalOwner.id !== guestMe.id" class="btn btn-sm mt-2" style="width:auto" :disabled="it.reserved && !it.reserved_by_me" @click="reserveWishItem(wishModalOwner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
+        <div v-if="wishModalOwner.items.length" class="wish-grid">
+          <div v-for="it in wishModalOwner.items" :key="it.id" class="wish-grid-card">
+            <img v-if="it.image" :src="it.image" alt="" class="wish-grid-img" />
+            <div class="wish-grid-body">
+              <p class="wish-grid-text">{{ it.text }}</p>
+              <p v-if="it.notes" class="text-sm opacity-70 mt-1 wish-grid-text">{{ it.notes }}</p>
+              <p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p>
+              <div class="wish-grid-actions">
+                <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a>
+                <span v-else></span>
+                <button v-if="guestMe && wishModalOwner.id !== guestMe.id" class="btn btn-sm" style="width:auto" :disabled="it.reserved && !it.reserved_by_me" @click="reserveWishItem(wishModalOwner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
