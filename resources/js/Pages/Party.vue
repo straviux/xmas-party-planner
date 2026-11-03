@@ -110,6 +110,7 @@
 
       <!-- GUEST HOME -->
       <section v-show="view === 'guesthome'">
+        <div class="guest-house" aria-hidden="true"></div>
         <div class="card m3-card p-4">
           <h2 class="text-2xl font-black">Your Party</h2>
           <div class="grid grid-cols-2 gap-2 mt-4">
