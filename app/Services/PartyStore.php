@@ -273,10 +273,10 @@ class PartyStore
         return [$i, $polls];
     }
 
-    // JPEG, not AVIF: AVIF uploads displayed as blank squares on
-    // browsers without AVIF decoding, while still taking tile space.
-    // JPEG displays everywhere. Kept the old method name so callers
-    // do not change; it now returns a JPEG data URL.
+    // WebP, not AVIF: AVIF uploads displayed as blank squares in
+    // LibreWolf, while still taking tile space. WebP is supported
+    // in LibreWolf and everywhere else. Kept the old method name
+    // so callers do not change; it now returns a WebP data URL.
     public static function convertToAvif(string $image): string
     {
         if ($image === '' || !function_exists('imagecreatefromstring')) {
@@ -290,20 +290,16 @@ class PartyStore
         if (function_exists('imageistruecolor') && !imageistruecolor($img)) {
             imagepalettetotruecolor($img);
         }
-        // JPEG has no alpha: composite over white so transparent
-        // PNGs do not turn black.
-        $w = imagesx($img); $h = imagesy($img);
-        $bg = imagecreatetruecolor($w, $h);
-        $white = imagecolorallocate($bg, 255, 255, 255);
-        imagefill($bg, 0, 0, $white);
-        imagecopy($bg, $img, 0, 0, 0, 0, $w, $h);
-        imagedestroy($img);
+        // WebP keeps alpha, so no white composite is needed.
+        if (function_exists('imagesavealpha')) {
+            imagesavealpha($img, true);
+        }
         ob_start();
-        $ok = imagejpeg($bg, null, 85);
+        $ok = function_exists('imagewebp') ? imagewebp($img, null, 85) : false;
         $data = ob_get_clean();
-        imagedestroy($bg);
+        imagedestroy($img);
         if ($ok && $data !== '') {
-            return 'data:image/jpeg;base64,'.base64_encode($data);
+            return 'data:image/webp;base64,'.base64_encode($data);
         }
         return $image;
     }

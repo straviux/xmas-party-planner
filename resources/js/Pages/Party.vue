@@ -897,20 +897,20 @@ export default {
       try {
         const img = new Image();
         await new Promise((resolve, reject) => { img.onload = resolve; img.onerror = reject; img.src = dataUrl; });
-        // Convert to JPEG, not AVIF: AVIF previews were blank on browsers
-        // that cannot decode AVIF, while still reserving the square tile.
-        // JPEG displays everywhere. Downscale to 1600px max side, white
-        // background so transparent PNGs do not turn black in JPEG.
+        // Convert to WebP, not AVIF: AVIF previews were blank in
+        // LibreWolf, while still reserving the square tile. WebP is
+        // supported in LibreWolf and everywhere else, and compresses
+        // better than JPEG. Downscale to 1600px max side.
         const maxSide = 1600;
         const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(img.naturalWidth * scale); canvas.height = Math.round(img.naturalHeight * scale);
-        const ctx = canvas.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.85));
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.85));
         if (blob) {
-          const jpegUrl = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
-          this.wishImage = jpegUrl;
+          const webpUrl = await new Promise((resolve) => { const r = new FileReader(); r.onload = () => resolve(r.result); r.readAsDataURL(blob); });
+          this.wishImage = webpUrl;
         }
       } catch (err) { /* keep original upload */ }
     },
