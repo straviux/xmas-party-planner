@@ -13,8 +13,13 @@ on his machine, against that spec — not against the code.
   detailed spec and the template for the others.
 - [ ] A3. Fill in acceptance criteria + edge cases for
   `01`, `02`, `04`, `05`, `06`, `07` (currently scaffolds).
-- [ ] A4. Answer every `[DECISION]` in `plan.md`. Storage
-  (JSON vs database) first — it blocks everything after it.
+- [x] A4a. Storage decision: ANSWERED 2026-11-03 — MariaDB /
+  MySQL (see `plan.md`). This unblocks the data sections of
+  every feature spec.
+- [ ] A4b. Answer the remaining `[DECISION]`s in `plan.md`
+  (stack, host deployment support including a database, QR
+  scanner, host seeding, wishlist images/AVIF, single vs
+  multiple polls).
 
 ## Phase B — Foundation
 

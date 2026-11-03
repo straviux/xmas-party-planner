@@ -31,28 +31,41 @@ rewriting the plan and re-checking every spec.
 - File locking around every read-modify-write that changes
   guests, wishlists, or polls (draw, reserve, vote).
 
-## Storage — the biggest open decision
+## Storage — DECIDED: MariaDB / MySQL (2026-11-03, Arc's choice)
 
-`[DECISION]` The current app stores the whole party as one JSON
-file with file locking. That is simple and worked, but it is
-also why host views, guest views, and the draw all touch one
-blob. For the rebuild, choose explicitly before building:
+The rebuild uses a MariaDB / MySQL database, not the current
+app's single JSON file store. This is Option B from the earlier
+draft, now decided — do not reopen it without a deliberate spec
+change.
 
-- Option A: keep the JSON file store. Pros: no migrations, no
-  database to configure on Arc's host, same deployment as now.
-  Cons: every feature shares one file, concurrent writes need
-  care, querying (e.g. "all wishlists by owner") is manual.
-- Option B: proper database tables (parties, guests,
-  wishlists, wishlist_items, polls, poll_options, votes, users).
-  Pros: each feature owns its tables, host/guest queries are
-  normal queries, scaling and reporting are easier. Cons:
-  migrations + database setup on Arc's host, and the deployment
-  spec (`07-deployment.md`) must be rewritten to match.
+What this means in practice:
 
-Recommendation: decide this in the spec review, not during
-coding. If Arc's host makes database setup painful, Option A
-wins by default. Do not start with Option B and fall back
-mid-build — the specs' data sections change with the choice.
+- Proper tables, one per concept: `parties`, `guests`,
+  `wishlist_items` (owned by a guest), `polls`, `poll_options`,
+  `votes`, `users` (host accounts). The feature specs' field
+  lists are the logical contract; these tables are their
+  physical form. Field names in the specs map to table columns
+  of the same name unless a spec says otherwise.
+- Laravel's `mysql` driver, with MariaDB-compatible migrations:
+  standard column types only, no MySQL-only features, charset
+  `utf8mb4`, collation `utf8mb4_unicode_ci`, so the same
+  migrations run on MariaDB and on MySQL.
+- PINs are still stored hashed only (`pin_hash`), never plain
+  text. Recipient mappings live in `guests.recipient_id` and
+  are still never exposed in any API response except the
+  `reveal` response, and never to the host.
+- Concurrency is handled by database transactions and row
+  locks for draw, reserve, and vote — the JSON file's flock
+  goes away with the JSON file.
+- Consequences Arc should know about before building starts:
+  local development now needs a MariaDB/MySQL instance running
+  (not just `php artisan serve`), and the deployed host must
+  provide a MariaDB/MySQL database. Both are covered in
+  `07-deployment.md`, which must be re-checked against Arc's
+  actual host before Phase F.
+- The old JSON party data does NOT migrate automatically
+  (constitution rule 20). If a migration is ever wanted, it is
+  a separate spec.
 
 ## Routes and sessions (to be pinned in review)
 
@@ -79,11 +92,11 @@ mid-build — the specs' data sections change with the choice.
 
 ## Open decisions (must be answered before tasks 1–3)
 
-1. `[DECISION]` Storage: JSON file (A) or database (B)?
+1. Storage: DECIDED — MariaDB / MySQL (see above).
 2. `[DECISION]` Stack: keep Laravel + Inertia, or re-evaluate?
 3. `[DECISION]` Host deployment: does Arc's host support the
-   Laravel deployment in `07-deployment.md`, or is it
-   drop-files-only?
+   Laravel deployment in `07-deployment.md` (now including a
+   MariaDB/MySQL database), or is it drop-files-only?
 4. `[DECISION]` Scan QR: design-only, or real camera scanner?
 5. `[DECISION]` Initial host account: env-set credentials, or
    seeder default that must be changed on first sign-in?

@@ -46,7 +46,8 @@ that change is recorded below.
   known rules carried over from the current app. They need a full
   review pass (acceptance criteria, edge cases, API contracts)
   before their slice is built.
-- `plan.md`: draft, with open decisions marked `[DECISION]`.
+- `plan.md`: storage decision answered (MariaDB / MySQL,
+  2026-11-03); other decisions still marked `[DECISION]`.
 - `tasks.md`: draft order, to be confirmed once the specs are reviewed.
 
 ## Change log
@@ -54,3 +55,7 @@ that change is recorded below.
 - 2026-11-03: Scaffold created from the current Laravel app's
   behaviour (main at 0b9a8d49). No code changed. Nothing pushed yet.
   Open decisions are marked `[DECISION]` in the specs and plan.
+- 2026-11-03: Scaffold pushed to main (e964bbd3).
+- 2026-11-03: Storage decision recorded: MariaDB / MySQL.
+  `plan.md` and `07-deployment.md` updated to match; local
+  spec files only, not pushed yet.
