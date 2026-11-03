@@ -1,26 +1,27 @@
 @import 'tailwindcss';
 
 :root { color-scheme: dark; }
-html, body { background: #000; color: #fafafa; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+html, body { background: linear-gradient(156deg, #2e335a 1.6%, #1c1b33 95.7%) fixed; color: #fafafa; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+body::before { content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; background: radial-gradient(600px 400px at 85% -10%, rgba(124,108,255,0.25), transparent 60%), radial-gradient(500px 400px at 0% 110%, rgba(1,183,197,0.12), transparent 60%); }
 body { margin: 0; }
 * { box-sizing: border-box; }
 button { font-family: inherit; }
 input, textarea, select { font-family: inherit; }
 
 /* Glass cards and buttons — same black/zinc/emerald look as the old app. */
-.card { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
-.m3-card { border-radius: 2.5rem; }
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 9999px; min-height: 48px; padding: 0 20px; font-weight: 700; border: 1px solid rgba(255,255,255,0.1); background: #18181b; color: #fafafa; cursor: pointer; text-decoration: none; }
+.card { background: linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06)); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 20px 50px rgba(0,0,0,0.35); }
+.m3-card { border-radius: 28px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-radius: 9999px; min-height: 48px; padding: 0 20px; font-weight: 700; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.10); color: #fafafa; cursor: pointer; text-decoration: none; box-shadow: 0 8px 20px rgba(0,0,0,0.25); }
 .btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.btn-primary { background: #34d399; color: #000; border-color: #34d399; }
+.btn-primary { background: #34d399; color: #000; border-color: #34d399; box-shadow: 0 8px 24px rgba(52,211,153,0.35); }
 .btn-success { background: #34d399; color: #000; border-color: #34d399; }
 .btn-error { background: #ff3954; color: #fff; border-color: #ff3954; }
 .btn-ghost { background: transparent; }
 .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.2); }
 .btn-sm { min-height: 36px; padding: 0 12px; font-size: 0.875rem; }
 .btn-compact { padding: 0 12px; }
-.input { width: 100%; background: #fafafa; color: #18181b; border: 1px solid rgba(255,255,255,0.2); border-radius: 0.75rem; padding: 12px; font-size: 1rem; }
-.input::placeholder { color: #71717a; }
+.input { width: 100%; background: rgba(255,255,255,0.10); color: #fafafa; border: 1px solid rgba(255,255,255,0.15); border-radius: 0.75rem; padding: 12px; font-size: 1rem; }
+.input::placeholder { color: #a1a1aa; }
 .input-error { border-color: #ff3954; }
 .text-error { color: #ff3954; }
 .alert { padding: 12px 16px; }
@@ -46,10 +47,10 @@ input, textarea, select { font-family: inherit; }
 .snow-bg span { position: absolute; color: #cfeaff; }
 
 /* Docks and host nav */
-.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40; width: min(92vw, 480px); display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; padding: 8px 10px; background: rgba(24,24,27,0.92); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); border-radius: 9999px; }
+.dock { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 40; width: min(92vw, 480px); display: flex; align-items: flex-end; justify-content: space-between; gap: 4px; padding: 8px 10px; background: rgba(28,27,51,0.88); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.14); border-radius: 9999px; box-shadow: 0 20px 50px rgba(0,0,0,0.45); }
 .dock-item { display: flex; flex-direction: column; align-items: center; gap: 2px; background: transparent; border: none; color: #fafafa; cursor: pointer; font-size: 0.7rem; font-weight: 700; padding: 4px 8px; }
 .dock-item-active { color: #34d399; }
-.dock-plus { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 9999px; background: #b8860b; color: #fff; box-shadow: 0 0 16px rgba(184,134,11,0.9), 0 0 32px rgba(184,134,11,0.5); }
+.dock-plus { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 9999px; background: #b8860b; color: #fff; border: 4px solid #1c1b33; transform: translateY(-14px); box-shadow: 0 0 16px rgba(184,134,11,0.9), 0 0 32px rgba(184,134,11,0.5); }
 .dock-plus svg { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)); }
 .file-btn { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; min-height: 48px; padding: 12px; border: 1px dashed rgba(255,255,255,0.4); border-radius: 0.75rem; background: rgba(255,255,255,0.08); color: #fafafa; font-weight: 700; cursor: pointer; }
 .file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
@@ -65,12 +66,12 @@ input, textarea, select { font-family: inherit; }
 .segmented { background: transparent; border: none; padding: 0; display: flex; gap: 12px; }
 .seg-btn { flex: 1; border-radius: 9999px; padding: 0.9rem 0.5rem; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; height: 54px; border: none; cursor: pointer; background: #34d399; color: #000; }
 .seg-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.wish-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-left: 6px solid #34d399; border-radius: 0.75rem; padding: 12px; }
+.wish-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-left: 6px solid #34d399; border-radius: 1rem; padding: 12px; }
 .poll-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 9999px; overflow: hidden; }
 .poll-bar-fill { height: 100%; background: #34d399; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; padding: 12px; background: rgba(0,0,0,0.5); }
 @media (min-width: 640px) { .modal-backdrop { align-items: center; } }
-.modal-card { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 2.5rem; padding: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow: auto; }
+.modal-card { background: linear-gradient(180deg, #2c2f48, #1c1b33); border: 1px solid rgba(255,255,255,0.14); border-radius: 28px; padding: 20px; width: 100%; max-width: 520px; max-height: 90vh; overflow: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
 .fab-wrap { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 41; }
 .fab-btn { width: 60px; height: 60px; border-radius: 9999px; background: #fafafa; color: #34d399; border: none; font-size: 1.5rem; cursor: pointer; box-shadow: 0 8px 20px rgba(0,0,0,0.35); }
 .fab-menu { position: fixed; right: 16px; bottom: calc(88px + env(safe-area-inset-bottom)); z-index: 41; display: flex; flex-direction: column; gap: 8px; }
@@ -694,13 +695,13 @@ input, textarea, select { font-family: inherit; }
    Sidebar is fixed at 260px; main content is 960px minimum, so the
    whole admin area is 1220px minimum and scrolls horizontally on
    narrower windows instead of reflowing for mobile. */
-.admin-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; z-index: 40; display: flex; flex-direction: column; gap: 20px; padding: 20px 16px; background: rgba(24,24,27,0.96); backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.1); overflow-y: auto; }
+.admin-sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 260px; z-index: 40; display: flex; flex-direction: column; gap: 20px; padding: 20px 16px; background: #1e2138; backdrop-filter: blur(12px); border-right: 1px solid rgba(255,255,255,0.08); overflow-y: auto; }
 .admin-brand-title { font-weight: 900; font-size: 1.5rem; letter-spacing: -0.02em; line-height: 1.1; }
 .admin-brand-party { font-weight: 700; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-brand-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.6; margin-top: 6px; }
 .admin-nav { display: flex; flex-direction: column; gap: 4px; }
 .admin-nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 0.75rem; font-weight: 700; text-align: left; color: #fafafa; background: transparent; border: none; cursor: pointer; white-space: nowrap; }
-.admin-nav-btn.active { background: #34d399; color: #000; }
+.admin-nav-btn.active { background: #01b7c5; color: #062a2e; box-shadow: 0 8px 20px rgba(1,183,197,0.35); }
 .admin-sidebar-foot { margin-top: auto; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
 .admin-signed-in { font-size: 0.85rem; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-layout { min-width: 1220px; }
@@ -709,12 +710,12 @@ input, textarea, select { font-family: inherit; }
 .admin-header h1 { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.15; }
 .admin-subtitle { font-size: 0.9rem; opacity: 0.7; margin-top: 4px; }
 .admin-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 12px; }
-.admin-stat { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 16px; text-align: center; }
+.admin-stat { background: #2c2f48; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 16px; text-align: center; box-shadow: 0 10px 20px rgba(0,0,0,0.35); }
 .admin-stat-value { font-size: 1.75rem; font-weight: 900; line-height: 1.1; }
 .admin-stat-label { font-size: 0.75rem; opacity: 0.7; margin-top: 2px; }
 .admin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; align-items: start; margin-top: 16px; }
 .admin-grid-main, .admin-grid-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.admin-panel { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1rem; padding: 20px; min-width: 0; }
+.admin-panel { background: #2c2f48; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; min-width: 0; box-shadow: 0 10px 20px rgba(0,0,0,0.35); }
 .admin-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .admin-panel h2 { font-size: 1.1rem; font-weight: 900; }
 .admin-danger { border-color: rgba(255,57,84,0.4); }
@@ -725,7 +726,7 @@ input, textarea, select { font-family: inherit; }
 .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .admin-field-full { grid-column: 1 / -1; }
 .admin-banner { background: rgba(255,193,7,0.12); border: 1px solid rgba(255,193,7,0.4); border-radius: 1rem; padding: 12px 16px; font-size: 0.9rem; margin-bottom: 16px; }
-.admin-signin { max-width: 480px; margin: 48px auto; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 1.5rem; padding: 24px; }
+.admin-signin { max-width: 480px; margin: 48px auto; background: #2c2f48; border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 24px; box-shadow: 0 10px 20px rgba(0,0,0,0.35); }
 .admin-signin .input { margin-top: 4px; }
 
 /* Tear-to-reveal strip: dashed pill, green arrow knob, "Tear" label.
@@ -741,3 +742,7 @@ input, textarea, select { font-family: inherit; }
 .reveal-pop { animation: reveal-pop 0.45s ease-out; }
 @keyframes reveal-pop { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
 @media (prefers-reduced-motion: reduce) { .tear-knob { transition: none; } .reveal-pop { animation: none; } }
+
+/* Host-only accent: Daccord teal replaces emerald inside admin pages. */
+.admin-main .btn-primary, .admin-main .btn-success { background: #01b7c5; border-color: #01b7c5; color: #062a2e; box-shadow: 0 8px 24px rgba(1,183,197,0.35); }
+.admin-brand-title { background: linear-gradient(90deg, #ffffff, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; }

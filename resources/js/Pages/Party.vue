@@ -78,7 +78,7 @@
           </div>
           <div v-if="guestSearched" class="mt-4">
             <div v-if="!filteredGuests.length" class="text-sm opacity-70">No match — try a nickname or just part of your name.</div>
-            <button v-for="g in filteredGuests" :key="g.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:inherit;cursor:pointer" @click="selectGuest(g)">
+            <button v-for="g in filteredGuests" :key="g.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="selectGuest(g)">
               <b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span v-if="g.aliases && g.aliases.length" class="text-sm opacity-60"> (also: {{ g.aliases.join(', ') }})</span><span v-if="g.claimed" class="text-error font-bold"> — Locked</span>
             </button>
           </div>
@@ -113,10 +113,10 @@
         <div class="card m3-card p-4">
           <h2 class="text-2xl font-black">Your Party</h2>
           <div class="grid grid-cols-2 gap-2 mt-4">
-            <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><p class="section-label">Party</p><p class="font-black mt-1">{{ localParty }}</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><p class="section-label">Locked</p><p class="font-black mt-1">{{ localGuests.filter(g => g.claimed).length }} / {{ localGuests.length }}</p><p class="text-sm opacity-80">names locked</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><p class="section-label">Budget ₱</p><p class="font-black mt-1">{{ formatBudget(localBudget) }}</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)"><p class="section-label">Gifts</p><p class="font-black mt-1">{{ myBoardItems.length }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Party</p><p class="font-black mt-1">{{ localParty }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Locked</p><p class="font-black mt-1">{{ localGuests.filter(g => g.claimed).length }} / {{ localGuests.length }}</p><p class="text-sm opacity-80">names locked</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Budget ₱</p><p class="font-black mt-1">{{ formatBudget(localBudget) }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Gifts</p><p class="font-black mt-1">{{ myBoardItems.length }}</p></div>
           </div>
           <p class="text-sm opacity-70 mt-3">Use the dock below for Gifts, Wishlists and Vote.</p>
         </div>
@@ -164,7 +164,7 @@
           <h2 class="text-2xl font-black">Everyone's wishlists</h2>
           <input class="input mt-3" v-model="wishSearch" placeholder="Search a name, nickname, or alias…" />
           <div v-if="!filteredWishBoard.length" class="text-sm opacity-70 mt-3">{{ localWishBoard.length ? 'No match.' : 'No members yet.' }}</div>
-          <button v-for="o in filteredWishBoard" :key="o.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:inherit;cursor:pointer" @click="openWishOwnerModal(o)">
+          <button v-for="o in filteredWishBoard" :key="o.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="openWishOwnerModal(o)">
             <b>{{ o.display }}</b><span v-if="o.nickname"> “{{ o.nickname }}”</span><span v-if="o.aliases && o.aliases.length" class="text-sm opacity-60"> (also: {{ o.aliases.join(', ') }})</span><span v-if="guestMe && o.id === guestMe.id"> — you</span>
             <span class="text-sm opacity-70"> • {{ o.items.length ? o.items.length + ' wish(es)' : 'no wishlist yet' }}</span>
             <ChevronRight class="w-4 h-4 inline float-right" />
@@ -181,7 +181,7 @@
           </div>
           <h2 class="text-2xl font-black">Polls</h2>
           <div v-if="!localPolls.length" class="text-sm opacity-70 mt-3">No polls yet.</div>
-          <div v-for="p in localPolls" :key="p.id" class="mt-4 rounded-xl p-3" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1)">
+          <div v-for="p in localPolls" :key="p.id" class="mt-4 rounded-xl p-3" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)">
             <b>{{ p.question }}</b>
             <p class="text-sm opacity-70">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p>
             <div v-for="o in p.options" :key="o.id" class="mt-2">
