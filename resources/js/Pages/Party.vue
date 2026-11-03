@@ -24,7 +24,7 @@
       </div>
     </aside>
 
-    <main v-if="!isHostView || !hostSignedInLocal" class="w-full mx-auto px-3 py-3 max-w-2xl" style="position:relative;z-index:1;padding-bottom:96px">
+    <main v-if="!isHostView || !hostSignedInLocal" class="guest-main w-full mx-auto px-3 py-3 max-w-2xl" style="position:relative;z-index:1;padding-bottom:96px">
       <!-- HOST SIGN-IN REQUIRED: no host content renders when signed out -->
       <section v-show="isHostView && !hostSignedInLocal">
         <div class="admin-signin">
@@ -38,7 +38,7 @@
         </div>
       </section>
       <!-- HOME -->
-      <section v-show="view === 'home'">
+      <section v-show="view === 'home'" class="home-hero">
         <div class="flex items-start gap-2">
           <div class="shrink-0 text-center">
             <ScorSanta :size="6" :class="{ 'santa-wave': santaWaving }" @click="waveSanta" />
