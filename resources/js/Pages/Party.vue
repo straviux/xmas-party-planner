@@ -79,7 +79,7 @@
           </div>
           <div v-if="guestSearched" class="mt-4">
             <div v-if="!filteredGuests.length" class="text-sm opacity-70">No match — try a nickname or just part of your name.</div>
-            <button v-for="g in filteredGuests" :key="g.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="selectGuest(g)">
+            <button v-for="g in filteredGuests" :key="g.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="selectGuest(g)">
               <b>{{ g.display }}</b><span v-if="g.nickname"> “{{ g.nickname }}”</span><span v-if="g.aliases && g.aliases.length" class="text-sm opacity-60"> (also: {{ g.aliases.join(', ') }})</span><span v-if="g.claimed" class="text-error font-bold"> — Locked</span>
             </button>
           </div>
@@ -114,10 +114,10 @@
         <div class="card m3-card p-4">
           <h2 class="text-2xl font-black">Your Party</h2>
           <div class="grid grid-cols-2 gap-2 mt-4">
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Party</p><p class="font-black mt-1">{{ localParty }}</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Locked</p><p class="font-black mt-1">{{ localGuests.filter(g => g.claimed).length }} / {{ localGuests.length }}</p><p class="text-sm opacity-80">names locked</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Budget ₱</p><p class="font-black mt-1">{{ formatBudget(localBudget) }}</p></div>
-            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Gifts</p><p class="font-black mt-1">{{ myBoardItems.length }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Party</p><p class="font-black mt-1">{{ localParty }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Locked</p><p class="font-black mt-1">{{ localGuests.filter(g => g.claimed).length }} / {{ localGuests.length }}</p><p class="text-sm opacity-80">names locked</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Budget ₱</p><p class="font-black mt-1">{{ formatBudget(localBudget) }}</p></div>
+            <div class="rounded-xl p-3 text-center" style="background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14)"><p class="section-label">Gifts</p><p class="font-black mt-1">{{ myBoardItems.length }}</p></div>
           </div>
           <p class="text-sm opacity-70 mt-3">Use the dock below for Gifts, Wishlists and Vote.</p>
         </div>
@@ -147,7 +147,7 @@
                 <p v-if="it.notes" class="text-sm opacity-70 mt-1" style="white-space:pre-wrap">{{ it.notes }}</p>
                 <p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p>
               </div>
-              <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" class="shrink-0" style="color:#34d399"><ExternalLink class="w-5 h-5" /></a>
+              <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" class="shrink-0" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a>
               <button class="shrink-0" style="background:none;border:none;color:inherit;cursor:pointer" aria-label="Delete wish" @click="deleteWishItem(it.id)"><Trash2 class="w-5 h-5" /></button>
             </div>
             <img v-if="it.image" :src="it.image" alt="" style="max-width:100%;border-radius:0.75rem;margin-top:8px" />
@@ -165,7 +165,7 @@
           <h2 class="text-2xl font-black">Everyone's wishlists</h2>
           <input class="input mt-3" v-model="wishSearch" placeholder="Search a name, nickname, or alias…" />
           <div v-if="!filteredWishBoard.length" class="text-sm opacity-70 mt-3">{{ localWishBoard.length ? 'No match.' : 'No members yet.' }}</div>
-          <button v-for="o in filteredWishBoard" :key="o.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="openWishOwnerModal(o)">
+          <button v-for="o in filteredWishBoard" :key="o.id" class="w-full text-left p-3 mt-2 card" style="border-radius:1rem;background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14);color:inherit;cursor:pointer" @click="openWishOwnerModal(o)">
             <b>{{ o.display }}</b><span v-if="o.nickname"> “{{ o.nickname }}”</span><span v-if="o.aliases && o.aliases.length" class="text-sm opacity-60"> (also: {{ o.aliases.join(', ') }})</span><span v-if="guestMe && o.id === guestMe.id"> — you</span>
             <span class="text-sm opacity-70"> • {{ o.items.length ? o.items.length + ' wish(es)' : 'no wishlist yet' }}</span>
             <ChevronRight class="w-4 h-4 inline float-right" />
@@ -182,12 +182,12 @@
           </div>
           <h2 class="text-2xl font-black">Polls</h2>
           <div v-if="!localPolls.length" class="text-sm opacity-70 mt-3">No polls yet.</div>
-          <div v-for="p in localPolls" :key="p.id" class="mt-4 rounded-xl p-3" style="background:linear-gradient(180deg, rgba(255,255,255,0.14), rgba(255,255,255,0.06));border:1px solid rgba(255,255,255,0.14)">
+          <div v-for="p in localPolls" :key="p.id" class="mt-4 rounded-xl p-3" style="background:linear-gradient(180deg, rgba(72,49,157,0.35), rgba(31,29,71,0.55));border:1px solid rgba(255,255,255,0.14)">
             <b>{{ p.question }}</b>
             <p class="text-sm opacity-70">{{ p.open ? 'Voting open' : 'Poll closed' }} • {{ p.total }} vote(s)</p>
             <div v-for="o in p.options" :key="o.id" class="mt-2">
               <button :disabled="!p.open" class="w-full text-left flex items-center gap-2" style="background:none;border:none;color:inherit;cursor:pointer" @click="votePoll(p.id, o.id)">
-                <span style="width:18px;height:18px;border-radius:9999px;border:2px solid #34d399;display:inline-flex;align-items:center;justify-content:center"><span v-if="p.my_vote === o.id" style="width:8px;height:8px;border-radius:9999px;background:#34d399"></span></span>
+                <span style="width:18px;height:18px;border-radius:9999px;border:2px solid #c427fb;display:inline-flex;align-items:center;justify-content:center"><span v-if="p.my_vote === o.id" style="width:8px;height:8px;border-radius:9999px;background:#c427fb"></span></span>
                 <span class="flex-1">{{ o.text }}</span>
                 <span class="text-sm opacity-70">{{ p.total ? Math.round(o.votes / p.total * 100) : 0 }}% ({{ o.votes }})</span>
               </button>
@@ -507,7 +507,7 @@
         <div v-if="!wishModalOwner.items.length" class="text-sm opacity-70 mt-3">No wishes yet.</div>
         <div v-for="it in wishModalOwner.items" :key="it.id" class="wish-card mt-3">
           <div class="flex gap-2"><div class="flex-1"><p style="white-space:pre-wrap">{{ it.text }}</p><p v-if="it.notes" class="text-sm opacity-70 mt-1" style="white-space:pre-wrap">{{ it.notes }}</p><p v-if="it.reserved" class="text-error font-bold text-sm mt-1">Reserved</p></div>
-          <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" style="color:#34d399"><ExternalLink class="w-5 h-5" /></a></div>
+          <a v-if="it.link" :href="it.link" target="_blank" rel="noopener" style="color:#e0d9ff"><ExternalLink class="w-5 h-5" /></a></div>
           <img v-if="it.image" :src="it.image" alt="" style="max-width:100%;border-radius:0.75rem;margin-top:8px" />
           <button v-if="guestMe && wishModalOwner.id !== guestMe.id" class="btn btn-sm mt-2" style="width:auto" :disabled="it.reserved && !it.reserved_by_me" @click="reserveWishItem(wishModalOwner.id, it.id)">{{ it.reserved_by_me ? 'Unreserve' : it.reserved ? 'Reserved' : 'Reserve' }}</button>
         </div>
@@ -1164,5 +1164,5 @@ export default {
 
 <style>
 body { background: #000; color: #fafafa; font-family: Inter, system-ui, sans-serif; }
-a { color: #34d399; }
+a { color: #e0d9ff; }
 </style>
