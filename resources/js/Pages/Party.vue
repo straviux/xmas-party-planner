@@ -39,22 +39,26 @@
       </section>
       <!-- HOME -->
       <section v-show="view === 'home'" class="home-hero">
-        <div class="flex items-start gap-2">
-          <div class="shrink-0 text-center">
-            <ScorSanta :size="6" :class="{ 'santa-wave': santaWaving }" @click="waveSanta" />
+        <div class="home-hero-left">
+          <div class="flex items-start gap-2">
+            <div class="shrink-0 text-center">
+              <ScorSanta :size="6" :class="{ 'santa-wave': santaWaving }" @click="waveSanta" />
+            </div>
+            <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
+              <span v-if="!setupDoneLocal">Ho ho ho! The party isn't set up yet — check back once your host has set it up.</span>
+              <span v-else>Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting.</span>
+            </div>
           </div>
-          <div class="santa-bubble flex-1"><span class="bubble-dot" aria-hidden="true"></span>
-            <span v-if="!setupDoneLocal">Ho ho ho! The party isn't set up yet — check back once your host has set it up.</span>
-            <span v-else>Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting.</span>
+          <p v-if="setupDoneLocal" class="text-sm opacity-80 mt-4">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name.</p>
+          <p v-if="!setupDoneLocal" class="text-sm opacity-80 mt-4">No party set up yet — the host needs to set it up first.</p>
+        </div>
+        <div class="home-hero-right">
+          <div class="segmented">
+            <button class="seg-btn" :disabled="!setupDoneLocal" @click="startGuest"><Gift class="w-6 h-6" /> I'm a guest</button>
           </div>
+          <button class="btn btn-outline w-full mt-3" @click="openQrModal"><QrCode class="w-5 h-5" /> Scan QR code</button>
+          <p class="text-center mt-3"><a href="/host/dashboard" class="text-sm opacity-60" style="text-decoration:underline">Host sign-in</a></p>
         </div>
-        <div class="segmented mt-4">
-          <button class="seg-btn" :disabled="!setupDoneLocal" @click="startGuest"><Gift class="w-6 h-6" /> I'm a guest</button>
-        </div>
-        <button class="btn btn-outline w-full mt-3" @click="openQrModal"><QrCode class="w-5 h-5" /> Scan QR code</button>
-        <p class="text-center mt-3"><a href="/host/dashboard" class="text-sm opacity-60" style="text-decoration:underline">Host sign-in</a></p>
-        <p v-if="!setupDoneLocal" class="text-sm opacity-80 text-center mt-3">No party set up yet — the host needs to set it up first.</p>
-        <p v-if="setupDoneLocal" class="text-sm opacity-80 text-center mt-3">Guest? Scan the QR code from your host, or open the direct link they sent you, then find your name.</p>
       </section>
 
       <!-- WHO -->

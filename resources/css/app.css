@@ -780,3 +780,18 @@ body { color: var(--text-primary); }
 /* Host admin keeps Daccord teal, overriding the guest purple above. */
 .admin-main .btn-primary, .admin-main .btn-success { background: #01b7c5; border-color: #01b7c5; color: #062a2e; box-shadow: 0 8px 24px rgba(1,183,197,0.35); }
 .admin-nav-btn.active { background: #01b7c5; color: #062a2e; }
+
+/* Desktop view for guests (mobile layout untouched below 1024px).
+   Guest main widens from the phone column to a desktop column,
+   home becomes two columns (Scor + intro left, actions right),
+   guesthome stats go from 2-up to 4-up, and the dock widens.
+   Host admin keeps its own 1220px desktop layout, unchanged. */
+@media (min-width: 1024px) {
+  .guest-main { max-width: 1120px; padding: 32px 24px 120px; }
+  .home-hero { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; min-height: calc(100dvh - 200px); }
+  .home-hero-left, .home-hero-right { display: flex; flex-direction: column; }
+  .home-hero-right .segmented { margin-top: 0; }
+  .guest-main .grid-cols-2 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .dock { width: min(92vw, 560px); }
+  .admin-signin { max-width: 560px; }
+}
