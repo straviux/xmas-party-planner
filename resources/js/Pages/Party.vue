@@ -48,7 +48,6 @@
             <span v-else>Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting.</span>
           </div>
         </div>
-        <div class="guest-house" aria-hidden="true"></div>
         <div class="segmented mt-4">
           <button class="seg-btn" :disabled="!setupDoneLocal" @click="startGuest"><Gift class="w-6 h-6" /> I'm a guest</button>
         </div>
