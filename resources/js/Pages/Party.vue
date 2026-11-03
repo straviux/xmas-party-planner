@@ -48,6 +48,7 @@
             <span v-else>Ho ho ho! Scan the QR — you'll land straight on the guest page. Search your name, and let's get gifting.</span>
           </div>
         </div>
+        <div class="guest-house" aria-hidden="true"></div>
         <div class="segmented mt-4">
           <button class="seg-btn" :disabled="!setupDoneLocal" @click="startGuest"><Gift class="w-6 h-6" /> I'm a guest</button>
         </div>
@@ -110,7 +111,6 @@
 
       <!-- GUEST HOME -->
       <section v-show="view === 'guesthome'">
-        <div class="guest-house" aria-hidden="true"></div>
         <div class="card m3-card p-4">
           <h2 class="text-2xl font-black">Your Party</h2>
           <div class="grid grid-cols-2 gap-2 mt-4">
