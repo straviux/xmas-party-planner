@@ -273,9 +273,13 @@ class PartyStore
         return [$i, $polls];
     }
 
+    // JPEG, not AVIF: AVIF uploads displayed as blank squares on
+    // browsers without AVIF decoding, while still taking tile space.
+    // JPEG displays everywhere. Kept the old method name so callers
+    // do not change; it now returns a JPEG data URL.
     public static function convertToAvif(string $image): string
     {
-        if ($image === '' || !function_exists('imageavif') || !function_exists('imagecreatefromstring')) {
+        if ($image === '' || !function_exists('imagecreatefromstring')) {
             return $image;
         }
         $raw = base64_decode((string) preg_replace('#^data:image/[^;]+;base64,#', '', $image));
@@ -286,15 +290,20 @@ class PartyStore
         if (function_exists('imageistruecolor') && !imageistruecolor($img)) {
             imagepalettetotruecolor($img);
         }
-        if (function_exists('imagesavealpha')) {
-            imagesavealpha($img, true);
-        }
-        ob_start();
-        $ok = imageavif($img, null, 80);
-        $data = ob_get_clean();
+        // JPEG has no alpha: composite over white so transparent
+        // PNGs do not turn black.
+        $w = imagesx($img); $h = imagesy($img);
+        $bg = imagecreatetruecolor($w, $h);
+        $white = imagecolorallocate($bg, 255, 255, 255);
+        imagefill($bg, 0, 0, $white);
+        imagecopy($bg, $img, 0, 0, 0, 0, $w, $h);
         imagedestroy($img);
+        ob_start();
+        $ok = imagejpeg($bg, null, 85);
+        $data = ob_get_clean();
+        imagedestroy($bg);
         if ($ok && $data !== '') {
-            return 'data:image/avif;base64,'.base64_encode($data);
+            return 'data:image/jpeg;base64,'.base64_encode($data);
         }
         return $image;
     }
